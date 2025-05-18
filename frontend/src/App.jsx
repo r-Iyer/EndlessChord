@@ -32,51 +32,8 @@ function App() {
   const [playerReady, setPlayerReady] = useState(false);
 
   const { fetchSongsForChannel, fetchMoreSongs } = useSongQueue(currentChannel, currentSong, setCurrentSong, setNextSong, setQueue, isFetchingSongs, setIsFetchingSongs);
-  const {
-    handleSeek,
-    handleNextSong,
-    handleVideoEnd,
-    togglePlayPause,
-    toggleMute,
-    handlePlayerStateChange,
-    handleSkipForward,      // <-- add
-    handleSkipBackward      // <-- add
-  } = usePlayerHandlers(
-    playerRef,
-    isPlaying,
-    setIsPlaying,
-    isMuted,
-    setIsMuted,
-    currentSong,
-    setCurrentSong,
-    nextSong,
-    setNextSong,
-    queue,
-    setQueue,
-    fetchMoreSongs,
-    showInfo,
-    setShowInfo,
-    infoTimeoutRef,
-    duration,               // <-- pass duration
-    setCurrentTime          // <-- pass setCurrentTime
-  );
-  usePlayerEffects(  // Remove empty destructuring
-    currentSong,
-    showInfo,
-    setShowInfo,
-    infoTimeoutRef,
-    currentTime,
-    setCurrentTime,
-    duration,
-    setDuration,
-    playerRef,
-    isPlaying,
-    setIsPlaying,
-    handleSeek,
-    handleNextSong,
-    handleVideoEnd,
-    fetchMoreSongs
-  );
+  const { handleSeek, handleNextSong, handleVideoEnd, togglePlayPause, toggleMute, handlePlayerStateChange, handleSkipForward, handleSkipBackward } = usePlayerHandlers(playerRef, isPlaying, setIsPlaying, isMuted, setIsMuted, currentSong, setCurrentSong, nextSong, setNextSong, queue, setQueue, fetchMoreSongs, showInfo, setShowInfo, infoTimeoutRef, duration, setCurrentTime);
+  usePlayerEffects(currentSong, showInfo, setShowInfo, infoTimeoutRef, currentTime, setCurrentTime, duration, setDuration, playerRef, isPlaying, setIsPlaying, handleSeek, handleNextSong, handleVideoEnd, fetchMoreSongs);
   const { toggleFullscreen } = useFullscreen(isFullscreen, setIsFullscreen);
 
   const selectChannel = useCallback(async (channelId) => {
