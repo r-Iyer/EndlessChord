@@ -105,7 +105,7 @@ function App() {
 
   useEffect(() => {
     let intervalId;
-    if (isPlaying && playerRef.current && playerRef.current.getCurrentTime) {
+    if (currentSong && playerRef.current && playerRef.current.getCurrentTime) {
       intervalId = setInterval(() => {
         try {
           const time = playerRef.current.getCurrentTime() || 0;
@@ -116,13 +116,52 @@ function App() {
       }, 500);
     }
     return () => intervalId && clearInterval(intervalId);
-  }, [isPlaying]);
+  }, [currentSong, playerRef.current]);
+
+  // Show SongInfo at the beginning and when 20s remain
+  useEffect(() => {
+    if (!currentSong || !duration) return;
+    let preEndTimeout = null;
+
+    // Show info 20s before end, but only if song is longer than 30s
+    if (duration > 30) {
+      const timeLeft = duration - currentTime;
+      if (timeLeft > 20) {
+        preEndTimeout = setTimeout(() => {
+          showSongInfo();
+        }, (timeLeft - 20) * 1000);
+      } else if (timeLeft <= 20 && timeLeft > 0) {
+        // If already within last 20s, show immediately
+        showSongInfo();
+      }
+    }
+
+    return () => {
+      if (preEndTimeout) clearTimeout(preEndTimeout);
+    };
+  }, [currentSong, duration, currentTime, showSongInfo]);
 
   const handleSeek = useCallback((time) => {
     if (!playerRef.current) return;
     playerRef.current.seekTo(Math.floor(time), true);
     setCurrentTime(Math.floor(time));
   }, []);
+
+  // Keyboard arrow controls for seeking
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (!currentSong || !playerRef.current) return;
+      if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.isContentEditable) return;
+      if (e.key === 'ArrowRight') {
+        handleSeek(Math.min(currentTime + 5, duration));
+      } else if (e.key === 'ArrowLeft') {
+        handleSeek(Math.max(currentTime - 5, 0));
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+    // eslint-disable-next-line
+  }, [currentTime, duration, currentSong, handleSeek]);
 
   const handleVideoEnd = () => {
     showSongInfo();
@@ -269,7 +308,7 @@ function App() {
     };
 
     window.addEventListener('mousemove', showAndResetTimer);
-    window.addEventListener('touchstart', showAndResetTimer);
+    window.addEventListener('touchstart', showAndResetTimer, { passive: true }); // Show controls on touch as well
 
     return () => {
       window.removeEventListener('mousemove', showAndResetTimer);
@@ -314,38 +353,130 @@ function App() {
               laterSong={queue && queue.length > 0 ? queue[0] : null}
               visible={showInfo}
             />
+            {/* TimerSlider and PlaybackControls: Both always visible, stacked at bottom, slider higher in fullscreen */}
             <div
-              className={`absolute left-0 right-0 bottom-20 z-50 flex justify-center pointer-events-auto transition-opacity duration-300 ${showUI ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
+              className={`fixed left-0 right-0 bottom-0 z-[2147483647] flex flex-col items-center transition-opacity duration-300 ${showUI ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}
+              style={{
+                pointerEvents: 'auto',
+                background: 'rgba(20,20,20,0.85)',
+                // In fullscreen, bring the slider up much higher
+                bottom: isFullscreen ? '15%' : 0,
+                paddingBottom: isFullscreen ? 0 : 80,
+              }}
             >
-              <div className="w-full max-w-md mx-auto">
+              <div
+                style={{
+                  width: '100%',
+                  maxWidth: 700,
+                  minWidth: 350,
+                  padding: '0 32px',
+                  pointerEvents: 'auto',
+                  zIndex: 2147483647,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 16,
+                }}
+              >
+                {/* -5s button */}
+                <button
+                  aria-label="Seek backward 5 seconds"
+                  onClick={() => handleSeek(Math.max(currentTime - 5, 0))}
+                  style={{
+                    background: 'rgba(40,40,40,0.6)',
+                    color: '#fff',
+                    border: 'none',
+                    borderRadius: '50%',
+                    width: 32,
+                    height: 32,
+                    fontSize: 14,
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.12)',
+                    transition: 'background 0.2s',
+                  }}
+                  tabIndex={0}
+                  onMouseOver={e => e.currentTarget.style.background = 'rgba(60,60,60,0.8)'}
+                  onMouseOut={e => e.currentTarget.style.background = 'rgba(40,40,40,0.6)'}
+                >
+                  -5
+                </button>
                 <TimerSlider
                   currentTime={currentTime}
                   duration={duration}
                   onSeek={handleSeek}
+                  style={{
+                    height: 20,
+                    pointerEvents: 'auto',
+                    zIndex: 2147483647,
+                    flex: 1,
+                    fontSize: 12,
+                  }}
+                />
+                {/* +5s button */}
+                <button
+                  aria-label="Seek forward 5 seconds"
+                  onClick={() => handleSeek(Math.min(currentTime + 5, duration))}
+                  style={{
+                    background: 'rgba(40,40,40,0.6)',
+                    color: '#fff',
+                    border: 'none',
+                    borderRadius: '50%',
+                    width: 32,
+                    height: 32,
+                    fontSize: 14,
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.12)',
+                    transition: 'background 0.2s',
+                  }}
+                  tabIndex={0}
+                  onMouseOver={e => e.currentTarget.style.background = 'rgba(60,60,60,0.8)'}
+                  onMouseOut={e => e.currentTarget.style.background = 'rgba(40,40,40,0.6)'}
+                >
+                  +5
+                </button>
+              </div>
+              <div
+                style={{
+                  width: '100%',
+                  maxWidth: 700,
+                  minWidth: 350,
+                  padding: '0 32px',
+                  marginTop: 8,
+                  pointerEvents: 'auto',
+                  zIndex: 2147483647,
+                }}
+              >
+                <PlaybackControls
+                  isPlaying={isPlaying}
+                  isMuted={isMuted}
+                  isFullscreen={isFullscreen}
+                  currentChannel={currentChannel}
+                  onPlayPause={togglePlayPause}
+                  onNext={handleNextSong}
+                  onMuteToggle={toggleMute}
+                  onFullscreenToggle={toggleFullscreen}
+                  style={{
+                    opacity: showUI ? 1 : 0,
+                    pointerEvents: showUI ? 'auto' : 'none',
+                    transition: 'opacity 0.3s',
+                    zIndex: 2147483647,
+                  }}
                 />
               </div>
             </div>
-            <PlaybackControls
-              isPlaying={isPlaying}
-              isMuted={isMuted}
-              isFullscreen={isFullscreen}
-              currentChannel={currentChannel}
-              onPlayPause={togglePlayPause}
-              onNext={handleNextSong}
-              onMuteToggle={toggleMute}
-              onFullscreenToggle={toggleFullscreen}
-              style={{
-                opacity: showUI ? 1 : 0,
-                pointerEvents: showUI ? 'auto' : 'none',
-                transition: 'opacity 0.3s'
-              }}
-            />
           </>
         )}
         {/* Optionally, show a message when nothing is playing and not loading */}
         {!currentSong && !isLoading && (
           <div className="flex items-center justify-center h-full w-full">
-            <div className="text-white text-xl">Select a channel to start watching</div>
+            <p className="text-lg">No song is currently playing. Please select a channel.</p>
           </div>
         )}
       </main>
