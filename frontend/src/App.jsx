@@ -3,9 +3,12 @@ import { fetchChannels, fetchChannelById } from './services/apiService';
 import ChannelSelector from './components/ChannelSelector';
 import VideoPlayer from './components/VideoPlayer';
 import SongInfo from './components/SongInfo';
-import PlaybackControls from './components/PlaybackControls';
-import TimerSlider from './components/TimerSlider';
 import Spinner from './components/Spinner';
+import PlayerFooter from './components/PlayerFooter';
+import usePlayerHandlers from './hooks/usePlayerHandlers';
+import usePlayerEffects from './hooks/usePlayerEffects';
+import useSongQueue from './hooks/useSongQueue';
+import useFullscreen from './hooks/useFullscreen';
 import './App.css';
 
 function App() {
@@ -26,23 +29,55 @@ function App() {
   const uiTimeoutRef = useRef(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isFetchingSongs, setIsFetchingSongs] = useState(false); // Add a flag
+  const [playerReady, setPlayerReady] = useState(false);
 
-  const fetchSongsForChannel = useCallback(async (channelId) => {
-    if (isFetchingSongs) {
-      // Block if already fetching
-      return [];
-    }
-    setIsFetchingSongs(true);
-    try {
-      const response = await fetch(`/api/channels/${channelId}/songs`);
-      return await response.json();
-    } catch (error) {
-      console.error('Error fetching songs:', error);
-      return [];
-    } finally {
-      setIsFetchingSongs(false);
-    }
-  }, [isFetchingSongs]);
+  const { fetchSongsForChannel, fetchMoreSongs } = useSongQueue(currentChannel, currentSong, setCurrentSong, setNextSong, setQueue, isFetchingSongs, setIsFetchingSongs);
+  const {
+    handleSeek,
+    handleNextSong,
+    handleVideoEnd,
+    togglePlayPause,
+    toggleMute,
+    handlePlayerStateChange,
+    handleSkipForward,      // <-- add
+    handleSkipBackward      // <-- add
+  } = usePlayerHandlers(
+    playerRef,
+    isPlaying,
+    setIsPlaying,
+    isMuted,
+    setIsMuted,
+    currentSong,
+    setCurrentSong,
+    nextSong,
+    setNextSong,
+    queue,
+    setQueue,
+    fetchMoreSongs,
+    showInfo,
+    setShowInfo,
+    infoTimeoutRef,
+    duration,               // <-- pass duration
+    setCurrentTime          // <-- pass setCurrentTime
+  );
+  usePlayerEffects(  // Remove empty destructuring
+    currentSong,
+    showInfo,
+    setShowInfo,
+    infoTimeoutRef,
+    currentTime,
+    setCurrentTime,
+    duration,
+    setDuration,
+    playerRef,
+    isPlaying,
+    setIsPlaying,
+    handleSeek,
+    handleNextSong,
+    handleVideoEnd,
+    fetchMoreSongs
+  );
+  const { toggleFullscreen } = useFullscreen(isFullscreen, setIsFullscreen);
 
   const selectChannel = useCallback(async (channelId) => {
     setIsPlaying(false);
@@ -85,219 +120,7 @@ function App() {
     };
     loadInitialChannel();
     return () => { mounted = false; };
-    // eslint-disable-next-line
-  }, []);
-
-  // Helper to show/hide song info
-  const showSongInfo = useCallback(() => {
-    setShowInfo(true);
-    if (infoTimeoutRef.current) clearTimeout(infoTimeoutRef.current);
-    infoTimeoutRef.current = setTimeout(() => setShowInfo(false), 8000);
-  }, []);
-
-  useEffect(() => {
-    if (currentSong) {
-      showSongInfo();
-    }
-    return () => { if (infoTimeoutRef.current) clearTimeout(infoTimeoutRef.current); };
-    // eslint-disable-next-line
-  }, [currentSong, showSongInfo]);
-
-  useEffect(() => {
-    let intervalId;
-    if (currentSong && playerRef.current && playerRef.current.getCurrentTime) {
-      intervalId = setInterval(() => {
-        try {
-          const time = playerRef.current.getCurrentTime() || 0;
-          const dur = playerRef.current.getDuration() || 0;
-          setCurrentTime(Math.floor(time));
-          if (dur) setDuration(Math.floor(dur));
-        } catch {}
-      }, 500);
-    }
-    return () => intervalId && clearInterval(intervalId);
-  }, [currentSong, playerRef.current]);
-
-  // Show SongInfo at the beginning and when 20s remain
-  useEffect(() => {
-    if (!currentSong || !duration) return;
-    let preEndTimeout = null;
-
-    // Show info 20s before end, but only if song is longer than 30s
-    if (duration > 30) {
-      const timeLeft = duration - currentTime;
-      if (timeLeft > 20) {
-        preEndTimeout = setTimeout(() => {
-          showSongInfo();
-        }, (timeLeft - 20) * 1000);
-      } else if (timeLeft <= 20 && timeLeft > 0) {
-        // If already within last 20s, show immediately
-        showSongInfo();
-      }
-    }
-
-    return () => {
-      if (preEndTimeout) clearTimeout(preEndTimeout);
-    };
-  }, [currentSong, duration, currentTime, showSongInfo]);
-
-  const handleSeek = useCallback((time) => {
-    if (!playerRef.current) return;
-    playerRef.current.seekTo(Math.floor(time), true);
-    setCurrentTime(Math.floor(time));
-  }, []);
-
-  // Keyboard arrow controls for seeking
-  useEffect(() => {
-    const handleKeyDown = (e) => {
-      if (!currentSong || !playerRef.current) return;
-      if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.isContentEditable) return;
-      if (e.key === 'ArrowRight') {
-        handleSeek(Math.min(currentTime + 5, duration));
-      } else if (e.key === 'ArrowLeft') {
-        handleSeek(Math.max(currentTime - 5, 0));
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-    // eslint-disable-next-line
-  }, [currentTime, duration, currentSong, handleSeek]);
-
-  const handleVideoEnd = () => {
-    showSongInfo();
-    if (nextSong) {
-      setCurrentSong(nextSong);
-      setNextSong(queue[0] || null);
-      setQueue(queue.slice(1));
-      if (queue.length < 3) fetchMoreSongs();
-    } else {
-      fetchMoreSongs(true);
-    }
-  };
-
-  const fetchMoreSongs = (setAsCurrent = false) => {
-    if (!currentChannel || isFetchingSongs) {
-      return; // Block if already fetching
-    }
-    setIsFetchingSongs(true);
-    fetch(`/api/channels/${currentChannel._id}/songs?exclude=${currentSong?.videoId || ''}`)
-      .then((response) => response.json())
-      .then((data) => {
-        if (data.length > 0) {
-          if (setAsCurrent) {
-            setCurrentSong(data[0]);
-            setNextSong(data[1] || null);
-            setQueue(data.slice(2));
-          } else {
-            setQueue((prevQueue) => [...prevQueue, ...data]);
-          }
-        }
-      })
-      .catch((error) => console.error('Error fetching more songs:', error))
-      .finally(() => setIsFetchingSongs(false));
-  };
-
-  const handleNextSong = () => {
-    if (nextSong) {
-      setCurrentSong(nextSong);
-      setNextSong(queue[0] || null);
-      setQueue(queue.slice(1));
-      if (queue.length < 3) {
-        fetchMoreSongs();
-      }
-    } else {
-      fetchMoreSongs(true);
-    }
-  };
-
-  const togglePlayPause = useCallback(() => {
-    try {
-      if (!playerRef.current) return;
-      if (isPlaying) {
-        playerRef.current.pauseVideo();
-      } else {
-        playerRef.current.playVideo();
-      }
-      setIsPlaying(!isPlaying);
-    } catch (error) {
-      console.error('Error toggling play state:', error);
-    }
-  }, [isPlaying]);
-
-  const toggleMute = () => {
-    if (playerRef.current?.internalPlayer) {
-      try {
-        if (isMuted) {
-          playerRef.current.internalPlayer.unMute().catch(() => {});
-        } else {
-          playerRef.current.internalPlayer.mute().catch(() => {});
-        }
-        setIsMuted(!isMuted);
-      } catch {}
-    }
-  };
-
-  const handlePlayerReady = (event) => {
-    playerRef.current = event.target;
-    if (isPlaying) {
-      try {
-        event.target.playVideo();
-      } catch {}
-    }
-  };
-
-  const handlePlayerStateChange = (event) => {
-    switch (event.data) {
-      case window.YT.PlayerState.PLAYING:
-        setIsPlaying(true);
-        break;
-      case window.YT.PlayerState.PAUSED:
-        setIsPlaying(false);
-        break;
-      case window.YT.PlayerState.ENDED:
-        handleVideoEnd();
-        break;
-      default:
-        break;
-    }
-  };
-
-  useEffect(() => {
-    const handleFullscreenChange = () => {
-      const isNowFullscreen =
-        document.fullscreenElement === document.documentElement ||
-        document.webkitFullscreenElement === document.documentElement ||
-        document.msFullscreenElement === document.documentElement;
-      setIsFullscreen(isNowFullscreen);
-    };
-    document.addEventListener('fullscreenchange', handleFullscreenChange);
-    document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
-    document.addEventListener('msfullscreenchange', handleFullscreenChange);
-    return () => {
-      document.removeEventListener('fullscreenchange', handleFullscreenChange);
-      document.removeEventListener('webkitfullscreenchange', handleFullscreenChange);
-      document.removeEventListener('msfullscreenchange', handleFullscreenChange);
-    };
-  }, []);
-
-  const toggleFullscreen = useCallback(() => {
-    if (!isFullscreen) {
-      const elem = document.documentElement;
-      if (elem.requestFullscreen) elem.requestFullscreen();
-      else if (elem.webkitRequestFullscreen) elem.webkitRequestFullscreen();
-      else if (elem.msRequestFullscreen) elem.msRequestFullscreen();
-    } else {
-      if (
-        document.fullscreenElement === document.documentElement ||
-        document.webkitFullscreenElement === document.documentElement ||
-        document.msFullscreenElement === document.documentElement
-      ) {
-        if (document.exitFullscreen) document.exitFullscreen();
-        else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
-        else if (document.msExitFullscreen) document.msExitFullscreen();
-      }
-    }
-  }, [isFullscreen]);
+  }, [currentChannel, selectChannel]); // Add missing dependencies
 
   // Auto-hide UI (controls + slider) after inactivity
   useEffect(() => {
@@ -316,6 +139,39 @@ function App() {
       if (uiTimeoutRef.current) clearTimeout(uiTimeoutRef.current);
     };
   }, []);
+
+  useEffect(() => {
+    setPlayerReady(false);
+  }, [currentSong]);
+
+  useEffect(() => {
+    let intervalId;
+    // Use a function to get the latest ref value
+    const getPlayer = () => playerRef.current;
+    if (currentSong && playerReady && getPlayer() && typeof getPlayer().getCurrentTime === 'function') {
+      intervalId = setInterval(() => {
+        try {
+          const player = getPlayer();
+          const time = player.getCurrentTime() || 0;
+          const dur = player.getDuration() || 0;
+          setCurrentTime(Math.floor(time));
+          if (dur) setDuration(Math.floor(dur));
+        } catch {}
+      }, 500);
+    }
+    return () => intervalId && clearInterval(intervalId);
+  }, [currentSong, playerReady, setCurrentTime, setDuration]); // Add missing dependencies
+
+  // Only define handlePlayerReady here, not in usePlayerHandlers
+  const handlePlayerReady = (event) => {
+    playerRef.current = event.target;
+    setPlayerReady(true);
+    if (isPlaying) {
+      try {
+        event.target.playVideo();
+      } catch {}
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gray-900 text-white flex flex-col">
@@ -353,124 +209,22 @@ function App() {
               laterSong={queue && queue.length > 0 ? queue[0] : null}
               visible={showInfo}
             />
-            {/* TimerSlider and PlaybackControls: Both always visible, stacked at bottom, slider higher in fullscreen */}
-            <div
-              className={`fixed left-0 right-0 bottom-0 z-[2147483647] flex flex-col items-center transition-opacity duration-300 ${showUI ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}
-              style={{
-                pointerEvents: 'auto',
-                background: 'rgba(20,20,20,0.85)',
-                // In fullscreen, bring the slider up much higher
-                bottom: isFullscreen ? '15%' : 0,
-                paddingBottom: isFullscreen ? 0 : 80,
-              }}
-            >
-              <div
-                style={{
-                  width: '100%',
-                  maxWidth: 700,
-                  minWidth: 350,
-                  padding: '0 32px',
-                  pointerEvents: 'auto',
-                  zIndex: 2147483647,
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 16,
-                }}
-              >
-                {/* -5s button */}
-                <button
-                  aria-label="Seek backward 5 seconds"
-                  onClick={() => handleSeek(Math.max(currentTime - 5, 0))}
-                  style={{
-                    background: 'rgba(40,40,40,0.6)',
-                    color: '#fff',
-                    border: 'none',
-                    borderRadius: '50%',
-                    width: 32,
-                    height: 32,
-                    fontSize: 14,
-                    fontWeight: 600,
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    boxShadow: '0 2px 8px rgba(0,0,0,0.12)',
-                    transition: 'background 0.2s',
-                  }}
-                  tabIndex={0}
-                  onMouseOver={e => e.currentTarget.style.background = 'rgba(60,60,60,0.8)'}
-                  onMouseOut={e => e.currentTarget.style.background = 'rgba(40,40,40,0.6)'}
-                >
-                  -5
-                </button>
-                <TimerSlider
-                  currentTime={currentTime}
-                  duration={duration}
-                  onSeek={handleSeek}
-                  style={{
-                    height: 20,
-                    pointerEvents: 'auto',
-                    zIndex: 2147483647,
-                    flex: 1,
-                    fontSize: 12,
-                  }}
-                />
-                {/* +5s button */}
-                <button
-                  aria-label="Seek forward 5 seconds"
-                  onClick={() => handleSeek(Math.min(currentTime + 5, duration))}
-                  style={{
-                    background: 'rgba(40,40,40,0.6)',
-                    color: '#fff',
-                    border: 'none',
-                    borderRadius: '50%',
-                    width: 32,
-                    height: 32,
-                    fontSize: 14,
-                    fontWeight: 600,
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    boxShadow: '0 2px 8px rgba(0,0,0,0.12)',
-                    transition: 'background 0.2s',
-                  }}
-                  tabIndex={0}
-                  onMouseOver={e => e.currentTarget.style.background = 'rgba(60,60,60,0.8)'}
-                  onMouseOut={e => e.currentTarget.style.background = 'rgba(40,40,40,0.6)'}
-                >
-                  +5
-                </button>
-              </div>
-              <div
-                style={{
-                  width: '100%',
-                  maxWidth: 700,
-                  minWidth: 350,
-                  padding: '0 32px',
-                  marginTop: 8,
-                  pointerEvents: 'auto',
-                  zIndex: 2147483647,
-                }}
-              >
-                <PlaybackControls
-                  isPlaying={isPlaying}
-                  isMuted={isMuted}
-                  isFullscreen={isFullscreen}
-                  currentChannel={currentChannel}
-                  onPlayPause={togglePlayPause}
-                  onNext={handleNextSong}
-                  onMuteToggle={toggleMute}
-                  onFullscreenToggle={toggleFullscreen}
-                  style={{
-                    opacity: showUI ? 1 : 0,
-                    pointerEvents: showUI ? 'auto' : 'none',
-                    transition: 'opacity 0.3s',
-                    zIndex: 2147483647,
-                  }}
-                />
-              </div>
-            </div>
+            <PlayerFooter
+              currentTime={currentTime}
+              duration={duration}
+              onSeek={handleSeek}
+              isFullscreen={isFullscreen}
+              showUI={showUI}
+              isPlaying={isPlaying}
+              isMuted={isMuted}
+              currentChannel={currentChannel}
+              onPlayPause={togglePlayPause}
+              onNext={handleNextSong}
+              onMuteToggle={toggleMute}
+              onFullscreenToggle={toggleFullscreen}
+              onSkipForward={handleSkipForward}      // <-- add this
+              onSkipBackward={handleSkipBackward}    // <-- add this
+            />
           </>
         )}
         {/* Optionally, show a message when nothing is playing and not loading */}
@@ -483,5 +237,4 @@ function App() {
     </div>
   );
 }
-
 export default App;
