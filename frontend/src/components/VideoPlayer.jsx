@@ -21,6 +21,7 @@ function VideoPlayer({ currentSong, isPlaying, onReady, onStateChange, onError, 
   useEffect(() => {
     setIsPlayerReady(false); // Reset when video changes
   }, [currentSong?.videoId]);
+  
 
   useEffect(() => {
     if (
