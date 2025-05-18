@@ -100,10 +100,10 @@ function App() {
         setChannelNameInURL(channelData.name.replace(/\s+/g, '-'));
         const songs = await fetchSongsForChannel(channelData._id);
         if (songs && songs.length > 0) {
+          setIsPlaying(true); // <-- Set playing BEFORE setting currentSong
           setCurrentSong(songs[0]);
           setNextSong(songs[1] || null);
           setQueue(songs.slice(2));
-          setIsPlaying(true);
         } else {
           setCurrentSong(null);
           setNextSong(null);
@@ -201,12 +201,22 @@ function App() {
   const handlePlayerReady = (event) => {
     playerRef.current = event.target;
     setPlayerReady(true);
-    if (isPlaying) {
+    // Don't call playVideo here, let the effect below handle it
+  };
+
+  // Ensure video plays when isPlaying and playerReady are true
+  useEffect(() => {
+    if (
+      isPlaying &&
+      playerReady &&
+      playerRef.current &&
+      typeof playerRef.current.playVideo === 'function'
+    ) {
       try {
-        event.target.playVideo();
+        playerRef.current.playVideo();
       } catch {}
     }
-  };
+  }, [isPlaying, playerReady]);
 
   // Modified handleNextSong to push currentSong to history
   const handleNextSong = useCallback(() => {
