@@ -25,16 +25,24 @@ function App() {
   const [showUI, setShowUI] = useState(true);
   const uiTimeoutRef = useRef(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isFetchingSongs, setIsFetchingSongs] = useState(false); // Add a flag
 
   const fetchSongsForChannel = useCallback(async (channelId) => {
+    if (isFetchingSongs) {
+      // Block if already fetching
+      return [];
+    }
+    setIsFetchingSongs(true);
     try {
       const response = await fetch(`/api/channels/${channelId}/songs`);
       return await response.json();
     } catch (error) {
       console.error('Error fetching songs:', error);
       return [];
+    } finally {
+      setIsFetchingSongs(false);
     }
-  }, []);
+  }, [isFetchingSongs]);
 
   const selectChannel = useCallback(async (channelId) => {
     setIsPlaying(false);
@@ -129,7 +137,10 @@ function App() {
   };
 
   const fetchMoreSongs = (setAsCurrent = false) => {
-    if (!currentChannel) return;
+    if (!currentChannel || isFetchingSongs) {
+      return; // Block if already fetching
+    }
+    setIsFetchingSongs(true);
     fetch(`/api/channels/${currentChannel._id}/songs?exclude=${currentSong?.videoId || ''}`)
       .then((response) => response.json())
       .then((data) => {
@@ -143,7 +154,8 @@ function App() {
           }
         }
       })
-      .catch((error) => console.error('Error fetching more songs:', error));
+      .catch((error) => console.error('Error fetching more songs:', error))
+      .finally(() => setIsFetchingSongs(false));
   };
 
   const handleNextSong = () => {
@@ -151,7 +163,9 @@ function App() {
       setCurrentSong(nextSong);
       setNextSong(queue[0] || null);
       setQueue(queue.slice(1));
-      if (queue.length < 3) fetchMoreSongs();
+      if (queue.length < 3) {
+        fetchMoreSongs();
+      }
     } else {
       fetchMoreSongs(true);
     }
@@ -294,7 +308,12 @@ function App() {
               onError={() => handleNextSong()}
               playerRef={playerRef}
             />
-            <SongInfo song={currentSong} visible={showInfo} />
+            <SongInfo
+              song={currentSong}
+              nextSong={nextSong}
+              laterSong={queue && queue.length > 0 ? queue[0] : null}
+              visible={showInfo}
+            />
             <div
               className={`absolute left-0 right-0 bottom-20 z-50 flex justify-center pointer-events-auto transition-opacity duration-300 ${showUI ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
             >

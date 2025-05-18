@@ -9,15 +9,16 @@ async function getAISuggestions(channel, Song) {
   for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
     try {
       console.log(`[AI] Fetching suggestions for channel: ${channel.name}, attempt ${attempt}`);
-      const existingSongs = await Song.find({ language: channel.language }).limit(5);
+      const existingSongs = await Song.find({ language: channel.language });
+      // Only use song titles for examples
       const songExamples = existingSongs.map(song =>
-        `"${song.title}" by ${song.artist} (${song.year}, ${song.genre})`
+        `"${song.title}"`
       ).join('\n');
-      const recommendationPrompt = `I need recommendations for 10 popular ${channel.language} music videos similar to these examples:
+      const recommendationPrompt = `I need recommendations for 10 ${channel.language} music videos for the channel "${channel.name}" similar to these examples:
 
 ${songExamples}
 
-Do not recommend the songs I mentioned above. Those are just examples.
+Do not recommend the songs I mentioned above. Those are just examples. You can suggest songs from any year.
 For each recommendation, provide only the song title, artist name, album name (if known), release year, and genre in JSON format:
 [{
   "title": "Song Title",

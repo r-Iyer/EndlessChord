@@ -53,9 +53,45 @@ app.get('/api/channels/:id', async (req, res) => {
   }
 });
 
+/**
+ * Returns true if there are duplicate videoIds in the array.
+ */
+function hasDuplicateVideoIds(songs) {
+  const seen = new Set();
+  for (const s of songs) {
+    if (seen.has(s.videoId)) return true;
+    seen.add(s.videoId);
+  }
+  return false;
+}
+
+/**
+ * Filters out songs with videoIds in excludeIds or already in baseSongs.
+ */
+function filterAISuggestions(aiSuggestions, excludeIds, baseSongs) {
+  const baseIds = new Set(baseSongs.map(s => s.videoId));
+  return aiSuggestions.filter(s =>
+    !excludeIds.includes(s.videoId) && !baseIds.has(s.videoId)
+  );
+}
+
+/**
+ * Get AI suggestions with duplicate check and retry logic.
+ */
+async function getUniqueAISuggestions(channel, Song, excludeIds, baseSongs, maxRetries = 3) {
+  let aiSuggestions = [];
+  let aiRetryCount = 0;
+  do {
+    aiSuggestions = await getAISuggestions(channel, Song);
+    aiSuggestions = filterAISuggestions(aiSuggestions, excludeIds, baseSongs);
+    if (!hasDuplicateVideoIds(aiSuggestions)) break;
+    aiRetryCount++;
+  } while (aiRetryCount < maxRetries);
+  return aiSuggestions;
+}
+
 app.get('/api/channels/:id/songs', async (req, res) => {
   console.log(`[ROUTE] GET /api/channels/${req.params.id}/songs`);
-  await initialize();
   try {
     const channel = await Channel.findById(req.params.id);
     if (!channel) {
@@ -65,16 +101,18 @@ app.get('/api/channels/:id/songs', async (req, res) => {
     const recentlyPlayed = await Song.find({ 
       language: channel.language,
       lastPlayed: { $exists: true }
-    }).sort({ lastPlayed: -1 }).limit(10).select('videoId');
+    }).sort({ lastPlayed: -1 }).select('videoId');
     const recentlyPlayedIds = recentlyPlayed.map(song => song.videoId);
     const allExcludeIds = [...new Set([...recentlyPlayedIds, ...excludeIds])];
     let songs = await Song.find({ 
       language: channel.language,
       videoId: { $nin: allExcludeIds }
     }).sort({ playCount: 1 }).limit(5);
+
     if (songs.length < 5) {
       try {
-        const aiSuggestions = await getAISuggestions(channel, Song);
+        const aiSuggestions = await getUniqueAISuggestions(channel, Song, allExcludeIds, songs);
+        console.log(aiSuggestions)
         const newSongs = [];
         for (const suggestion of aiSuggestions) {
           const exists = await Song.findOne({ videoId: suggestion.videoId });
@@ -87,13 +125,12 @@ app.get('/api/channels/:id/songs', async (req, res) => {
             newSongs.push(newSong);
           }
         }
-        if (songs.length < 5) {
-          songs = [...songs, ...newSongs.slice(0, 5 - songs.length)];
-        }
+        songs = [...songs, ...newSongs];
       } catch (aiError) {
         console.error('Error getting AI suggestions:', aiError);
       }
     }
+
     for (const song of songs) {
       song.playCount += 1;
       song.lastPlayed = new Date();
