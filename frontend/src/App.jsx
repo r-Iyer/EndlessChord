@@ -72,12 +72,12 @@ function App() {
     window.history.replaceState({}, '', newUrl);
   };
 
-  // Modified selectChannel to accept channelName as well as channelId
+  // Modified selectChannel to NOT set isPlaying to true immediately
   const selectChannel = useCallback(
     async (channelIdOrName) => {
       setUserInteracted(true);
       setBackendError(false);
-      setIsPlaying(false);
+      setIsPlaying(false); // <-- always set to false here
       setCurrentSong(null);
       setNextSong(null);
       setQueue([]);
@@ -101,10 +101,10 @@ function App() {
         setChannelNameInURL(channelData.name.replace(/\s+/g, '-'));
         const songs = await fetchSongsForChannel(channelData._id);
         if (songs && songs.length > 0) {
-          setIsPlaying(true); // <-- Set playing BEFORE setting currentSong
           setCurrentSong(songs[0]);
           setNextSong(songs[1] || null);
           setQueue(songs.slice(2));
+          // Do NOT set isPlaying here!
         } else {
           setCurrentSong(null);
           setNextSong(null);
@@ -202,6 +202,7 @@ function App() {
   const handlePlayerReady = (event) => {
     playerRef.current = event.target;
     setPlayerReady(true);
+    setIsPlaying(true); // <-- set isPlaying to true ONLY when player is ready
     // Don't call playVideo here, let the effect below handle it
   };
 
