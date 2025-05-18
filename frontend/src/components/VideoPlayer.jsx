@@ -42,7 +42,7 @@ function VideoPlayer({ currentSong, isPlaying, onReady, onStateChange, onError, 
       disablekb: 0,
       fs: 0,
       modestbranding: 1,
-      rel: 0,
+      rel: 0, // This disables "More Videos" suggestions at the end and on pause as much as possible
       iv_load_policy: 3,
       showinfo: 0
     }

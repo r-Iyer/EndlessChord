@@ -2,10 +2,8 @@
   "name": "music-channel-backend",
   "version": "1.0.0",
   "description": "Backend for the Music Channel application",
-  "main": "server.js",
   "scripts": {
-    "start": "node server.js",
-    "dev": "nodemon server.js"
+    "dev": "nodemon api/index.js"
   },
   "dependencies": {
     "@google/genai": "^0.14.1",
@@ -14,7 +12,9 @@
     "express": "^4.18.2",
     "gemini-api": "^2.0.4",
     "mongoose": "^7.0.3",
-    "path": "^0.12.7"
+    "path": "^0.12.7",
+    "axios": "^1.9.0",
+    "cheerio": "^1.0.0"
   },
   "devDependencies": {
     "nodemon": "^2.0.22"

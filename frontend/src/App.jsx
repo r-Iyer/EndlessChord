@@ -5,6 +5,7 @@ import VideoPlayer from './components/VideoPlayer';
 import SongInfo from './components/SongInfo';
 import PlaybackControls from './components/PlaybackControls';
 import TimerSlider from './components/TimerSlider';
+import Spinner from './components/Spinner';
 import './App.css';
 
 function App() {
@@ -23,6 +24,7 @@ function App() {
   const [duration, setDuration] = useState(0);
   const [showUI, setShowUI] = useState(true);
   const uiTimeoutRef = useRef(null);
+  const [isLoading, setIsLoading] = useState(false);
 
   const fetchSongsForChannel = useCallback(async (channelId) => {
     try {
@@ -39,6 +41,7 @@ function App() {
     setCurrentSong(null);
     setNextSong(null);
     setQueue([]);
+    setIsLoading(true); // Start loading
     try {
       const [channelData, songs] = await Promise.all([
         fetchChannelById(channelId),
@@ -53,6 +56,8 @@ function App() {
       }
     } catch (error) {
       console.error('Error loading channel data:', error);
+    } finally {
+      setIsLoading(false); // Stop loading
     }
   }, [fetchSongsForChannel]);
 
@@ -271,43 +276,59 @@ function App() {
         </div>
       </header>
       <main className="flex-1 flex flex-col items-center justify-center relative">
-        <VideoPlayer
-          currentSong={currentSong}
-          isPlaying={isPlaying}
-          isFullscreen={isFullscreen}
-          onReady={handlePlayerReady}
-          onStateChange={handlePlayerStateChange}
-          onError={() => handleNextSong()}
-          playerRef={playerRef}
-        />
-        <SongInfo song={currentSong} visible={showInfo} />
-        {/* Slider: fade out with controls */}
-        <div
-          className={`absolute left-0 right-0 bottom-20 z-50 flex justify-center pointer-events-auto transition-opacity duration-300 ${showUI ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
-        >
-          <div className="w-full max-w-md mx-auto">
-            <TimerSlider
-              currentTime={currentTime}
-              duration={duration}
-              onSeek={handleSeek}
-            />
+        {/* Show spinner while loading */}
+        {isLoading && (
+          <div className="flex items-center justify-center h-full w-full absolute top-0 left-0 z-50 bg-black bg-opacity-70">
+            <Spinner />
           </div>
-        </div>
-        <PlaybackControls
-          isPlaying={isPlaying}
-          isMuted={isMuted}
-          isFullscreen={isFullscreen}
-          currentChannel={currentChannel}
-          onPlayPause={togglePlayPause}
-          onNext={handleNextSong}
-          onMuteToggle={toggleMute}
-          onFullscreenToggle={toggleFullscreen}
-          style={{
-            opacity: showUI ? 1 : 0,
-            pointerEvents: showUI ? 'auto' : 'none',
-            transition: 'opacity 0.3s'
-          }}
-        />
+        )}
+        {/* Show player UI only if currentSong exists and not loading */}
+        {currentSong && !isLoading && (
+          <>
+            <VideoPlayer
+              currentSong={currentSong}
+              isPlaying={isPlaying}
+              isFullscreen={isFullscreen}
+              onReady={handlePlayerReady}
+              onStateChange={handlePlayerStateChange}
+              onError={() => handleNextSong()}
+              playerRef={playerRef}
+            />
+            <SongInfo song={currentSong} visible={showInfo} />
+            <div
+              className={`absolute left-0 right-0 bottom-20 z-50 flex justify-center pointer-events-auto transition-opacity duration-300 ${showUI ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
+            >
+              <div className="w-full max-w-md mx-auto">
+                <TimerSlider
+                  currentTime={currentTime}
+                  duration={duration}
+                  onSeek={handleSeek}
+                />
+              </div>
+            </div>
+            <PlaybackControls
+              isPlaying={isPlaying}
+              isMuted={isMuted}
+              isFullscreen={isFullscreen}
+              currentChannel={currentChannel}
+              onPlayPause={togglePlayPause}
+              onNext={handleNextSong}
+              onMuteToggle={toggleMute}
+              onFullscreenToggle={toggleFullscreen}
+              style={{
+                opacity: showUI ? 1 : 0,
+                pointerEvents: showUI ? 'auto' : 'none',
+                transition: 'opacity 0.3s'
+              }}
+            />
+          </>
+        )}
+        {/* Optionally, show a message when nothing is playing and not loading */}
+        {!currentSong && !isLoading && (
+          <div className="flex items-center justify-center h-full w-full">
+            <div className="text-white text-xl">Select a channel to start watching</div>
+          </div>
+        )}
       </main>
     </div>
   );
