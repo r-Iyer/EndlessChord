@@ -202,23 +202,9 @@ function App() {
   const handlePlayerReady = (event) => {
     playerRef.current = event.target;
     setPlayerReady(true);
-    setIsPlaying(true); // <-- set isPlaying to true ONLY when player is ready
-    // Don't call playVideo here, let the effect below handle it
+    setIsPlaying(true);
+    event.target.playVideo(); // <-- Force play on ready
   };
-
-  // Ensure video plays when isPlaying and playerReady are true
-  useEffect(() => {
-    if (
-      isPlaying &&
-      playerReady &&
-      playerRef.current &&
-      typeof playerRef.current.playVideo === 'function'
-    ) {
-      try {
-        playerRef.current.playVideo();
-      } catch {}
-    }
-  }, [isPlaying, playerReady]);
 
   // Modified handleNextSong to push currentSong to history
   const handleNextSong = useCallback(() => {

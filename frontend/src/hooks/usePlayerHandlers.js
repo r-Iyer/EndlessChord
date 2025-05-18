@@ -70,10 +70,8 @@ export default function usePlayerHandlers(
 
   const handlePlayerReady = useCallback((event) => {
     playerRef.current = event.target;
-    if (isPlaying) {
-      event.target.playVideo();
-    }
-  }, [playerRef, isPlaying]);
+    event.target.playVideo(); // <-- Always play on ready
+  }, [playerRef]);
 
   const handlePlayerStateChange = useCallback((event) => {
     switch (event.data) {
