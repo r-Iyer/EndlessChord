@@ -1,10 +1,11 @@
+require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const connectDB = require('../config/db');
 const Channel = require('../models/Channel');
 const Song = require('../models/Song');
 const { initializeDatabase } = require('../utils/dbInit');
-const { getAISuggestions, searchYouTube, extractTopResultFromHTML } = require('../utils/aiHelpers');
+const { getAISuggestions} = require('../utils/aiHelpers');
 
 const app = express();
 app.use(cors());
@@ -111,12 +112,13 @@ app.get('/api/test-gpt', async (req, res) => {
   await initialize();
   try {
     const prompt = "Say hello to the world in a creative way.";
-    const ai = require('@google/genai').GoogleGenAI({ apiKey: process.env.GOOGLE_GENAI_API_KEY });
+    const { GoogleGenAI } = require('@google/genai');
+    const ai = new GoogleGenAI({ apiKey: process.env.GOOGLE_GENAI_API_KEY });
     const response = await ai.models.generateContent({
       model: "gemini-2.0-flash",
       contents: prompt
     });
-    const responseText = await response.text();
+    const responseText = response.text; // <-- fix here
     const cleanText = responseText.replace(/```json\n|\n```/g, '');
     res.json({ message: cleanText });
   } catch (error) {
