@@ -17,9 +17,7 @@ function App() {
   const [showInfo, setShowInfo] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
   const playerRef = useRef(null);
-  const [infoTimeout, setInfoTimeout] = useState(null);
-  const [showControls, setShowControls] = useState(true);
-  const controlsTimeoutRef = useRef(null);
+  const infoTimeoutRef = useRef(null); // use ref instead of state for infoTimeout
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
@@ -77,29 +75,20 @@ function App() {
     // eslint-disable-next-line
   }, []);
 
-  useEffect(() => {
-    const handleMouseMove = () => {
-      setShowControls(true);
-      if (controlsTimeoutRef.current) clearTimeout(controlsTimeoutRef.current);
-      controlsTimeoutRef.current = setTimeout(() => setShowControls(false), 3000);
-    };
-    window.addEventListener('mousemove', handleMouseMove);
-    return () => {
-      window.removeEventListener('mousemove', handleMouseMove);
-      if (controlsTimeoutRef.current) clearTimeout(controlsTimeoutRef.current);
-    };
+  // Helper to show/hide song info
+  const showSongInfo = useCallback(() => {
+    setShowInfo(true);
+    if (infoTimeoutRef.current) clearTimeout(infoTimeoutRef.current);
+    infoTimeoutRef.current = setTimeout(() => setShowInfo(false), 8000);
   }, []);
 
   useEffect(() => {
     if (currentSong) {
-      if (infoTimeout) clearTimeout(infoTimeout);
-      setShowInfo(true);
-      const timeout = setTimeout(() => setShowInfo(false), 8000);
-      setInfoTimeout(timeout);
+      showSongInfo();
     }
-    return () => { if (infoTimeout) clearTimeout(infoTimeout); };
+    return () => { if (infoTimeoutRef.current) clearTimeout(infoTimeoutRef.current); };
     // eslint-disable-next-line
-  }, [currentSong]);
+  }, [currentSong, showSongInfo]);
 
   useEffect(() => {
     let intervalId;
@@ -123,10 +112,7 @@ function App() {
   }, []);
 
   const handleVideoEnd = () => {
-    if (infoTimeout) clearTimeout(infoTimeout);
-    setShowInfo(true);
-    const timeout = setTimeout(() => setShowInfo(false), 8000);
-    setInfoTimeout(timeout);
+    showSongInfo();
     if (nextSong) {
       setCurrentSong(nextSong);
       setNextSong(queue[0] || null);
