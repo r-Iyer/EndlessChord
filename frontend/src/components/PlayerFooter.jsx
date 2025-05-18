@@ -23,7 +23,6 @@ function PlayerFooter({
       className={`fixed left-0 right-0 bottom-0 z-[2147483647] flex flex-col items-center transition-opacity duration-300 ${showUI ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}
       style={{
         pointerEvents: 'auto',
-        background: 'linear-gradient(transparent, rgba(0,0,0,0.7))',
         bottom: isFullscreen ? '15%' : 0,
         paddingBottom: isFullscreen ? 0 : 80,
       }}
