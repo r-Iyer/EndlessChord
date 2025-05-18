@@ -38,6 +38,7 @@ function PlayerFooter({
           display: 'flex',
           alignItems: 'center',
           gap: 16,
+          marginBottom: 24, // <-- Add this line to move slider up
         }}
       >
         {/* -5s button */}

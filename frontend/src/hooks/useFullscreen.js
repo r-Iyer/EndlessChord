@@ -1,12 +1,12 @@
 import { useCallback, useEffect } from 'react';
 
-export default function useFullscreen(isFullscreen, setIsFullscreen) {
+export default function useFullscreen(isFullscreen, setIsFullscreen, fullscreenRef) {
   useEffect(() => {
     const handleFullscreenChange = () => {
       const isNowFullscreen =
-        document.fullscreenElement === document.documentElement ||
-        document.webkitFullscreenElement === document.documentElement ||
-        document.msFullscreenElement === document.documentElement;
+        document.fullscreenElement === (fullscreenRef?.current || document.documentElement) ||
+        document.webkitFullscreenElement === (fullscreenRef?.current || document.documentElement) ||
+        document.msFullscreenElement === (fullscreenRef?.current || document.documentElement);
       setIsFullscreen(isNowFullscreen);
     };
     document.addEventListener('fullscreenchange', handleFullscreenChange);
@@ -17,26 +17,29 @@ export default function useFullscreen(isFullscreen, setIsFullscreen) {
       document.removeEventListener('webkitfullscreenchange', handleFullscreenChange);
       document.removeEventListener('msfullscreenchange', handleFullscreenChange);
     };
-  }, [setIsFullscreen]);
+  }, [setIsFullscreen, fullscreenRef]);
 
   const toggleFullscreen = useCallback(() => {
+    const elem = fullscreenRef?.current || document.documentElement;
     if (!isFullscreen) {
-      const elem = document.documentElement;
       if (elem.requestFullscreen) elem.requestFullscreen();
       else if (elem.webkitRequestFullscreen) elem.webkitRequestFullscreen();
       else if (elem.msRequestFullscreen) elem.msRequestFullscreen();
+      if (window.screen.orientation && window.screen.orientation.lock) {
+        window.screen.orientation.lock('landscape').catch(() => {});
+      }
     } else {
       if (
-        document.fullscreenElement === document.documentElement ||
-        document.webkitFullscreenElement === document.documentElement ||
-        document.msFullscreenElement === document.documentElement
+        document.fullscreenElement === elem ||
+        document.webkitFullscreenElement === elem ||
+        document.msFullscreenElement === elem
       ) {
         if (document.exitFullscreen) document.exitFullscreen();
         else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
         else if (document.msExitFullscreen) document.msExitFullscreen();
       }
     }
-  }, [isFullscreen]);
+  }, [isFullscreen, fullscreenRef]);
 
   return { toggleFullscreen };
 }

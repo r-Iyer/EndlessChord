@@ -33,6 +33,7 @@ function App() {
   const [userInteracted, setUserInteracted] = useState(false);
   const [backendError, setBackendError] = useState(false);
   const [history, setHistory] = useState([]); // <-- Add history state
+  const fullscreenRef = useRef(null);
 
   const { fetchSongsForChannel, fetchMoreSongs } = useSongQueue(
     currentChannel, currentSong, setCurrentSong, setNextSong, setQueue, isFetchingSongs, setIsFetchingSongs
@@ -51,7 +52,7 @@ function App() {
   usePlayerEffects(
     currentSong, showInfo, setShowInfo, infoTimeoutRef, currentTime, setCurrentTime, duration, setDuration, playerRef, isPlaying, setIsPlaying, handleSeek, handleVideoEnd, fetchMoreSongs
   );
-  const { toggleFullscreen } = useFullscreen(isFullscreen, setIsFullscreen);
+  const { toggleFullscreen } = useFullscreen(isFullscreen, setIsFullscreen, fullscreenRef);
 
   // Helper: get channel name from URL query param
   const getChannelNameFromURL = () => {
@@ -262,7 +263,7 @@ function App() {
   }, [handlePreviousSong, handleNextSong]);
 
   return (
-    <div className="min-h-screen bg-gray-900 text-white flex flex-col">
+    <div ref={fullscreenRef} className="min-h-screen bg-gray-900 text-white flex flex-col">
       <header className={`p-4 bg-gray-800 transition-opacity duration-300 ${showUI ? 'opacity-100' : 'opacity-0'} ${isFullscreen ? 'hidden' : ''}`}>
         <div className="container mx-auto">
           <ChannelSelector
@@ -286,7 +287,7 @@ function App() {
           />
         </div>
       </header>
-      <main className="flex-1 flex flex-col items-center justify-center relative">
+      <main className="flex-1 flex flex-col items-stretch justify-start relative">
         {/* Show spinner while loading */}
         {isLoading && (
           <div className="flex items-center justify-center h-full w-full absolute top-0 left-0 z-50 bg-black bg-opacity-70">

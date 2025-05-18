@@ -1,6 +1,19 @@
 import React, { useRef, useEffect, useState } from 'react';
 import YouTube from 'react-youtube';
 
+// Helper to request fullscreen and lock orientation
+export function requestFullscreenWithOrientation(element) {
+  if (!element) return;
+  // Request fullscreen
+  if (element.requestFullscreen) element.requestFullscreen();
+  else if (element.webkitRequestFullscreen) element.webkitRequestFullscreen();
+  else if (element.msRequestFullscreen) element.msRequestFullscreen();
+  // Lock orientation if possible
+  if (window.screen.orientation && window.screen.orientation.lock) {
+    window.screen.orientation.lock('landscape').catch(() => {});
+  }
+}
+
 function VideoPlayer({ currentSong, isPlaying, onReady, onStateChange, onError, isFullscreen, playerRef }) {
   const containerRef = useRef(null);
   const [isPlayerReady, setIsPlayerReady] = useState(false);
@@ -33,16 +46,37 @@ function VideoPlayer({ currentSong, isPlaying, onReady, onStateChange, onError, 
     }
   }, [isPlaying, playerRef, isPlayerReady, currentSong?.videoId]);
 
+  // Remove the previous orientation lock effect, keep only fullscreenchange as fallback
+  useEffect(() => {
+    function handleFullscreenChange() {
+      const isFull =
+        document.fullscreenElement === containerRef.current ||
+        document.webkitFullscreenElement === containerRef.current ||
+        document.msFullscreenElement === containerRef.current;
+      if (isFull && window.screen.orientation && window.screen.orientation.lock) {
+        window.screen.orientation.lock('landscape').catch(() => {});
+      }
+    }
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
+    document.addEventListener('msfullscreenchange', handleFullscreenChange);
+    return () => {
+      document.removeEventListener('fullscreenchange', handleFullscreenChange);
+      document.removeEventListener('webkitfullscreenchange', handleFullscreenChange);
+      document.removeEventListener('msfullscreenchange', handleFullscreenChange);
+    };
+  }, []);
+
   const opts = {
-    height: '100%',
     width: '100%',
+    height: '100%',
     playerVars: {
       autoplay: 1,
-      controls: 0, // Hide native controls
+      controls: 0,
       disablekb: 0,
       fs: 0,
       modestbranding: 1,
-      rel: 0, // This disables "More Videos" suggestions at the end and on pause as much as possible
+      rel: 0,
       iv_load_policy: 3,
       showinfo: 0
     }
@@ -56,22 +90,27 @@ function VideoPlayer({ currentSong, isPlaying, onReady, onStateChange, onError, 
 
   if (!currentSong) {
     return (
-      <div className="flex items-center justify-center h-screen bg-black">
+      <div className="flex items-center justify-center w-full h-screen bg-black">
         <div className="text-white text-xl">Select a channel to start watching</div>
       </div>
     );
   }
 
   return (
-    <div ref={containerRef} className="youtube-container bg-black">
-      <YouTube
-        videoId={currentSong.videoId}
-        opts={opts}
-        onReady={handleReady}
-        onStateChange={onStateChange}
-        onError={onError}
-        className="youtube-player"
-      />
+    <div
+      ref={containerRef}
+      className="youtube-container"
+    >
+      <div className="w-full aspect-video bg-black">
+        <YouTube
+          videoId={currentSong.videoId}
+          opts={opts}
+          onReady={handleReady}
+          onStateChange={onStateChange}
+          onError={onError}
+          className="youtube-player"
+        />
+      </div>
     </div>
   );
 }
