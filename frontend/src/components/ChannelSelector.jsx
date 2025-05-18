@@ -1,5 +1,9 @@
 import React from 'react';
 
+function slugify(name) {
+  return name.replace(/\s+/g, '-').toLowerCase();
+}
+
 function ChannelSelector({ channels, currentChannel, onSelectChannel }) {
   return (
     <div className="p-4 flex flex-wrap gap-2">
@@ -11,7 +15,11 @@ function ChannelSelector({ channels, currentChannel, onSelectChannel }) {
               ? 'bg-purple-700 text-white' 
               : 'bg-gray-700 hover:bg-gray-600 text-gray-200'
           }`}
-          onClick={() => onSelectChannel(channel._id)}
+          onClick={() => {
+            if (!currentChannel || currentChannel._id !== channel._id) {
+              onSelectChannel(slugify(channel.name));
+            }
+          }}
         >
           <div className="flex items-center space-x-2">
             <span className="w-3 h-3 rounded-full bg-red-500 animate-pulse"></span>

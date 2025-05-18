@@ -1,5 +1,5 @@
 import React, { forwardRef } from 'react';
-import { Play, Pause, SkipForward, Volume2, VolumeX, Maximize, Minimize } from 'lucide-react';
+import { Play, Pause, SkipForward, SkipBack, Volume2, VolumeX, Maximize, Minimize } from 'lucide-react';
 
 const PlaybackControls = forwardRef(function PlaybackControls({
   isPlaying, 
@@ -10,6 +10,7 @@ const PlaybackControls = forwardRef(function PlaybackControls({
   onNext, 
   onMuteToggle,
   onFullscreenToggle,
+  onPrevious, // <-- add this prop
   style
 }, ref) {
   return (
@@ -27,6 +28,14 @@ const PlaybackControls = forwardRef(function PlaybackControls({
       <div className="container mx-auto">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4">
+            {/* Previous button */}
+            <button 
+              className="rounded-full bg-white bg-opacity-20 p-3 hover:bg-opacity-30 transition-colors"
+              onClick={onPrevious}
+              aria-label="Previous Song"
+            >
+              <SkipBack size={24} />
+            </button>
             {/* Play/Pause button */}
             <button 
               className="rounded-full bg-white bg-opacity-20 p-3 hover:bg-opacity-30 transition-colors"
@@ -35,7 +44,6 @@ const PlaybackControls = forwardRef(function PlaybackControls({
             >
               {isPlaying ? <Pause size={24} /> : <Play size={24} />}
             </button>
-            
             {/* Next button */}
             <button 
               className="rounded-full bg-white bg-opacity-20 p-3 hover:bg-opacity-30 transition-colors"
@@ -44,7 +52,6 @@ const PlaybackControls = forwardRef(function PlaybackControls({
             >
               <SkipForward size={24} />
             </button>
-            
             {/* Mute button */}
             <button 
               className="rounded-full bg-white bg-opacity-20 p-3 hover:bg-opacity-30 transition-colors"
@@ -53,7 +60,6 @@ const PlaybackControls = forwardRef(function PlaybackControls({
             >
               {isMuted ? <VolumeX size={24} /> : <Volume2 size={24} />}
             </button>
-
             {/* Fullscreen button */}
             <button 
               className="rounded-full bg-white bg-opacity-20 p-3 hover:bg-opacity-30 transition-colors"

@@ -14,6 +14,9 @@ function PlayerFooter({
   onNext,
   onMuteToggle,
   onFullscreenToggle,
+  onSkipForward,
+  onSkipBackward,
+  onPrevious, // <-- add this prop
 }) {
   return (
     <div
@@ -123,6 +126,7 @@ function PlayerFooter({
           onNext={onNext}
           onMuteToggle={onMuteToggle}
           onFullscreenToggle={onFullscreenToggle}
+          onPrevious={onPrevious} // <-- pass down
           style={{
             opacity: showUI ? 1 : 0,
             pointerEvents: showUI ? 'auto' : 'none',

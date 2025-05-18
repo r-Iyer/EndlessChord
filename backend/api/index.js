@@ -53,6 +53,24 @@ app.get('/api/channels/:id', async (req, res) => {
   }
 });
 
+// Optional: Get channel by slugified name (for future-proofing)
+app.get('/api/channels/by-name/:slug', async (req, res) => {
+  await initialize();
+  try {
+    const slug = req.params.slug.toLowerCase();
+    const channels = await Channel.find();
+    const channel = channels.find(
+      c => c.name.replace(/\s+/g, '-').toLowerCase() === slug
+    );
+    if (!channel) {
+      return res.status(404).json({ message: 'Channel not found' });
+    }
+    res.json(channel);
+  } catch (error) {
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
 /**
  * Returns true if there are duplicate videoIds in the array.
  */

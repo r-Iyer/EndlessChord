@@ -30,46 +30,122 @@ function App() {
   const [isLoading, setIsLoading] = useState(false);
   const [isFetchingSongs, setIsFetchingSongs] = useState(false); // Add a flag
   const [playerReady, setPlayerReady] = useState(false);
+  const [userInteracted, setUserInteracted] = useState(false);
+  const [backendError, setBackendError] = useState(false);
+  const [history, setHistory] = useState([]); // <-- Add history state
 
-  const { fetchSongsForChannel, fetchMoreSongs } = useSongQueue(currentChannel, currentSong, setCurrentSong, setNextSong, setQueue, isFetchingSongs, setIsFetchingSongs);
-  const { handleSeek, handleNextSong, handleVideoEnd, togglePlayPause, toggleMute, handlePlayerStateChange, handleSkipForward, handleSkipBackward } = usePlayerHandlers(playerRef, isPlaying, setIsPlaying, isMuted, setIsMuted, currentSong, setCurrentSong, nextSong, setNextSong, queue, setQueue, fetchMoreSongs, showInfo, setShowInfo, infoTimeoutRef, duration, setCurrentTime);
-  usePlayerEffects(currentSong, showInfo, setShowInfo, infoTimeoutRef, currentTime, setCurrentTime, duration, setDuration, playerRef, isPlaying, setIsPlaying, handleSeek, handleNextSong, handleVideoEnd, fetchMoreSongs);
+  const { fetchSongsForChannel, fetchMoreSongs } = useSongQueue(
+    currentChannel, currentSong, setCurrentSong, setNextSong, setQueue, isFetchingSongs, setIsFetchingSongs
+  );
+  const {
+    handleSeek,
+    handleVideoEnd,
+    togglePlayPause,
+    toggleMute,
+    handlePlayerStateChange,
+    handleSkipForward,
+    handleSkipBackward
+  } = usePlayerHandlers(
+    playerRef, isPlaying, setIsPlaying, isMuted, setIsMuted, currentSong, setCurrentSong, nextSong, setNextSong, queue, setQueue, fetchMoreSongs, showInfo, setShowInfo, infoTimeoutRef, duration, setCurrentTime
+  );
+  usePlayerEffects(
+    currentSong, showInfo, setShowInfo, infoTimeoutRef, currentTime, setCurrentTime, duration, setDuration, playerRef, isPlaying, setIsPlaying, handleSeek, handleVideoEnd, fetchMoreSongs
+  );
   const { toggleFullscreen } = useFullscreen(isFullscreen, setIsFullscreen);
 
-  const selectChannel = useCallback(async (channelId) => {
-    setIsPlaying(false);
-    setCurrentSong(null);
-    setNextSong(null);
-    setQueue([]);
-    setIsLoading(true); // Start loading
-    try {
-      const [channelData, songs] = await Promise.all([
-        fetchChannelById(channelId),
-        fetchSongsForChannel(channelId)
-      ]);
-      setCurrentChannel(channelData);
-      if (songs.length > 0) {
-        setCurrentSong(songs[0]);
-        setNextSong(songs[1] || null);
-        setQueue(songs.slice(2));
-        setIsPlaying(true);
-      }
-    } catch (error) {
-      console.error('Error loading channel data:', error);
-    } finally {
-      setIsLoading(false); // Stop loading
+  // Helper: get channel name from URL query param
+  const getChannelNameFromURL = () => {
+    const params = new URLSearchParams(window.location.search);
+    return params.get('channel');
+  };
+
+  // Helper: update URL with channel name
+  const setChannelNameInURL = (channelName) => {
+    const params = new URLSearchParams(window.location.search);
+    if (channelName) {
+      params.set('channel', channelName);
+    } else {
+      params.delete('channel');
     }
-  }, [fetchSongsForChannel]);
+    const newUrl = `${window.location.pathname}?${params.toString()}`;
+    window.history.replaceState({}, '', newUrl);
+  };
+
+  // Modified selectChannel to accept channelName as well as channelId
+  const selectChannel = useCallback(
+    async (channelIdOrName) => {
+      setUserInteracted(true);
+      setBackendError(false);
+      setIsPlaying(false);
+      setCurrentSong(null);
+      setNextSong(null);
+      setQueue([]);
+      setIsLoading(true);
+      try {
+        let channelData = null;
+        if (channels.length > 0 && typeof channelIdOrName === 'string' && !/^[0-9a-fA-F]{24}$/.test(channelIdOrName)) {
+          channelData = channels.find(
+            c => c.name.replace(/\s+/g, '-').toLowerCase() === channelIdOrName.replace(/\s+/g, '-').toLowerCase()
+          );
+        }
+        if (!channelData) {
+          channelData = await fetchChannelById(channelIdOrName);
+        }
+        // Prevent unnecessary re-selection
+        if (currentChannel && currentChannel._id === channelData._id) {
+          setIsLoading(false);
+          return;
+        }
+        setCurrentChannel(channelData);
+        setChannelNameInURL(channelData.name.replace(/\s+/g, '-'));
+        const songs = await fetchSongsForChannel(channelData._id);
+        if (songs && songs.length > 0) {
+          setCurrentSong(songs[0]);
+          setNextSong(songs[1] || null);
+          setQueue(songs.slice(2));
+          setIsPlaying(true);
+        } else {
+          setCurrentSong(null);
+          setNextSong(null);
+          setQueue([]);
+          setIsPlaying(false);
+        }
+      } catch (error) {
+        setBackendError(true);
+        setCurrentSong(null);
+        setNextSong(null);
+        setQueue([]);
+        setIsPlaying(false);
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [fetchSongsForChannel, channels, currentChannel]
+  );
 
   useEffect(() => {
     let mounted = true;
+    // Only run once on mount
     const loadInitialChannel = async () => {
       try {
         const data = await fetchChannels();
         if (!mounted) return;
         setChannels(data);
-        if (data.length > 0 && !currentChannel) {
-          selectChannel(data[0]._id);
+        const urlChannelName = getChannelNameFromURL();
+        let channelToSelect = null;
+        if (urlChannelName) {
+          channelToSelect = data.find(
+            c => c.name.replace(/\s+/g, '-').toLowerCase() === urlChannelName.replace(/\s+/g, '-').toLowerCase()
+          );
+        }
+        // Only select if not already selected
+        if (
+          channelToSelect &&
+          (!currentChannel || currentChannel._id !== channelToSelect._id)
+        ) {
+          if (!isLoading) selectChannel(channelToSelect._id);
+        } else if (data.length > 0 && !currentChannel) {
+          if (!isLoading) selectChannel(data[0]._id);
         }
       } catch (error) {
         console.error('Error fetching channels:', error);
@@ -77,7 +153,9 @@ function App() {
     };
     loadInitialChannel();
     return () => { mounted = false; };
-  }, [currentChannel, selectChannel]); // Add missing dependencies
+    // Only run on mount: remove all dependencies!
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Auto-hide UI (controls + slider) after inactivity
   useEffect(() => {
@@ -130,6 +208,49 @@ function App() {
     }
   };
 
+  // Modified handleNextSong to push currentSong to history
+  const handleNextSong = useCallback(() => {
+    if (nextSong) {
+      setHistory(prev => [...prev, currentSong]);
+      setCurrentSong(nextSong);
+      setNextSong(queue[0] || null);
+      setQueue(queue.slice(1));
+      if (queue.length < 3) fetchMoreSongs();
+    } else {
+      fetchMoreSongs(true);
+    }
+  }, [nextSong, currentSong, queue, setCurrentSong, setNextSong, setQueue, fetchMoreSongs]);
+
+  // New handlePreviousSong to pop from history
+  const handlePreviousSong = useCallback(() => {
+    if (history.length > 0) {
+      const prevSong = history[history.length - 1];
+      setHistory(prev => prev.slice(0, -1));
+      setQueue(q => [currentSong, ...q]);
+      setNextSong(currentSong);
+      setCurrentSong(prevSong);
+    } else if (playerRef.current && typeof playerRef.current.seekTo === 'function') {
+      playerRef.current.seekTo(0, true);
+      setCurrentTime(0);
+    }
+  }, [history, currentSong, setCurrentSong, setNextSong, setQueue, setHistory, playerRef, setCurrentTime]);
+
+  // Keyboard shortcuts for previous (Q) and next (E)
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.isContentEditable) return;
+      if (e.key === 'q' || e.key === 'Q') {
+        e.preventDefault();
+        handlePreviousSong();
+      } else if (e.key === 'e' || e.key === 'E') {
+        e.preventDefault();
+        handleNextSong();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [handlePreviousSong, handleNextSong]);
+
   return (
     <div className="min-h-screen bg-gray-900 text-white flex flex-col">
       <header className={`p-4 bg-gray-800 transition-opacity duration-300 ${showUI ? 'opacity-100' : 'opacity-0'} ${isFullscreen ? 'hidden' : ''}`}>
@@ -137,7 +258,21 @@ function App() {
           <ChannelSelector
             channels={channels}
             currentChannel={currentChannel}
-            onSelectChannel={selectChannel}
+            onSelectChannel={channelIdOrName => {
+              setUserInteracted(true);
+              setBackendError(false);
+              // Find channel by id or name, then update URL and select
+              let channel = channels.find(c => c._id === channelIdOrName);
+              if (!channel) {
+                channel = channels.find(
+                  c => c.name.replace(/\s+/g, '-').toLowerCase() === channelIdOrName.replace(/\s+/g, '-').toLowerCase()
+                );
+              }
+              if (channel) {
+                setChannelNameInURL(channel.name.replace(/\s+/g, '-'));
+                selectChannel(channel._id);
+              }
+            }}
           />
         </div>
       </header>
@@ -179,15 +314,28 @@ function App() {
               onNext={handleNextSong}
               onMuteToggle={toggleMute}
               onFullscreenToggle={toggleFullscreen}
-              onSkipForward={handleSkipForward}      // <-- add this
-              onSkipBackward={handleSkipBackward}    // <-- add this
+              onSkipForward={handleSkipForward}
+              onSkipBackward={handleSkipBackward}
+              onPrevious={handlePreviousSong} // <-- add this
             />
           </>
         )}
-        {/* Optionally, show a message when nothing is playing and not loading */}
-        {!currentSong && !isLoading && (
+        {/* Show backend error if user interacted and backend failed */}
+        {!isLoading && backendError && userInteracted && (
           <div className="flex items-center justify-center h-full w-full">
-            <p className="text-lg">No song is currently playing. Please select a channel.</p>
+            <p className="text-lg text-red-400">Backend is down or not responding.</p>
+          </div>
+        )}
+        {/* Show "no song" message only if user has NOT interacted */}
+        {!isLoading && !backendError && !currentSong && !userInteracted && (
+          <div className="flex items-center justify-center h-full w-full">
+            <p className="text-lg">Please select a channel.</p>
+          </div>
+        )}
+        {/* If user interacted, not loading, not backend error, but no song */}
+        {!isLoading && !backendError && !currentSong && userInteracted && (
+          <div className="flex items-center justify-center h-full w-full">
+            <p className="text-lg">No songs found for this channel.</p>
           </div>
         )}
       </main>

@@ -1,28 +1,22 @@
+const channelSeeds = require('./channelSeeds');
+
 async function initializeDatabase(Channel, Song) {
   const channelCount = await Channel.countDocuments();
   await Song.deleteMany({});
   console.log('[DB] Songs collection cleared');
   if (channelCount === 0) {
     console.log('[DB] No channels found, seeding...');
-    const hindiChannel = new Channel({
-      name: 'Hindi Hits',
-      description: 'Popular Hindi music from Bollywood and beyond',
-      language: 'hindi',
-      genre: 'various',
-      seedSongs: []
-    });
-    const englishChannel = new Channel({
-      name: 'English Pop',
-      description: 'Top English pop hits from around the world',
-      language: 'english',
-      genre: 'pop',
-      seedSongs: []
-    });
-    await Promise.all([
-      hindiChannel.save(),
-      englishChannel.save()
-    ]);
+    await Channel.insertMany(channelSeeds);
     console.log('[DB] Channels seeded.');
+  } else {
+    // Add any missing channels from channelSeeds
+    for (const seed of channelSeeds) {
+      const exists = await Channel.findOne({ name: seed.name });
+      if (!exists) {
+        await new Channel(seed).save();
+        console.log(`[DB] Channel added: ${seed.name}`);
+      }
+    }
   }
 }
 
