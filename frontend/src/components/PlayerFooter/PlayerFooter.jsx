@@ -14,6 +14,8 @@ function PlayerFooter({
   onNext,
   onFullscreenToggle,
   onPrevious,
+  isCCEnabled,
+  onCCToggle
 }) {
   const handleSeekBackward = () => {
     onSeek(Math.max(currentTime - 5, 0));
@@ -74,6 +76,8 @@ function PlayerFooter({
           onNext={onNext}
           onFullscreenToggle={onFullscreenToggle}
           onPrevious={onPrevious}
+          isCCEnabled={isCCEnabled}
+          onCCToggle={onCCToggle}
           style={{
             opacity: showUI ? 1 : 0,
             pointerEvents: showUI ? 'auto' : 'none',

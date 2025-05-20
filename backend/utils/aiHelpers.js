@@ -14,7 +14,7 @@ async function getAISuggestions(channel, Song) {
       const songExamples = existingSongs.map(song =>
         `"${song.title}"`
       ).join('\n');
-      const recommendationPrompt = `I need recommendations for 10 ${channel.language} music videos for the channel "${channel.name}" similar to these examples:
+      const recommendationPrompt = `I need recommendations for 10 ${channel.language} music having description ${channel.description}, for the channel "${channel.name}", similar to these examples:
 
 ${songExamples}
 

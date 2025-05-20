@@ -4,16 +4,12 @@ export default function usePlayerHandlers(
   playerRef,
   isPlaying,
   setIsPlaying,
-  currentSong,
   setCurrentSong,
   nextSong,
   setNextSong,
   queue,
   setQueue,
   fetchMoreSongs,
-  setShowInfo,
-  duration,
-  setCurrentTime
 ) {
   const handleSeek = useCallback((time) => {
     if (!playerRef.current) return;
@@ -30,18 +26,6 @@ export default function usePlayerHandlers(
       fetchMoreSongs(true);
     }
   }, [nextSong, setCurrentSong, setNextSong, queue, setQueue, fetchMoreSongs]);
-
-  const handleVideoEnd = useCallback(() => {
-    setShowInfo(true);
-    if (nextSong) {
-      setCurrentSong(nextSong);
-      setNextSong(queue[0] || null);
-      setQueue(queue.slice(1));
-      if (queue.length < 3) fetchMoreSongs();
-    } else {
-      fetchMoreSongs(true);
-    }
-  }, [nextSong, setCurrentSong, setNextSong, queue, setQueue, fetchMoreSongs, setShowInfo]);
 
   const togglePlayPause = useCallback(() => {
     if (!playerRef.current) return;
@@ -67,17 +51,16 @@ export default function usePlayerHandlers(
         setIsPlaying(false);
         break;
       case window.YT.PlayerState.ENDED:
-        handleVideoEnd();
+        handleNextSong();
         break;
       default:
         break;
     }
-  }, [setIsPlaying, handleVideoEnd]);
+  }, [setIsPlaying, handleNextSong]);
 
   return {
     handleSeek,
     handleNextSong,
-    handleVideoEnd,
     togglePlayPause,
     handlePlayerReady,
     handlePlayerStateChange

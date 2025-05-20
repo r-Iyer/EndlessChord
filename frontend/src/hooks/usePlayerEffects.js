@@ -2,7 +2,6 @@ import { useEffect, useCallback } from 'react';
 
 export default function usePlayerEffects(
   currentSong,
-  showInfo,
   setShowInfo,
   infoTimeoutRef,
   currentTime,
@@ -10,12 +9,6 @@ export default function usePlayerEffects(
   duration,
   setDuration,
   playerRef,
-  isPlaying,
-  setIsPlaying,
-  handleSeek,
-  handleNextSong,
-  handleVideoEnd,
-  fetchMoreSongs
 ) {
   // Show/hide song info
   const showSongInfo = useCallback(() => {

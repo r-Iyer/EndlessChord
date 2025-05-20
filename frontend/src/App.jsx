@@ -12,6 +12,7 @@ import useFullscreen from './hooks/useFullscreen';
 import './App.css';
 
 function App() {
+  const [isCCEnabled, setIsCCEnabled] = useState(false)
   const [currentChannel, setCurrentChannel] = useState(null);
   const [channels, setChannels] = useState([]);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -39,15 +40,12 @@ function App() {
   );
   const {
     handleSeek,
-    handleVideoEnd,
     togglePlayPause,
     handlePlayerStateChange,
   } = usePlayerHandlers(
-    playerRef, isPlaying, setIsPlaying, currentSong, setCurrentSong, nextSong, setNextSong, queue, setQueue, fetchMoreSongs, showInfo, setShowInfo, infoTimeoutRef, duration, setCurrentTime
-  );
+    playerRef, isPlaying, setIsPlaying, setCurrentSong, nextSong, setNextSong, queue, setQueue, fetchMoreSongs);
   usePlayerEffects(
-    currentSong, showInfo, setShowInfo, infoTimeoutRef, currentTime, setCurrentTime, duration, setDuration, playerRef, isPlaying, setIsPlaying, handleSeek, handleVideoEnd, fetchMoreSongs
-  );
+    currentSong, setShowInfo, infoTimeoutRef, currentTime, setCurrentTime, duration, setDuration, playerRef);
   const { toggleFullscreen } = useFullscreen(isFullscreen, setIsFullscreen, fullscreenRef);
 
   // Helper: get channel name from URL query param
@@ -287,6 +285,7 @@ function App() {
               onStateChange={handlePlayerStateChange}
               onError={() => handleNextSong()}
               playerRef={playerRef}
+              isCCEnabled={isCCEnabled}
             />
             <SongInfo
               song={currentSong}
@@ -305,7 +304,9 @@ function App() {
               onPlayPause={togglePlayPause}
               onNext={handleNextSong}
               onFullscreenToggle={toggleFullscreen}
-              onPrevious={handlePreviousSong} // <-- add this
+              onPrevious={handlePreviousSong}
+              isCCEnabled={isCCEnabled}
+              onCCToggle={() => setIsCCEnabled(prev => !prev)} // <-- add this
             />
           </>
         )}

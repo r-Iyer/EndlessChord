@@ -1,60 +1,67 @@
-import React, { useRef, useEffect, useState } from 'react';
+// VideoPlayer.js
+import React, { useRef, useEffect, useState, useMemo } from 'react';
 import YouTube from 'react-youtube';
 import './VideoPlayer.css';
 
-// Helper to request fullscreen and lock orientation
 export function requestFullscreenWithOrientation(element) {
   if (!element) return;
-  // Request fullscreen
   if (element.requestFullscreen) element.requestFullscreen();
   else if (element.webkitRequestFullscreen) element.webkitRequestFullscreen();
   else if (element.msRequestFullscreen) element.msRequestFullscreen();
-  // Lock orientation if possible
-  if (window.screen.orientation && window.screen.orientation.lock) {
+  if (window.screen.orientation?.lock) {
     window.screen.orientation.lock('landscape').catch(() => {});
   }
 }
 
-function VideoPlayer({ currentSong, isPlaying, onReady, onStateChange, onError, playerRef }) {
+function VideoPlayer({
+  currentSong,
+  isPlaying,
+  isCCEnabled,
+  onReady,
+  onStateChange,
+  onError,
+  playerRef
+}) {
   const containerRef = useRef(null);
   const [isPlayerReady, setIsPlayerReady] = useState(false);
 
   useEffect(() => {
-    setIsPlayerReady(false); // Reset when video changes
+    setIsPlayerReady(false);
   }, [currentSong?.videoId]);
-  
-  useEffect(() => {
-    if (
-      isPlayerReady &&
-      playerRef?.current &&
-      typeof playerRef.current.getPlayerState === 'function'
-    ) {
-      let state;
-      try {
-        state = playerRef.current.getPlayerState();
-      } catch {
-        // Player not ready, skip
-        return;
-      }
-      // Only control playback if player is not UNSTARTED (-1) or CUED (5) and state is a number
-      if (typeof state === 'number' && state !== -1 && state !== 5) {
-        if (isPlaying) {
-          try { playerRef.current.playVideo(); } catch {}
-        } else {
-          try { playerRef.current.pauseVideo(); } catch {}
-        }
-      }
-    }
-  }, [isPlaying, playerRef, isPlayerReady, currentSong?.videoId]);
 
-  // Remove the previous orientation lock effect, keep only fullscreenchange as fallback
+  useEffect(() => {
+    if (!isPlayerReady || !playerRef.current?.getPlayerState) return;
+    try {
+      const state = playerRef.current.getPlayerState();
+      if (state !== -1 && state !== 5) {
+        isPlaying ? playerRef.current.playVideo() : playerRef.current.pauseVideo();
+      }
+    } catch {}
+  }, [isPlaying, isPlayerReady, playerRef]);
+
+  // Toggle captions using loadModule/unloadModule to avoid reloads
+  useEffect(() => {
+    const p = playerRef.current;
+    if (!isPlayerReady || !p) return;
+    try {
+      if (isCCEnabled) {
+        // Load captions module then select English track
+        if (p.loadModule) p.loadModule('captions');
+        p.setOption('captions', 'track', { languageCode: 'en' });
+      } else {
+        // Unload captions to disable
+        if (p.unloadModule) p.unloadModule('captions');
+      }
+    } catch {}
+  }, [isCCEnabled, isPlayerReady, playerRef]);
+
   useEffect(() => {
     function handleFullscreenChange() {
       const isFull =
         document.fullscreenElement === containerRef.current ||
         document.webkitFullscreenElement === containerRef.current ||
         document.msFullscreenElement === containerRef.current;
-      if (isFull && window.screen.orientation && window.screen.orientation.lock) {
+      if (isFull && window.screen.orientation?.lock) {
         window.screen.orientation.lock('landscape').catch(() => {});
       }
     }
@@ -68,23 +75,22 @@ function VideoPlayer({ currentSong, isPlaying, onReady, onStateChange, onError, 
     };
   }, []);
 
-  const opts = {
+  const opts = useMemo(() => ({
     width: '100%',
     height: '100%',
     playerVars: {
       autoplay: 1,
       controls: 0,
-      disablekb: 0,
       fs: 0,
       modestbranding: 1,
       rel: 0,
       iv_load_policy: 3,
       showinfo: 0
     }
-  };
+  }), []);
 
   const handleReady = (event) => {
-    if (playerRef) playerRef.current = event.target;
+    playerRef.current = event.target;
     setIsPlayerReady(true);
     onReady(event);
   };
@@ -98,10 +104,7 @@ function VideoPlayer({ currentSong, isPlaying, onReady, onStateChange, onError, 
   }
 
   return (
-    <div
-      ref={containerRef}
-      className="youtube-container"
-    >
+    <div ref={containerRef} className="youtube-container">
       <div className="video-wrapper">
         <YouTube
           videoId={currentSong.videoId}
