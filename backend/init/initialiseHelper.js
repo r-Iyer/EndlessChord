@@ -1,8 +1,5 @@
 const connectDB = require('../config/db');
 
-
-const { initializeDatabase } = require('./dbInit');
-
 let dbInitialized = false;
 
 async function initializeDbConnection() {
@@ -16,6 +13,8 @@ async function initializeDbConnection() {
 
 async function initializeDbTables(Channel, Song) {
     if (!dbInitialized) {
+      
+      const { initializeDatabase } = require('./dbInit');
       await initializeDatabase(Channel, Song);
       dbInitialized = true;
       console.log('[INIT] Initialization complete.');

@@ -33,10 +33,11 @@ function App() {
   const [userInteracted, setUserInteracted] = useState(false);
   const [backendError, setBackendError] = useState(false);
   const [history, setHistory] = useState([]); // <-- Add history state
+  const [isInitialLoad, setIsInitialLoad] = useState(true); // <-- Add initial load state
   const fullscreenRef = useRef(null);
 
   const { fetchSongsForChannel, fetchMoreSongs } = useSongQueue(
-    currentChannel, currentSong, setCurrentSong, setNextSong, setQueue, isFetchingSongs, setIsFetchingSongs
+    currentChannel, currentSong, setCurrentSong, setNextSong, setQueue, isFetchingSongs, setIsFetchingSongs, isInitialLoad, setIsInitialLoad
   );
   const {
     handleSeek,

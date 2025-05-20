@@ -7,13 +7,23 @@ export default function useSongQueue(
   setNextSong,
   setQueue,
   isFetchingSongs,
-  setIsFetchingSongs
+  setIsFetchingSongs,
+  isInitialLoad,
+  setIsInitialLoad,
 ) {
   const fetchSongsForChannel = useCallback(async (channelId) => {
     if (isFetchingSongs) return [];
     setIsFetchingSongs(true);
     try {
-      const response = await fetch(`/api/channels/${channelId}/songs`);
+      let queryUrl = `/api/channels/${channelId}/songs`;
+      if(isInitialLoad) {
+        queryUrl+=`?source=initial`;
+      }
+      else {
+        queryUrl+=`?source=initial`;
+      }
+      const response = await fetch(queryUrl);
+      setIsInitialLoad(false);
       return await response.json();
     } catch (error) {
       console.error('Error fetching songs:', error);
@@ -21,7 +31,7 @@ export default function useSongQueue(
     } finally {
       setIsFetchingSongs(false);
     }
-  }, [isFetchingSongs, setIsFetchingSongs]);
+  }, [isFetchingSongs, isInitialLoad, setIsFetchingSongs, setIsInitialLoad]);
 
   const fetchMoreSongs = useCallback((setAsCurrent = false) => {
     if (!currentChannel || isFetchingSongs) return;
