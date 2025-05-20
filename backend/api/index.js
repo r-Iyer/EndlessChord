@@ -15,7 +15,7 @@ app.use(express.json());
 
 app.get('/api/channels', async (req, res) => {
   console.log('[ROUTE] GET /api/channels');
-  await initializeDbTables(Channel, Song);
+  //await initializeDbTables(Channel, Song);
   try {
     const channels = await Channel.find();
     res.json(channels);
