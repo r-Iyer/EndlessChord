@@ -1,8 +1,8 @@
 /* SongInfo.css */
 
 .song-info-container {
-  position: absolute;
-  bottom: 25rem;
+  position: relative;
+  bottom: 40rem;
   left: 2rem;
   background-color: rgba(0, 0, 0, 0.7);
   padding: 1rem;
