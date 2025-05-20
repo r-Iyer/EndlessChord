@@ -1,0 +1,29 @@
+.playback-controls {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background-image: linear-gradient(to top, rgba(0, 0, 0, 0), rgba(0, 0, 0, 0), transparent);
+  padding: 2rem 0rem;
+  z-index: 50;
+}
+
+.playback-buttons-group {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1.5rem;
+}
+
+.control-button {
+  border-radius: 9999px; /* rounded-full */
+  background-color: rgba(255, 255, 255, 0.3);
+  padding: 0.75rem;
+  transition-property: background-color;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 300ms;
+}
+
+.control-button:hover {
+  background-color: rgba(255, 255, 255, 0.3);
+}

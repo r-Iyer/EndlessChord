@@ -1,5 +1,6 @@
 import React, { useRef, useEffect, useState } from 'react';
 import YouTube from 'react-youtube';
+import './VideoPlayer.css';
 
 // Helper to request fullscreen and lock orientation
 export function requestFullscreenWithOrientation(element) {
@@ -22,7 +23,6 @@ function VideoPlayer({ currentSong, isPlaying, onReady, onStateChange, onError, 
     setIsPlayerReady(false); // Reset when video changes
   }, [currentSong?.videoId]);
   
-
   useEffect(() => {
     if (
       isPlayerReady &&
@@ -91,8 +91,8 @@ function VideoPlayer({ currentSong, isPlaying, onReady, onStateChange, onError, 
 
   if (!currentSong) {
     return (
-      <div className="flex items-center justify-center w-full h-screen bg-black">
-        <div className="text-white text-xl">Select a channel to start watching</div>
+      <div className="empty-player-container">
+        <div className="empty-player-message">Select a channel to start watching</div>
       </div>
     );
   }
@@ -102,7 +102,7 @@ function VideoPlayer({ currentSong, isPlaying, onReady, onStateChange, onError, 
       ref={containerRef}
       className="youtube-container"
     >
-      <div className="w-full aspect-video bg-black">
+      <div className="video-wrapper">
         <YouTube
           videoId={currentSong.videoId}
           opts={opts}

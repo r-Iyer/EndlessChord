@@ -1,0 +1,66 @@
+.player-footer {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 2147483647;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  transition: opacity 0.3s;
+  pointer-events: auto;
+}
+
+.player-footer.visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.player-footer.hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.slider-container {
+  width: 100%;
+  max-width: 700px;
+  min-width: 350px;
+  padding: 0 32px;
+  pointer-events: auto;
+  z-index: 2147483647;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.seek-button {
+  background: rgba(40, 40, 40, 0.6);
+  color: #fff;
+  border: none;
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+  transition: background 0.2s;
+}
+
+.seek-button:hover {
+  background: rgba(60, 60, 60, 0.8);
+}
+
+.controls-container {
+  width: 100%;
+  max-width: 700px;
+  min-width: 350px;
+  padding: 0 32px;
+  margin-top: 8px;
+  pointer-events: auto;
+  z-index: 2147483647;
+}

@@ -1,0 +1,123 @@
+/* SongInfo.css */
+
+.song-info-container {
+  position: absolute;
+  bottom: 25rem;
+  left: 2rem;
+  background-color: rgba(0, 0, 0, 0.7);
+  padding: 1rem;
+  border-radius: 0.5rem;
+  max-width: 28rem;
+  transform: translateY(0);
+  transition: opacity 1s, transform 1s;
+}
+
+.song-info-container.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.song-info-container.hidden {
+  opacity: 0;
+  transform: translateY(1rem);
+}
+
+.song-info-content {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.current-song {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+}
+
+.song-details {
+  flex: 1;
+}
+
+.song-title {
+  font-size: 1.25rem;
+  font-weight: bold;
+  color: white;
+  margin-bottom: 0.25rem;
+}
+
+.song-artist {
+  color: #d1d5db;
+  font-size: 1.125rem;
+}
+
+.song-metadata {
+  margin-top: 0.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.metadata-item {
+  color: #9ca3af;
+  font-size: 0.875rem;
+  display: flex;
+  align-items: center;
+}
+
+.metadata-label {
+  width: 4rem;
+  display: inline-block;
+}
+
+.metadata-value {
+  color: #d1d5db;
+}
+
+.upcoming-songs {
+  display: flex;
+  gap: 1rem;
+  margin-top: 0.5rem;
+}
+
+.next-song,
+.later-song {
+  flex: 1;
+  border-radius: 0.5rem;
+  padding: 0.75rem;
+}
+
+.next-song {
+  background-color: rgba(31, 41, 55, 0.8);
+}
+
+.later-song {
+  background-color: rgba(31, 41, 55, 0.6);
+}
+
+.queue-label {
+  font-size: 0.75rem;
+  margin-bottom: 0.25rem;
+}
+
+.next-label {
+  color: #c4b5fd;
+}
+
+.later-label {
+  color: #9ca3af;
+}
+
+.queue-title {
+  font-weight: 600;
+  color: white;
+}
+
+.queue-artist {
+  color: #d1d5db;
+  font-size: 0.875rem;
+}
+
+.queue-album {
+  color: #9ca3af;
+  font-size: 0.75rem;
+}

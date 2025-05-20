@@ -1,10 +1,10 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { fetchChannels, fetchChannelById } from './services/apiService';
-import ChannelSelector from './components/ChannelSelector';
-import VideoPlayer from './components/VideoPlayer';
-import SongInfo from './components/SongInfo';
-import Spinner from './components/Spinner';
-import PlayerFooter from './components/PlayerFooter';
+import ChannelSelector from './components/ChannelSelector/ChannelSelector';
+import VideoPlayer from './components/VideoPlayer/VideoPlayer';
+import SongInfo from './components/SongInfo/SongInfo';
+import Spinner from './components/Spinner/Spinner';
+import PlayerFooter from './components/PlayerFooter/PlayerFooter';
 import usePlayerHandlers from './hooks/usePlayerHandlers';
 import usePlayerEffects from './hooks/usePlayerEffects';
 import useSongQueue from './hooks/useSongQueue';
@@ -251,7 +251,7 @@ function App() {
 
   return (
     <div ref={fullscreenRef} className="min-h-screen bg-gray-900 text-white flex flex-col">
-      <header className={`p-4 bg-gray-800 transition-opacity duration-300 ${showUI ? 'opacity-100' : 'opacity-0'} ${isFullscreen ? 'hidden' : ''}`}>
+      <header className={`p-4 bg-gray-800 transition-opacity duration-300 'opacity-100' : 'opacity-0' ${isFullscreen ? 'hidden' : ''}`}>
         <div className="container mx-auto">
           <ChannelSelector
             channels={channels}

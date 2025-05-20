@@ -1,0 +1,47 @@
+.channel-selector {
+  padding: 1rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.channel-button {
+  padding: 0.5rem 1rem;
+  border-radius: 9999px;
+  transition-property: background-color;
+  transition-duration: 200ms;
+  background-color: #374151; /* gray-700 */
+  color: #e5e7eb; /* gray-200 */
+}
+
+.channel-button:hover {
+  background-color: #4b5563; /* gray-600 */
+}
+
+.channel-button.active {
+  background-color: #6d28d9; /* purple-700 */
+  color: white;
+}
+
+.channel-content {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.channel-indicator {
+  width: 0.75rem;
+  height: 0.75rem;
+  border-radius: 9999px;
+  background-color: #ef4444; /* red-500 */
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}

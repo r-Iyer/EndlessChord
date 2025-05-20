@@ -1,4 +1,5 @@
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
+import './TimerSlider.css';
 
 function formatTime(sec) {
   if (!isFinite(sec) || sec < 0) return '0:00';
@@ -13,7 +14,7 @@ export default function TimerSlider({ currentTime = 0, duration = 0, onSeek, sty
   const dragging = useRef(false);
 
   // Sync sliderValue with currentTime when not dragging
-  React.useEffect(() => {
+  useEffect(() => {
     if (!dragging.current) setSliderValue(currentTime);
   }, [currentTime]);
 
@@ -28,8 +29,8 @@ export default function TimerSlider({ currentTime = 0, duration = 0, onSeek, sty
   };
 
   return (
-    <div className="flex items-center w-full space-x-2" style={style}>
-      <span className="text-sm w-12">{formatTime(sliderValue)}</span>
+    <div className="timer-slider" style={style}>
+      <span className="time-display">{formatTime(sliderValue)}</span>
       <input
         type="range"
         min={0}
@@ -39,9 +40,9 @@ export default function TimerSlider({ currentTime = 0, duration = 0, onSeek, sty
         onChange={handleChange}
         onMouseUp={handleCommit}
         onTouchEnd={handleCommit}
-        className="flex-grow h-1 cursor-pointer appearance-none"
+        className="slider-input"
       />
-      <span className="text-sm w-12">{formatTime(duration)}</span>
+      <span className="time-display">{formatTime(duration)}</span>
     </div>
   );
 }
