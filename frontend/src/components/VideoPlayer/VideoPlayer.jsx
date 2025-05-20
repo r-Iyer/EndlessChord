@@ -15,7 +15,7 @@ export function requestFullscreenWithOrientation(element) {
   }
 }
 
-function VideoPlayer({ currentSong, isPlaying, onReady, onStateChange, onError, isFullscreen, playerRef }) {
+function VideoPlayer({ currentSong, isPlaying, onReady, onStateChange, onError, playerRef }) {
   const containerRef = useRef(null);
   const [isPlayerReady, setIsPlayerReady] = useState(false);
 

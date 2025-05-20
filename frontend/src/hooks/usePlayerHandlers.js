@@ -4,8 +4,6 @@ export default function usePlayerHandlers(
   playerRef,
   isPlaying,
   setIsPlaying,
-  isMuted,
-  setIsMuted,
   currentSong,
   setCurrentSong,
   nextSong,
@@ -13,9 +11,7 @@ export default function usePlayerHandlers(
   queue,
   setQueue,
   fetchMoreSongs,
-  showInfo,
   setShowInfo,
-  infoTimeoutRef,
   duration,
   setCurrentTime
 ) {
@@ -57,17 +53,6 @@ export default function usePlayerHandlers(
     setIsPlaying(!isPlaying);
   }, [playerRef, isPlaying, setIsPlaying]);
 
-  const toggleMute = useCallback(() => {
-    if (playerRef.current?.internalPlayer) {
-      if (isMuted) {
-        playerRef.current.internalPlayer.unMute().catch(() => {});
-      } else {
-        playerRef.current.internalPlayer.mute().catch(() => {});
-      }
-      setIsMuted(!isMuted);
-    }
-  }, [playerRef, isMuted, setIsMuted]);
-
   const handlePlayerReady = useCallback((event) => {
     playerRef.current = event.target;
     event.target.playVideo(); // <-- Always play on ready
@@ -89,31 +74,12 @@ export default function usePlayerHandlers(
     }
   }, [setIsPlaying, handleVideoEnd]);
 
-  const handleSkipForward = () => {
-    if (playerRef.current && typeof playerRef.current.seekTo === 'function') {
-      const newTime = Math.min((playerRef.current.getCurrentTime() || 0) + 5, duration);
-      playerRef.current.seekTo(newTime, true);
-      setCurrentTime(Math.floor(newTime));
-    }
-  };
-
-  const handleSkipBackward = () => {
-    if (playerRef.current && typeof playerRef.current.seekTo === 'function') {
-      const newTime = Math.max((playerRef.current.getCurrentTime() || 0) - 5, 0);
-      playerRef.current.seekTo(newTime, true);
-      setCurrentTime(Math.floor(newTime));
-    }
-  };
-
   return {
     handleSeek,
     handleNextSong,
     handleVideoEnd,
     togglePlayPause,
-    toggleMute,
     handlePlayerReady,
-    handlePlayerStateChange,
-    handleSkipForward,
-    handleSkipBackward
+    handlePlayerStateChange
   };
 }

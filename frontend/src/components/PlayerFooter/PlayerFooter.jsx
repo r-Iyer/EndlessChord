@@ -9,14 +9,10 @@ function PlayerFooter({
   isFullscreen,
   showUI,
   isPlaying,
-  isMuted,
   currentChannel,
   onPlayPause,
   onNext,
-  onMuteToggle,
   onFullscreenToggle,
-  onSkipForward,
-  onSkipBackward,
   onPrevious,
 }) {
   const handleSeekBackward = () => {
@@ -51,7 +47,7 @@ function PlayerFooter({
           duration={duration}
           onSeek={onSeek}
           style={{
-            height: 20,
+            height: 40,
             pointerEvents: 'auto',
             zIndex: 2147483647,
             flex: 1,
@@ -72,12 +68,10 @@ function PlayerFooter({
       <div className="controls-container">
         <PlaybackControls
           isPlaying={isPlaying}
-          isMuted={isMuted}
           isFullscreen={isFullscreen}
           currentChannel={currentChannel}
           onPlayPause={onPlayPause}
           onNext={onNext}
-          onMuteToggle={onMuteToggle}
           onFullscreenToggle={onFullscreenToggle}
           onPrevious={onPrevious}
           style={{

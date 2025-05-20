@@ -1,8 +1,8 @@
 /* SongInfo.css */
 
 .song-info-container {
-  position: relative;
-  bottom: 40rem;
+  position: fixed;
+  bottom: 0rem;
   left: 2rem;
   background-color: rgba(0, 0, 0, 0.7);
   padding: 1rem;
@@ -10,6 +10,7 @@
   max-width: 28rem;
   transform: translateY(0);
   transition: opacity 1s, transform 1s;
+  z-index: 10;
 }
 
 .song-info-container.visible {
@@ -120,4 +121,14 @@
 .queue-album {
   color: #9ca3af;
   font-size: 0.75rem;
+}
+
+/* Fullscreen compatibility */
+:fullscreen .song-info-container,
+:-webkit-full-screen .song-info-container,
+:-ms-fullscreen .song-info-container {
+  position: fixed;
+  bottom: 7rem;
+  left: 2rem;
+  z-index: 10;
 }

@@ -19,7 +19,6 @@ function App() {
   const [nextSong, setNextSong] = useState(null);
   const [queue, setQueue] = useState([]);
   const [showInfo, setShowInfo] = useState(false);
-  const [isMuted, setIsMuted] = useState(false);
   const playerRef = useRef(null);
   const infoTimeoutRef = useRef(null); // use ref instead of state for infoTimeout
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -42,12 +41,9 @@ function App() {
     handleSeek,
     handleVideoEnd,
     togglePlayPause,
-    toggleMute,
     handlePlayerStateChange,
-    handleSkipForward,
-    handleSkipBackward
   } = usePlayerHandlers(
-    playerRef, isPlaying, setIsPlaying, isMuted, setIsMuted, currentSong, setCurrentSong, nextSong, setNextSong, queue, setQueue, fetchMoreSongs, showInfo, setShowInfo, infoTimeoutRef, duration, setCurrentTime
+    playerRef, isPlaying, setIsPlaying, currentSong, setCurrentSong, nextSong, setNextSong, queue, setQueue, fetchMoreSongs, showInfo, setShowInfo, infoTimeoutRef, duration, setCurrentTime
   );
   usePlayerEffects(
     currentSong, showInfo, setShowInfo, infoTimeoutRef, currentTime, setCurrentTime, duration, setDuration, playerRef, isPlaying, setIsPlaying, handleSeek, handleVideoEnd, fetchMoreSongs
@@ -287,7 +283,6 @@ function App() {
             <VideoPlayer
               currentSong={currentSong}
               isPlaying={isPlaying}
-              isFullscreen={isFullscreen}
               onReady={handlePlayerReady}
               onStateChange={handlePlayerStateChange}
               onError={() => handleNextSong()}
@@ -306,14 +301,10 @@ function App() {
               isFullscreen={isFullscreen}
               showUI={showUI}
               isPlaying={isPlaying}
-              isMuted={isMuted}
               currentChannel={currentChannel}
               onPlayPause={togglePlayPause}
               onNext={handleNextSong}
-              onMuteToggle={toggleMute}
               onFullscreenToggle={toggleFullscreen}
-              onSkipForward={handleSkipForward}
-              onSkipBackward={handleSkipBackward}
               onPrevious={handlePreviousSong} // <-- add this
             />
           </>

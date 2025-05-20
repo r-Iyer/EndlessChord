@@ -1,14 +1,12 @@
-import React, { forwardRef } from 'react';
-import { Play, Pause, SkipForward, SkipBack, Volume2, VolumeX, Maximize, Minimize } from 'lucide-react';
+import { forwardRef } from 'react';
+import { Play, Pause, SkipForward, SkipBack, Maximize, Minimize } from 'lucide-react';
 import './PlaybackControls.css';
 
 const PlaybackControls = forwardRef(function PlaybackControls({
   isPlaying, 
-  isMuted,
   isFullscreen,
   onPlayPause, 
   onNext, 
-  onMuteToggle,
   onFullscreenToggle,
   onPrevious,
   style
@@ -41,13 +39,6 @@ const PlaybackControls = forwardRef(function PlaybackControls({
             aria-label="Next Song"
           >
             <SkipForward size={24} />
-          </button>
-          <button 
-            className="control-button"
-            onClick={onMuteToggle}
-            aria-label={isMuted ? "Unmute" : "Mute"}
-          >
-            {isMuted ? <VolumeX size={24} /> : <Volume2 size={24} />}
           </button>
           <button 
             className="control-button"
