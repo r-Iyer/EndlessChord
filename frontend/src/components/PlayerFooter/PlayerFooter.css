@@ -23,7 +23,7 @@
 
 .slider-container {
   width: 100%;
-  padding: 0 32px;
+  padding: 10px 32px;
   max-width: 700px;
   min-width: 350px;
   pointer-events: auto;

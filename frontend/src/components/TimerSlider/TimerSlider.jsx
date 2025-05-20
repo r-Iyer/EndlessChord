@@ -28,6 +28,9 @@ export default function TimerSlider({ currentTime = 0, duration = 0, onSeek, sty
     if (onSeek) onSeek(sliderValue);
   };
 
+  // Calculate progress percentage for the slider fill
+  const progressPercentage = duration > 0 ? (sliderValue / duration) * 100 : 0;
+
   return (
     <div className="timer-slider" style={style}>
       <span className="time-display">{formatTime(sliderValue)}</span>
@@ -41,6 +44,10 @@ export default function TimerSlider({ currentTime = 0, duration = 0, onSeek, sty
         onMouseUp={handleCommit}
         onTouchEnd={handleCommit}
         className="slider-input"
+        style={{
+          // Set the CSS variable for the progress percentage
+          '--progress-percentage': `${progressPercentage}%`,
+        }}
       />
       <span className="time-display">{formatTime(duration)}</span>
     </div>
