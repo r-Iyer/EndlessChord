@@ -1,4 +1,3 @@
-import React from 'react';
 import TimerSlider from '../TimerSlider/TimerSlider';
 import PlaybackControls from '../PlaybackControls/PlaybackControls';
 import './PlayerFooter.css';
@@ -32,6 +31,7 @@ function PlayerFooter({
     <div
       className={`player-footer ${showUI ? 'visible' : 'hidden'}`}
       style={{
+        
         bottom: isFullscreen ? '15%' : 0,
         paddingBottom: isFullscreen ? 0 : 80,
       }}
