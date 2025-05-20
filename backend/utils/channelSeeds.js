@@ -26,6 +26,13 @@ module.exports = [
     language: 'various',
     genre: 'lofi',
     seedSongs: []
-  }
+  },
+  {
+    name: 'Tamil Tunes',
+    description: 'All time tamil hit film songs and albums',
+    language: 'tamil',
+    genre: 'various',
+    seedSongs: []
+  },
   // Add more channels here as needed
 ];
