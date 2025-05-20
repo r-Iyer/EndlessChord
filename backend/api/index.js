@@ -2,8 +2,8 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const Channel = require('../models/Channel');
-const Song = require('../models/Song');
-const { initializeDbTables } = require('../init/initialiseHelper');
+const { Song } = require('../models/Song');
+const { initializeDbTables, initializeDbConnection } = require('../init/initialiseHelper');
 const { getUniqueAISuggestions, } = require('../utils/aiHelpers');
 const songCacheService = require('../services/songCache');
 
@@ -15,7 +15,8 @@ app.use(express.json());
 
 app.get('/api/channels', async (req, res) => {
   console.log('[ROUTE] GET /api/channels');
-  //await initializeDbTables(Channel, Song);
+  await initializeDbConnection();
+  await initializeDbTables(Channel, Song);
   try {
     const channels = await Channel.find();
     res.json(channels);
@@ -109,38 +110,11 @@ app.get('/api/channels/:id/songs', async (req, res) => {
   }
 });
 
-
 if (require.main === module) {
-  (async () => {
-    const PORT = process.env.PORT || 5000;
-
-    // Import required modules
-    const { initializeSongCache } = require('../init/cacheInit');
-    const { initializeDbConnection } = require('../init/initialiseHelper'); // Adjust path as needed
-
-    try {
-      // First initialize the DB connection
-      await initializeDbConnection();
-      console.log('[STARTUP] Database connection established.');
-
-      // Then initialize the song cache
-      await initializeSongCache();
-      console.log('[STARTUP] Song cache initialized.');
-
-      // Start the server
-      app.listen(PORT, () => {
-        console.log(`[LOCAL] Server running on port ${PORT}`);
-      });
-    } catch (err) {
-      console.error('[STARTUP] Initialization error:', err);
-
-      // Optional: Start server anyway, depending on your fallback logic
-      app.listen(PORT, () => {
-        console.log(`[LOCAL] Server running on port ${PORT} (with startup errors)`);
-      });
-    }
-  })();
+  const PORT = process.env.PORT || 5000;
+  app.listen(PORT, () => {
+    console.log(`[LOCAL] Server running on port ${PORT}`);
+  });
 }
-
 
 module.exports = app;

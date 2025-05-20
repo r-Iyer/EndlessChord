@@ -12,4 +12,5 @@ const songSchema = new mongoose.Schema({
   lastPlayed: Date,
 });
 
-module.exports = mongoose.model('Song', songSchema);
+const Song = mongoose.model('Song', songSchema);
+module.exports = { Song, songSchema };

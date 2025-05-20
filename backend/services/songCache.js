@@ -1,6 +1,7 @@
 const Channel = require('../models/Channel');
-const Song = require('../models/Song');
+const { Song } = require('../models/Song');
 const { getUniqueAISuggestions, } = require('../utils/aiHelpers');
+const SongCache = require('../models/SongCache');
 
 /**
 * Service for caching songs and managing song retrieval
@@ -27,6 +28,7 @@ class SongCacheService {
     return this.channels[channelId];
   }
   
+  
   /**
   * Get songs from cache or refresh if needed
   * @param {string} channelId - Id of the channel
@@ -34,12 +36,12 @@ class SongCacheService {
   * @returns {Promise<Array>} Array of songs
   */
   async getCachedSongs(channelId, count = 3) {
-    const cache = this.initChannel(channelId);
+    const cache = await SongCache.findOne({ channelId })
     
-    const availableSongs = cache.songs
+    const availableSongs = cache?.songs
     
     // If we have enough songs in cache after filtering
-    if (availableSongs.length >= count) {
+    if (availableSongs?.length >= count) {
       // Trigger cache refresh in background
       if (!cache.updating) {
         this.refreshCache(channelId)
@@ -67,6 +69,7 @@ class SongCacheService {
   */
   getRandomSongs(songs, count) {
     const shuffled = [...songs].sort(() => 0.5 - Math.random());
+    
     return shuffled.slice(0, count);
   }
   
@@ -77,14 +80,31 @@ class SongCacheService {
   * @returns {Promise<Array>} Array of songs
   */
   async refreshCache(channelId, returnCount = 3) {
-    const cache = this.initChannel(channelId);
-    
+    let cache = await SongCache.findOne({ channelId });
+
+    if (!cache) {
+      console.log(`[CACHE] No cache found for channel ${channelId}, creating new one.`);
+      cache = new SongCache({
+        channelId,
+        songs: [],
+        lastUpdated: null,
+        updating: false,
+      });
+      await cache.save();
+    }
+
     // Prevent concurrent refreshes
     if (cache.updating) {
       // If already updating, wait for existing songs or return empty array
       if (cache.songs.length > 0) {
         const availableSongs = cache.songs
-        return this.getRandomSongs(availableSongs, returnCount);
+        const songs = this.getRandomSongs(availableSongs, returnCount);
+        await SongCache.findOneAndUpdate(
+          { channelId },
+          { songs: availableSongs, lastUpdated: new Date() },
+          { upsert: true, new: true }
+        );
+        return songs;
       }
       return [];
     }
@@ -119,7 +139,13 @@ class SongCacheService {
       cache.lastUpdated = new Date();
       
       // Return requested number of random songs
-      return this.getRandomSongs(newSongs, returnCount);
+      const songs = this.getRandomSongs(newSongs, returnCount);
+      await SongCache.findOneAndUpdate(
+        { channelId },
+        { songs: newSongs, lastUpdated: new Date() },
+        { upsert: true, new: true }
+      );
+      return songs;
     } catch (error) {
       console.error(`Error refreshing cache for channel ${channelId}:`, error);
       return [];

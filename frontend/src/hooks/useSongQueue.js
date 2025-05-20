@@ -20,7 +20,7 @@ export default function useSongQueue(
         queryUrl+=`?source=initial`;
       }
       else {
-        queryUrl+=`?source=initial`;
+        queryUrl+=`?source=refresh`;
       }
       const response = await fetch(queryUrl);
       setIsInitialLoad(false);
