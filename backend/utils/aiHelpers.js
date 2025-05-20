@@ -2,6 +2,22 @@ const axios = require('axios');
 const cheerio = require('cheerio');
 const { GoogleGenAI } = require("@google/genai");
 
+
+/**
+ * Get AI suggestions with duplicate check and retry logic.
+ */
+async function getUniqueAISuggestions(channel, Song, excludeIds, baseSongs, maxRetries = 3) {
+  let aiSuggestions = [];
+  let aiRetryCount = 0;
+  do {
+    aiSuggestions = await getAISuggestions(channel, Song);
+    aiSuggestions = filterAISuggestions(aiSuggestions, excludeIds, baseSongs);
+    if (!hasDuplicateVideoIds(aiSuggestions)) break;
+    aiRetryCount++;
+  } while (aiRetryCount < maxRetries);
+  return aiSuggestions;
+}
+
 async function getAISuggestions(channel, Song) {
   const ai = new GoogleGenAI({ apiKey: process.env.GOOGLE_GENAI_API_KEY });
   const MAX_RETRIES = 5;
@@ -164,4 +180,28 @@ async function extractTopResultFromHTML(html) {
   }
 }
 
-module.exports = { getAISuggestions, searchYouTube, extractTopResultFromHTML };
+/**
+ * Filters out songs with videoIds in excludeIds or already in baseSongs.
+ */
+function filterAISuggestions(aiSuggestions, excludeIds, baseSongs) {
+  const baseIds = new Set(baseSongs.map(s => s.videoId));
+  return aiSuggestions.filter(s =>
+    !excludeIds.includes(s.videoId) && !baseIds.has(s.videoId)
+  );
+}
+
+
+/**
+ * Returns true if there are duplicate videoIds in the array.
+ */
+function hasDuplicateVideoIds(songs) {
+  const seen = new Set();
+  for (const s of songs) {
+    if (seen.has(s.videoId)) return true;
+    seen.add(s.videoId);
+  }
+  return false;
+}
+
+
+module.exports = { getUniqueAISuggestions, searchYouTube, extractTopResultFromHTML };

@@ -1,4 +1,4 @@
-const channelSeeds = require('./channelSeeds');
+const channelSeeds = require('../config/channelSeeds');
 
 async function initializeDatabase(Channel, Song) {
   const channelCount = await Channel.countDocuments();
