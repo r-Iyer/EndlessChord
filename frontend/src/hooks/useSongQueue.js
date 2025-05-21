@@ -20,7 +20,6 @@ export default function useSongQueue(
         queryUrl+=`?source=initial`;
       }
       const response = await fetch(queryUrl);
-      setIsInitialLoad(false);
       return await response.json();
     } catch (error) {
       console.error('Error fetching songs:', error);
@@ -28,7 +27,7 @@ export default function useSongQueue(
     } finally {
       setIsFetchingSongs(false);
     }
-  }, [isFetchingSongs, isInitialLoad, setIsFetchingSongs, setIsInitialLoad]);
+  }, [isFetchingSongs, isInitialLoad, setIsFetchingSongs]);
 
   const fetchMoreSongs = useCallback((setAsCurrent = false) => {
     if (!currentChannel || isFetchingSongs) return;

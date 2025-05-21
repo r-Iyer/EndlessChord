@@ -15,19 +15,22 @@ export default function usePlayerHandlers(
   setHistory,
   setCurrentTime,
   setPlayerReady,
+  isInitialialLoad,
+  setIsInitialLoad
 ) {
 const handlePlayerReady = (event) => {
   playerRef.current = event.target;
   setPlayerReady(true);
   
-  // Try to play and handle potential failure due to autoplay policy
-  event.target.playVideo();
   
   // Check if player is actually playing
-  if (event.target.getPlayerState() !== window.YT.PlayerState.PLAYING) {
+  if (isInitialialLoad) {
     console.log("Autoplay was prevented. User interaction required.");
     setIsPlaying(false);
+    setIsInitialLoad(false);
   } else {
+    // Try to play and handle potential failure due to autoplay policy
+    event.target.playVideo();
     setIsPlaying(true);
   }
 };
