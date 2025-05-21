@@ -2,7 +2,7 @@ const Channel = require('../models/Channel');
 const { Song } = require('../models/Song');
 const { getUniqueAISuggestions, } = require('../utils/aiHelpers');
 const SongCache = require('../models/SongCache');
-const { CACHED_SONG_COUNT } = require('../config/constants');
+const { CACHED_SONG_COUNT_LIMIT } = require('../config/constants');
 
 /**
 * Service for caching songs and managing song retrieval
@@ -40,7 +40,8 @@ async findSongCacheDb(channelName) {
   * @param {number} count - Number of songs to return
   * @returns {Promise<Array>} Array of songs
   */
-  async getCachedSongs(channelName, count = CACHED_SONG_COUNT) {
+  async getCachedSongs(channelName) {
+    const count = CACHED_SONG_COUNT_RETURNED;
     const cache = await this.findSongCacheDb(channelName);
     
     const availableSongs = cache?.songs
@@ -63,12 +64,13 @@ async findSongCacheDb(channelName) {
     }
     
     // Not enough songs in cache, need to fetch more immediately
-    const songs = this.refreshCache(channelName, count);
+    const songs = this.refreshCache(channelName);
     this.refreshEmptyChannelCaches();
     return songs;
   }
 
-async updateSongCacheDb(channelName, newSongs, returnCount = CACHED_SONG_COUNT) {
+async updateSongCacheDb(channelName, newSongs) {
+  const returnCount = CACHED_SONG_COUNT_RETURNED
   // Shuffle and select random songs
   const selectedSongs = this.getRandomSongs(newSongs, returnCount);
 
@@ -104,7 +106,8 @@ async updateSongCacheDb(channelName, newSongs, returnCount = CACHED_SONG_COUNT) 
   * @param {number} returnCount - Number of songs to return
   * @returns {Promise<Array>} Array of songs
   */
-  async refreshCache(channelName, returnCount = CACHED_SONG_COUNT) {
+  async refreshCache(channelName) {
+    const returnCount = CACHED_SONG_COUNT_RETURNED
     let cache = await this.findSongCacheDb(channelName);
 
     if (!cache) {
@@ -144,7 +147,7 @@ async updateSongCacheDb(channelName, newSongs, returnCount = CACHED_SONG_COUNT) 
       const newSongs = [];
       try {
         console.log(`[CACHE] Fetching songs for channel: ${channel.name}`);
-        const aiSuggestions = await getUniqueAISuggestions(channel, Song, [], [], 10);
+        const aiSuggestions = await getUniqueAISuggestions(channel, Song, [], [], CACHED_SONG_COUNT_LIMIT);
 
        console.log(`[CACHE] Fetched songs for channel: ${channel.name}`);
 
