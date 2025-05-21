@@ -7,6 +7,7 @@ const { initializeDbTables, initializeDbConnection } = require('../init/initiali
 const { getUniqueAISuggestions, } = require('../utils/aiHelpers');
 const songCacheService = require('../services/songCacheService');
 const { MINIMUM_SONG_COUNT} = require('../config/constants');
+const { DEFAULT_SONG_COUNT } = require('../config/constants');
 
 const app = express();
 app.use(cors());
