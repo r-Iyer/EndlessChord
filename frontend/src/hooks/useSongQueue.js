@@ -106,19 +106,7 @@ export default function useSongQueue(
         setIsInitialLoad(false);
       }*/
     }
-  }, [
-    currentChannel, 
-    currentSong,
-    nextSong,
-    queue, 
-    isFetchingSongs, 
-    isInitialLoad,
-    setCurrentSong, 
-    setNextSong, 
-    setQueue, 
-    setIsFetchingSongs,
-    setIsInitialLoad
-  ]);
+  }, [currentChannel, currentSong, nextSong, queue, isFetchingSongs, isInitialLoad, setCurrentSong, setNextSong, setQueue, setIsFetchingSongs]);
 
   // For backward compatibility and convenience
   const fetchSongsForChannel = useCallback((channelId) => {
