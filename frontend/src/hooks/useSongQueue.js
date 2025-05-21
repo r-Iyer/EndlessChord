@@ -101,10 +101,10 @@ export default function useSongQueue(
     } finally {
       setIsFetchingSongs(false);
       
-      // If this was an initial load, update the flag
+      /*// If this was an initial load, update the flag
       if (initial && isInitialLoad) {
         setIsInitialLoad(false);
-      }
+      }*/
     }
   }, [
     currentChannel, 

@@ -18,26 +18,22 @@ export default function usePlayerHandlers(
   isInitialialLoad,
   setIsInitialLoad
 ) {
-const handlePlayerReady = (event) => {
-  playerRef.current = event.target;
-  setPlayerReady(true);
-  if (playerRef.current.isMuted()) {
-      playerRef.current.unMute();
+  const handlePlayerReady = (event) => {
+    playerRef.current = event.target;
+    setPlayerReady(true);
+    
+    
+    // Check if player is actually playing
+    if (isInitialialLoad) {
+      console.log("Autoplay was prevented. User interaction required.");
+      setIsPlaying(false);
+      setIsInitialLoad(false);
+    } else {
+      // Try to play and handle potential failure due to autoplay policy
+      event.target.playVideo();
+      setIsPlaying(true);
     }
-  event.target.playVideo();
-  setIsPlaying(true);
-  
-  // Check if player is actually playing
-  if (isInitialialLoad) {
-    console.log("Autoplay was prevented. User interaction required.");
-    setIsPlaying(false);
-    setIsInitialLoad(false);
-  } else {
-    // Try to play and handle potential failure due to autoplay policy
-    event.target.playVideo();
-    setIsPlaying(true);
-  }
-};
+  };
   const handleSeek = useCallback((time) => {
     if (!playerRef.current) return;
     playerRef.current.seekTo(Math.floor(time), true);
