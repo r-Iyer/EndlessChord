@@ -21,7 +21,11 @@ export default function usePlayerHandlers(
 const handlePlayerReady = (event) => {
   playerRef.current = event.target;
   setPlayerReady(true);
-  
+  if (playerRef.current.isMuted()) {
+      playerRef.current.unMute();
+    }
+  event.target.playVideo();
+  setIsPlaying(true);
   
   // Check if player is actually playing
   if (isInitialialLoad) {
