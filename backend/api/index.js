@@ -190,7 +190,7 @@ app.get('/api/search', async (req, res) => {
     
     
     // First, get matching songs from the database
-    //let songs = await Song.find(query).sort({ playCount: 1 }).limit(20);
+    let songs = await Song.find(query).sort({ playCount: 1 }).limit(20);
     
     console.log(`[SEARCH] Found ${songs.length} matching songs in database`);
     
