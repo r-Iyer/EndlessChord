@@ -46,8 +46,8 @@ app.get('/api/channels/:id', async (req, res) => {
 //Fetch songs for a channel
 
 app.get('/api/channels/:id/songs', async (req, res) => {
-
-  const source = req.query.source; // "initial" or "refresh"
+  
+  const source = req.query.source; // "initial" or undefined
   console.log(`[ROUTE] GET /api/channels/${req.params.id}/songs — Source: ${source}`);
   try {
     const channel = await Channel.findById(req.params.id);
@@ -56,12 +56,14 @@ app.get('/api/channels/:id/songs', async (req, res) => {
     }
     if (source === 'initial') {
       try {
-        const songs = await songCacheService.getCachedSongs(channel._id, 3);
+        const songs = await songCacheService.getCachedSongs(channel.name, 3);
+        await Song.insertMany(songs, { ordered: false })
+  .catch(err => { if (err.code !== 11000) throw err });
         return res.json(songs);
       } catch (error) {
-    console.error(`[ERROR] /api/channels/${req.params.id}/songs:`, error);
-    res.status(500).json({ message: 'Server error' });
-  }
+        console.error(`[ERROR] /api/channels/${req.params.id}/songs:`, error);
+        res.status(500).json({ message: 'Server error' });
+      }
     }
     const excludeIds = req.query.exclude ? req.query.exclude.split(',') : [];
     const recentlyPlayed = await Song.find({ 
@@ -73,11 +75,11 @@ app.get('/api/channels/:id/songs', async (req, res) => {
     let songs = await Song.find({ 
       language: channel.language,
       videoId: { $nin: allExcludeIds }
-    }).sort({ playCount: 1 }).limit(5);
-
+    }).sort({ playCount: 1 })
+    
     if (songs.length < 5) {
       try {
-        const aiSuggestions = await getUniqueAISuggestions(channel, Song, allExcludeIds, songs);
+        const aiSuggestions = await getUniqueAISuggestions(channel, Song, allExcludeIds, songs, 30);
         console.log(aiSuggestions)
         const newSongs = [];
         for (const suggestion of aiSuggestions) {
@@ -96,16 +98,42 @@ app.get('/api/channels/:id/songs', async (req, res) => {
         console.error('Error getting AI suggestions:', aiError);
       }
     }
-
-    for (const song of songs) {
-      song.playCount += 1;
-      song.lastPlayed = new Date();
-      await song.save();
-    }
     console.log(`[SONGS] Returning ${songs.length} songs for channel ${channel.name}`);
     res.json(songs);
   } catch (error) {
     console.error(`[ERROR] /api/channels/${req.params.id}/songs:`, error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// New API endpoint to update play count
+app.post('/api/songs/played', async (req, res) => {
+  console.log('[ROUTE] POST /api/songs/played');
+  try {
+    const { songIds } = req.body;
+    
+    if (!songIds || !Array.isArray(songIds) || songIds.length === 0) {
+      return res.status(400).json({ message: 'Invalid request. songIds array is required.' });
+    }
+    
+    const updateResults = [];
+    
+    for (const songId of songIds) {
+      const song = await Song.findById(songId);
+      if (song) {
+        song.playCount += 1;
+        song.lastPlayed = new Date();
+        await song.save();
+        updateResults.push({ id: songId, success: true });
+      } else {
+        updateResults.push({ id: songId, success: false, message: 'Song not found' });
+      }
+    }
+    
+    console.log(`[SONGS] Updated play count for ${updateResults.filter(r => r.success).length} songs`);
+    res.json({ success: true, updates: updateResults });
+  } catch (error) {
+    console.error('[ERROR] /api/songs/played:', error);
     res.status(500).json({ message: 'Server error' });
   }
 });

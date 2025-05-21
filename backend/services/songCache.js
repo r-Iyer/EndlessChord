@@ -8,35 +8,39 @@ const SongCache = require('../models/SongCache');
 */
 class SongCacheService {
   constructor() {
-    // Structure: { channelId: { songs: [], lastUpdated: Date, updating: boolean } }
+    // Structure: { channelName: { songs: [], lastUpdated: Date, updating: boolean } }
     this.channels = {};
   }
   
   /**
   * Initialize cache for a channel
-  * @param {string} channelId - Id of the channel to initialize
+  * @param {string} channelName - Name of the channel to initialize
   * @returns {Object} Channel cache object
   */
-  initChannel(channelId) {
-    if (!this.channels[channelId]) {
-      this.channels[channelId] = {
+  initChannel(channelName) {
+    if (!this.channels[channelName]) {
+      this.channels[channelName] = {
         songs: [],
         lastUpdated: null,
         updating: false
       };
     }
-    return this.channels[channelId];
+    return this.channels[channelName];
   }
   
+
+async findSongCacheDb(channelName) {
+  return SongCache.findOne({ channelName: channelName });
+}
   
   /**
   * Get songs from cache or refresh if needed
-  * @param {string} channelId - Id of the channel
+  * @param {string} channelName - Name of the channel
   * @param {number} count - Number of songs to return
   * @returns {Promise<Array>} Array of songs
   */
-  async getCachedSongs(channelId, count = 3) {
-    const cache = await SongCache.findOne({ channelId })
+  async getCachedSongs(channelName, count = 3) {
+    const cache = await this.findSongCacheDb(channelName);
     
     const availableSongs = cache?.songs
     
@@ -44,12 +48,12 @@ class SongCacheService {
     if (availableSongs?.length >= count) {
       // Trigger cache refresh in background
       if (!cache.updating) {
-        this.refreshCache(channelId)
+        this.refreshCache(channelName)
         .then(() => {
-          console.log(`Background cache refresh completed for channel ${channelId}`);
+          console.log(`[CACHE] Background cache refresh completed for channel ${channelName}`);
         })
         .catch(err => {
-          console.error(`Background cache refresh error for channel ${channelId}:`, err);
+          console.error(`[CACHE] Background cache refresh error for channel ${channelName}:`, err);
         });
       }
       
@@ -58,8 +62,28 @@ class SongCacheService {
     }
     
     // Not enough songs in cache, need to fetch more immediately
-    return this.refreshCache(channelId, count);
+    const songs = this.refreshCache(channelName, count);
+    this.refreshEmptyChannelCaches();
+    return songs;
   }
+
+async updateSongCacheDb(channelName, newSongs, returnCount = 3) {
+  // Shuffle and select random songs
+  const selectedSongs = this.getRandomSongs(newSongs, returnCount);
+
+  // Update cache in MongoDB with embedded song data
+  await SongCache.findOneAndUpdate(
+    { channelName },
+    {
+      songs: newSongs,
+      lastUpdated: new Date(),
+      updating: false,
+    },
+    { upsert: true, new: true }
+  );
+
+  return selectedSongs;
+}
   
   /**
   * Get random selection of songs
@@ -75,17 +99,17 @@ class SongCacheService {
   
   /**
   * Refresh the cache for a channel
-  * @param {string} channelId - Id of the channel
+  * @param {string} channelName - Name of the channel
   * @param {number} returnCount - Number of songs to return
   * @returns {Promise<Array>} Array of songs
   */
-  async refreshCache(channelId, returnCount = 3) {
-    let cache = await SongCache.findOne({ channelId });
+  async refreshCache(channelName, returnCount = 3) {
+    let cache = await this.findSongCacheDb(channelName);
 
     if (!cache) {
-      console.log(`[CACHE] No cache found for channel ${channelId}, creating new one.`);
+      console.log(`[CACHE] No cache found for channel ${channelName}, creating new one.`);
       cache = new SongCache({
-        channelId,
+        channelName,
         songs: [],
         lastUpdated: null,
         updating: false,
@@ -99,11 +123,9 @@ class SongCacheService {
       if (cache.songs.length > 0) {
         const availableSongs = cache.songs
         const songs = this.getRandomSongs(availableSongs, returnCount);
-        await SongCache.findOneAndUpdate(
-          { channelId },
-          { songs: availableSongs, lastUpdated: new Date() },
-          { upsert: true, new: true }
-        );
+        
+        this.updateSongCacheDb(channelName, availableSongs);
+
         return songs;
       }
       return [];
@@ -113,16 +135,18 @@ class SongCacheService {
     
     try {
       // Get channel details
-      const channel = await Channel.findById(channelId);
+      const channel = await Channel.findOne({ name: channelName }) 
       if (!channel) {
-        throw new Error(`Channel ${channelId} not found`);
+        throw new Error(`Channel ${channelName} not found`);
       }
       
       const newSongs = [];
       try {
         console.log(`[CACHE] Fetching songs for channel: ${channel.name}`);
-        const aiSuggestions = await getUniqueAISuggestions(channel, Song, [], []);
-        
+        const aiSuggestions = await getUniqueAISuggestions(channel, Song, [], [], 10);
+
+       console.log(`[CACHE] Fetched songs for channel: ${channel.name}`);
+
         for (const suggestion of aiSuggestions) {
           const newSong = new Song({
             ...suggestion,
@@ -131,23 +155,16 @@ class SongCacheService {
           newSongs.push(newSong);
         }
       } catch (aiError) {
-        console.error('Error getting AI suggestions:', aiError);
+        console.error('[CACHE] Error getting AI suggestions:', aiError);
       }
-      
-      // Update cache
-      cache.songs = newSongs;
-      cache.lastUpdated = new Date();
-      
       // Return requested number of random songs
       const songs = this.getRandomSongs(newSongs, returnCount);
-      await SongCache.findOneAndUpdate(
-        { channelId },
-        { songs: newSongs, lastUpdated: new Date() },
-        { upsert: true, new: true }
-      );
+
+      this.updateSongCacheDb(channelName, newSongs);
+
       return songs;
     } catch (error) {
-      console.error(`Error refreshing cache for channel ${channelId}:`, error);
+      console.error(`[CACHE] Error refreshing cache for channel ${channelName}:`, error);
       return [];
     } finally {
       cache.updating = false;
@@ -165,7 +182,7 @@ class SongCacheService {
       
       // Process each channel
       for (const channel of channels) {
-        const cache = this.channels[channel._id];
+        const cache = this.channels[channel.name];
         
         // Skip if cache exists and has songs or is currently updating
         if (cache && (cache.songs.length > 0 || cache.updating)) {
@@ -173,12 +190,12 @@ class SongCacheService {
         }
         
         // Refresh cache for this channel
-        this.refreshCache(channel._id).catch(err => 
-          console.error(`Error refreshing empty cache for channel ${channel._id}:`, err)
+        this.refreshCache(channel.name).catch(err => 
+          console.error(`[CACHE] Error refreshing empty cache for channel ${channel._id}:`, err)
         );
       }
     } catch (error) {
-      console.error('Error refreshing empty channel caches:', error);
+      console.error('[CACHE] Error refreshing empty channel caches:', error);
     }
   }
 }

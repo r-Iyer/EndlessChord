@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { fetchChannels, fetchChannelById } from './services/apiService';
 import ChannelSelector from './components/ChannelSelector/ChannelSelector';
 import VideoPlayer from './components/VideoPlayer/VideoPlayer';
@@ -6,10 +6,12 @@ import SongInfo from './components/SongInfo/SongInfo';
 import Spinner from './components/Spinner/Spinner';
 import PlayerFooter from './components/PlayerFooter/PlayerFooter';
 import usePlayerHandlers from './hooks/usePlayerHandlers';
-import usePlayerEffects from './hooks/usePlayerEffects';
 import useSongQueue from './hooks/useSongQueue';
 import useFullscreen from './hooks/useFullscreen';
 import './App.css';
+import useChannelHandlers from './hooks/useChannelHandlers';
+import usePlayerEffects from './hooks/usePlayerEffects';
+
 
 function App() {
   const [isCCEnabled, setIsCCEnabled] = useState(false)
@@ -19,9 +21,9 @@ function App() {
   const [currentSong, setCurrentSong] = useState(null);
   const [nextSong, setNextSong] = useState(null);
   const [queue, setQueue] = useState([]);
-  const [showInfo, setShowInfo] = useState(false);
   const playerRef = useRef(null);
-  const infoTimeoutRef = useRef(null); // use ref instead of state for infoTimeout
+  const [showInfo, setShowInfo] = useState(false);
+  const infoTimeoutRef = useRef(null); 
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
@@ -36,17 +38,29 @@ function App() {
   const [isInitialLoad, setIsInitialLoad] = useState(true); // <-- Add initial load state
   const fullscreenRef = useRef(null);
 
-  const { fetchSongsForChannel, fetchMoreSongs } = useSongQueue(
-    currentChannel, currentSong, setCurrentSong, setNextSong, setQueue, isFetchingSongs, setIsFetchingSongs, isInitialLoad, setIsInitialLoad
-  );
+  const { 
+    fetchSongsForChannel, 
+    fetchMoreSongs 
+  } = useSongQueue( currentChannel, currentSong, setCurrentSong, setNextSong, setQueue, 
+    isFetchingSongs, setIsFetchingSongs, isInitialLoad, setIsInitialLoad);
   const {
     handleSeek,
+    handlePreviousSong,
+    handleNextSong,
     togglePlayPause,
+    handlePlayerReady,
     handlePlayerStateChange,
   } = usePlayerHandlers(
-    playerRef, isPlaying, setIsPlaying, setCurrentSong, nextSong, setNextSong, queue, setQueue, fetchMoreSongs);
-  usePlayerEffects(
+    playerRef, isPlaying, setIsPlaying, currentSong, setCurrentSong, nextSong, setNextSong, queue, setQueue, fetchMoreSongs, 
+    history, setHistory, setCurrentTime, setPlayerReady);
+
+    usePlayerEffects(
     currentSong, setShowInfo, infoTimeoutRef, currentTime, setCurrentTime, duration, setDuration, playerRef);
+
+  const { setChannelNameInURL, selectChannel } = useChannelHandlers(
+    setUserInteracted, setBackendError, setIsPlaying, setCurrentSong, setNextSong, setQueue, setIsLoading,
+    setCurrentChannel, fetchChannelById, fetchSongsForChannel, currentChannel, channels
+  );
   const { toggleFullscreen } = useFullscreen(isFullscreen, setIsFullscreen, fullscreenRef);
 
   // Helper: get channel name from URL query param
@@ -54,70 +68,6 @@ function App() {
     const params = new URLSearchParams(window.location.search);
     return params.get('channel');
   };
-
-  // Helper: update URL with channel name
-  const setChannelNameInURL = (channelName) => {
-    const params = new URLSearchParams(window.location.search);
-    if (channelName) {
-      params.set('channel', channelName);
-    } else {
-      params.delete('channel');
-    }
-    const newUrl = `${window.location.pathname}?${params.toString()}`;
-    window.history.replaceState({}, '', newUrl);
-  };
-
-  // Modified selectChannel to NOT set isPlaying to true immediately
-  const selectChannel = useCallback(
-    async (channelIdOrName) => {
-      setUserInteracted(true);
-      setBackendError(false);
-      setIsPlaying(false); // <-- always set to false here
-      setCurrentSong(null);
-      setNextSong(null);
-      setQueue([]);
-      setIsLoading(true);
-      try {
-        let channelData = null;
-        if (channels.length > 0 && typeof channelIdOrName === 'string' && !/^[0-9a-fA-F]{24}$/.test(channelIdOrName)) {
-          channelData = channels.find(
-            c => c.name.replace(/\s+/g, '-').toLowerCase() === channelIdOrName.replace(/\s+/g, '-').toLowerCase()
-          );
-        }
-        if (!channelData) {
-          channelData = await fetchChannelById(channelIdOrName);
-        }
-        // Prevent unnecessary re-selection
-        if (currentChannel && currentChannel._id === channelData._id) {
-          setIsLoading(false);
-          return;
-        }
-        setCurrentChannel(channelData);
-        setChannelNameInURL(channelData.name.replace(/\s+/g, '-'));
-        const songs = await fetchSongsForChannel(channelData._id);
-        if (songs && songs.length > 0) {
-          setCurrentSong(songs[0]);
-          setNextSong(songs[1] || null);
-          setQueue(songs.slice(2));
-          // Do NOT set isPlaying here!
-        } else {
-          setCurrentSong(null);
-          setNextSong(null);
-          setQueue([]);
-          setIsPlaying(false);
-        }
-      } catch (error) {
-        setBackendError(true);
-        setCurrentSong(null);
-        setNextSong(null);
-        setQueue([]);
-        setIsPlaying(false);
-      } finally {
-        setIsLoading(false);
-      }
-    },
-    [fetchSongsForChannel, channels, currentChannel]
-  );
 
   useEffect(() => {
     let mounted = true;
@@ -193,40 +143,6 @@ function App() {
     return () => intervalId && clearInterval(intervalId);
   }, [currentSong, playerReady, setCurrentTime, setDuration]); // Add missing dependencies
 
-  // Only define handlePlayerReady here, not in usePlayerHandlers
-  const handlePlayerReady = (event) => {
-    playerRef.current = event.target;
-    setPlayerReady(true);
-    setIsPlaying(true);
-    event.target.playVideo(); // <-- Force play on ready
-  };
-
-  // Modified handleNextSong to push currentSong to history
-  const handleNextSong = useCallback(() => {
-    if (nextSong) {
-      setHistory(prev => [...prev, currentSong]);
-      setCurrentSong(nextSong);
-      setNextSong(queue[0] || null);
-      setQueue(queue.slice(1));
-      if (queue.length < 3) fetchMoreSongs();
-    } else {
-      fetchMoreSongs(true);
-    }
-  }, [nextSong, currentSong, queue, setCurrentSong, setNextSong, setQueue, fetchMoreSongs]);
-
-  // New handlePreviousSong to pop from history
-  const handlePreviousSong = useCallback(() => {
-    if (history.length > 0) {
-      const prevSong = history[history.length - 1];
-      setHistory(prev => prev.slice(0, -1));
-      setQueue(q => [currentSong, ...q]);
-      setNextSong(currentSong);
-      setCurrentSong(prevSong);
-    } else if (playerRef.current && typeof playerRef.current.seekTo === 'function') {
-      playerRef.current.seekTo(0, true);
-      setCurrentTime(0);
-    }
-  }, [history, currentSong, setCurrentSong, setNextSong, setQueue, setHistory, playerRef, setCurrentTime]);
 
   // Keyboard shortcuts for previous (Q) and next (E)
   useEffect(() => {

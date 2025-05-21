@@ -4,20 +4,63 @@ export default function usePlayerHandlers(
   playerRef,
   isPlaying,
   setIsPlaying,
+  currentSong,
   setCurrentSong,
   nextSong,
   setNextSong,
   queue,
   setQueue,
   fetchMoreSongs,
+  history,
+  setHistory,
+  setCurrentTime,
+  setPlayerReady,
 ) {
+  const handlePlayerReady = (event) => {
+    playerRef.current = event.target;
+    setPlayerReady(true);
+    setIsPlaying(true);
+    event.target.playVideo(); // <-- Force play on ready
+  };
   const handleSeek = useCallback((time) => {
     if (!playerRef.current) return;
     playerRef.current.seekTo(Math.floor(time), true);
   }, [playerRef]);
-
+  
+  const updatePlayCount = useCallback(async (songId) => {
+    try {
+      await fetch('/api/songs/played', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ songIds: [songId] }),
+      });
+    } catch (error) {
+      console.error('Failed to update play count:', error);
+    }
+  }, []);
+  
+  
+  // New handlePreviousSong to pop from history
+  const handlePreviousSong = useCallback(() => {
+    updatePlayCount(currentSong._id);
+    if (history.length > 0) {
+      const prevSong = history[history.length - 1];
+      setHistory(prev => prev.slice(0, -1));
+      setQueue(q => [currentSong, ...q]);
+      setNextSong(currentSong);
+      setCurrentSong(prevSong);
+    } else if (playerRef.current && typeof playerRef.current.seekTo === 'function') {
+      playerRef.current.seekTo(0, true);
+      setCurrentTime(0);
+    }
+  }, [updatePlayCount, currentSong, history, playerRef, setHistory, setQueue, setNextSong, setCurrentSong, setCurrentTime]);
+  // Modified handleNextSong to push currentSong to history
   const handleNextSong = useCallback(() => {
+    updatePlayCount(currentSong._id);
     if (nextSong) {
+      setHistory(prev => [...prev, currentSong]);
       setCurrentSong(nextSong);
       setNextSong(queue[0] || null);
       setQueue(queue.slice(1));
@@ -25,8 +68,8 @@ export default function usePlayerHandlers(
     } else {
       fetchMoreSongs(true);
     }
-  }, [nextSong, setCurrentSong, setNextSong, queue, setQueue, fetchMoreSongs]);
-
+  }, [updatePlayCount, currentSong, nextSong, setHistory, setCurrentSong, setNextSong, queue, setQueue, fetchMoreSongs]);
+  
   const togglePlayPause = useCallback(() => {
     if (!playerRef.current) return;
     if (isPlaying) {
@@ -36,30 +79,26 @@ export default function usePlayerHandlers(
     }
     setIsPlaying(!isPlaying);
   }, [playerRef, isPlaying, setIsPlaying]);
-
-  const handlePlayerReady = useCallback((event) => {
-    playerRef.current = event.target;
-    event.target.playVideo(); // <-- Always play on ready
-  }, [playerRef]);
-
+  
   const handlePlayerStateChange = useCallback((event) => {
     switch (event.data) {
       case window.YT.PlayerState.PLAYING:
-        setIsPlaying(true);
-        break;
+      setIsPlaying(true);
+      break;
       case window.YT.PlayerState.PAUSED:
-        setIsPlaying(false);
-        break;
+      setIsPlaying(false);
+      break;
       case window.YT.PlayerState.ENDED:
-        handleNextSong();
-        break;
+      handleNextSong();
+      break;
       default:
-        break;
+      break;
     }
   }, [setIsPlaying, handleNextSong]);
-
+  
   return {
     handleSeek,
+    handlePreviousSong,
     handleNextSong,
     togglePlayPause,
     handlePlayerReady,

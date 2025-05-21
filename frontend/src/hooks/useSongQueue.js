@@ -19,9 +19,6 @@ export default function useSongQueue(
       if(isInitialLoad) {
         queryUrl+=`?source=initial`;
       }
-      else {
-        queryUrl+=`?source=refresh`;
-      }
       const response = await fetch(queryUrl);
       setIsInitialLoad(false);
       return await response.json();

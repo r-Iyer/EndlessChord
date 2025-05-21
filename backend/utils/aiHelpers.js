@@ -6,11 +6,11 @@ const { GoogleGenAI } = require("@google/genai");
 /**
  * Get AI suggestions with duplicate check and retry logic.
  */
-async function getUniqueAISuggestions(channel, Song, excludeIds, baseSongs, maxRetries = 3) {
+async function getUniqueAISuggestions(channel, Song, excludeIds, baseSongs, song_count = 30, maxRetries = 3) {
   let aiSuggestions = [];
   let aiRetryCount = 0;
   do {
-    aiSuggestions = await getAISuggestions(channel, Song);
+    aiSuggestions = await getAISuggestions(channel, Song, song_count);
     aiSuggestions = filterAISuggestions(aiSuggestions, excludeIds, baseSongs);
     if (!hasDuplicateVideoIds(aiSuggestions)) break;
     aiRetryCount++;
@@ -18,7 +18,7 @@ async function getUniqueAISuggestions(channel, Song, excludeIds, baseSongs, maxR
   return aiSuggestions;
 }
 
-async function getAISuggestions(channel, Song) {
+async function getAISuggestions(channel, Song, song_count) {
   const ai = new GoogleGenAI({ apiKey: process.env.GOOGLE_GENAI_API_KEY });
   const MAX_RETRIES = 5;
   const BACKOFF_FACTOR = 1000;
@@ -30,7 +30,7 @@ async function getAISuggestions(channel, Song) {
       const songExamples = existingSongs.map(song =>
         `"${song.title}"`
       ).join('\n');
-      const recommendationPrompt = `I need recommendations for 10 ${channel.language} music having description ${channel.description}, for the channel "${channel.name}", similar to these examples:
+      const recommendationPrompt = `I need recommendations for ${song_count} ${channel.language} music having description ${channel.description}, for the channel "${channel.name}", similar to these examples:
 
 ${songExamples}
 
