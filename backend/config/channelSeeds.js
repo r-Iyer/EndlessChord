@@ -22,15 +22,22 @@ module.exports = [
   },
   {
     name: 'Lofi',
-    description: 'Chill Lofi beats to relax/study to',
+    description: 'Chill Lofi beats to relax or study',
     language: 'various',
     genre: 'lofi',
     seedSongs: []
   },
   {
-    name: 'Tamil Tunes',
-    description: 'All time tamil hit film songs and albums',
+    name: 'Tamizh Tunes',
+    description: 'All time tamil hit film songs and music and albums',
     language: 'tamil',
+    genre: 'various',
+    seedSongs: []
+  },
+  {
+    name: 'Bangali Baaje',
+    description: 'All time Bengali great hit film songs and music and albums',
+    language: 'Bengali',
     genre: 'various',
     seedSongs: []
   },
