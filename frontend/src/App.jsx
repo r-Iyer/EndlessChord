@@ -41,7 +41,7 @@ function App() {
   const { 
     fetchSongsForChannel, 
     fetchMoreSongs 
-  } = useSongQueue( currentChannel, currentSong, setCurrentSong, setNextSong, setQueue, 
+  } = useSongQueue( currentChannel, currentSong, setCurrentSong, nextSong, setNextSong, queue, setQueue, 
     isFetchingSongs, setIsFetchingSongs, isInitialLoad, setIsInitialLoad);
   const {
     handleSeek,

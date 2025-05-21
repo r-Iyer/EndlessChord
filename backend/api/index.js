@@ -65,7 +65,13 @@ app.get('/api/channels/:id/songs', async (req, res) => {
         res.status(500).json({ message: 'Server error' });
       }
     }
-    const excludeIds = req.query.exclude ? req.query.exclude.split(',') : [];
+    let excludeIds = [];
+    try {
+        // New format: JSON array of IDs
+        excludeIds = JSON.parse(req.query.excludeIds);
+      } catch (error) {
+        console.error('Error parsing excludeIds:', error);
+      }
     const recentlyPlayed = await Song.find({ 
       language: channel.language,
       lastPlayed: { $exists: true }
