@@ -24,11 +24,11 @@ function VideoPlayer({
 }) {
   const containerRef = useRef(null);
   const [isPlayerReady, setIsPlayerReady] = useState(false);
-
+  
   useEffect(() => {
     setIsPlayerReady(false);
   }, [currentSong?.videoId]);
-
+  
   useEffect(() => {
     if (!isPlayerReady || !playerRef.current?.getPlayerState) return;
     try {
@@ -38,7 +38,7 @@ function VideoPlayer({
       }
     } catch {}
   }, [isPlaying, isPlayerReady, playerRef]);
-
+  
   // Toggle captions using loadModule/unloadModule to avoid reloads
   useEffect(() => {
     const p = playerRef.current;
@@ -54,13 +54,13 @@ function VideoPlayer({
       }
     } catch {}
   }, [isCCEnabled, isPlayerReady, playerRef]);
-
+  
   useEffect(() => {
     function handleFullscreenChange() {
       const isFull =
-        document.fullscreenElement === containerRef.current ||
-        document.webkitFullscreenElement === containerRef.current ||
-        document.msFullscreenElement === containerRef.current;
+      document.fullscreenElement === containerRef.current ||
+      document.webkitFullscreenElement === containerRef.current ||
+      document.msFullscreenElement === containerRef.current;
       if (isFull && window.screen.orientation?.lock) {
         window.screen.orientation.lock('landscape').catch(() => {});
       }
@@ -74,7 +74,7 @@ function VideoPlayer({
       document.removeEventListener('msfullscreenchange', handleFullscreenChange);
     };
   }, []);
-
+  
   const opts = useMemo(() => ({
     width: '100%',
     height: '100%',
@@ -85,36 +85,37 @@ function VideoPlayer({
       modestbranding: 1,
       rel: 0,
       iv_load_policy: 3,
-      showinfo: 0
+      showinfo: 0,
+      cc_load_policy: 3,
     }
   }), []);
-
+  
   const handleReady = (event) => {
     playerRef.current = event.target;
     setIsPlayerReady(true);
     onReady(event);
   };
-
+  
   if (!currentSong) {
     return (
       <div className="empty-player-container">
-        <div className="empty-player-message">Select a channel to start watching</div>
+      <div className="empty-player-message">Select a channel to start watching</div>
       </div>
     );
   }
-
+  
   return (
     <div ref={containerRef} className="youtube-container">
-      <div className="video-wrapper">
-        <YouTube
-          videoId={currentSong.videoId}
-          opts={opts}
-          onReady={handleReady}
-          onStateChange={onStateChange}
-          onError={onError}
-          className="youtube-player"
-        />
-      </div>
+    <div className="video-wrapper">
+    <YouTube
+    videoId={currentSong.videoId}
+    opts={opts}
+    onReady={handleReady}
+    onStateChange={onStateChange}
+    onError={onError}
+    className="youtube-player"
+    />
+    </div>
     </div>
   );
 }
