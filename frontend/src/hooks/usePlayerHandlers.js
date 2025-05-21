@@ -16,12 +16,21 @@ export default function usePlayerHandlers(
   setCurrentTime,
   setPlayerReady,
 ) {
-  const handlePlayerReady = (event) => {
-    playerRef.current = event.target;
-    setPlayerReady(true);
+const handlePlayerReady = (event) => {
+  playerRef.current = event.target;
+  setPlayerReady(true);
+  
+  // Try to play and handle potential failure due to autoplay policy
+  event.target.playVideo();
+  
+  // Check if player is actually playing
+  if (event.target.getPlayerState() !== window.YT.PlayerState.PLAYING) {
+    console.log("Autoplay was prevented. User interaction required.");
+    setIsPlaying(false);
+  } else {
     setIsPlaying(true);
-    event.target.playVideo(); // <-- Force play on ready
-  };
+  }
+};
   const handleSeek = useCallback((time) => {
     if (!playerRef.current) return;
     playerRef.current.seekTo(Math.floor(time), true);
