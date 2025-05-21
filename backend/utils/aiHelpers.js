@@ -32,11 +32,8 @@ async function getAISuggestions(channel, Song, song_count) {
       const songExamples = existingSongs.map(song =>
         `"${song.title}"`
       ).join('\n');
-      const recommendationPrompt = `I need recommendations for ${song_count} ${channel.language} music having description ${channel.description}, for the channel "${channel.name}", similar to these examples:
-
-${songExamples}
-
-Do not recommend the songs I mentioned above. Those are just examples. You can suggest songs from any year.
+      const recommendationPrompt = `I need recommendations for ${song_count} ${channel.language} music having description ${channel.description}
+You can suggest songs from any year.
 For each recommendation, provide only the song title, artist name, album name (if known), release year, and genre in JSON format:
 [{
   "title": "Song Title",

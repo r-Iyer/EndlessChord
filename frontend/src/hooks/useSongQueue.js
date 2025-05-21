@@ -12,6 +12,8 @@ export default function useSongQueue(
   setIsFetchingSongs,
   isInitialLoad,
   setIsInitialLoad,
+  history,
+  searchQuery // Added search query parameter
 ) {
   /**
    * Fetches songs for a channel with various options
@@ -31,9 +33,10 @@ export default function useSongQueue(
       appendToQueue = false
     } = options;
     
-    // Guard clauses
-    if (!channelId) return [];
+    // Guard clauses - modified to allow null channelId for search
+							  
     if (isFetchingSongs) return [];
+    if (!channelId && !searchQuery) return []; // Allow null channelId if we have a search query
     
     setIsFetchingSongs(true);
 
@@ -59,13 +62,31 @@ export default function useSongQueue(
           }
         });
       }
+
+            // Add all songs from history
+      if (history && Array.isArray(history)) {
+        history.forEach(song => {
+          if (song?.videoId) {
+            excludeIds.push(song.videoId);
+          }
+        });
+      }
       
-      // Build query URL
-      let queryUrl = `/api/channels/${channelId}/songs`;
+      // Build query URL - modified to support search
+      let queryUrl;
       const params = new URLSearchParams();
       
-      if (initial) {
-        params.append('source', 'initial');
+      if (!channelId) {
+        // Search mode
+        queryUrl = `/api/search`;
+        params.append('q', searchQuery);
+        params.append('custom', 'true');
+      } else {
+        // Channel mode
+        queryUrl = `/api/channels/${channelId}/songs`;
+        if (initial) {
+          params.append('source', 'initial');
+        }
       }
       
       // Send all excluded IDs to backend
@@ -106,7 +127,7 @@ export default function useSongQueue(
         setIsInitialLoad(false);
       }*/
     }
-  }, [currentChannel, currentSong, nextSong, queue, isFetchingSongs, isInitialLoad, setCurrentSong, setNextSong, setQueue, setIsFetchingSongs]);
+  }, [currentChannel, currentSong, nextSong, queue, isFetchingSongs, isInitialLoad, setCurrentSong, setNextSong, setQueue, setIsFetchingSongs, searchQuery, history]);
 
   // For backward compatibility and convenience
   const fetchSongsForChannel = useCallback((channelId) => {
