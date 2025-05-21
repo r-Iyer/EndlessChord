@@ -2,7 +2,7 @@ const Channel = require('../models/Channel');
 const { Song } = require('../models/Song');
 const { getUniqueAISuggestions, } = require('../utils/aiHelpers');
 const SongCache = require('../models/SongCache');
-const { CACHED_SONG_COUNT_LIMIT } = require('../config/constants');
+const { CACHED_SONG_COUNT_LIMIT, CACHED_SONG_COUNT_RETURNED } = require('../config/constants');
 
 /**
 * Service for caching songs and managing song retrieval
