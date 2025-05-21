@@ -2,6 +2,7 @@ const Channel = require('../models/Channel');
 const { Song } = require('../models/Song');
 const { getUniqueAISuggestions, } = require('../utils/aiHelpers');
 const SongCache = require('../models/SongCache');
+const { CACHED_SONG_COUNT } = require('../config/constants');
 
 /**
 * Service for caching songs and managing song retrieval
@@ -39,7 +40,7 @@ async findSongCacheDb(channelName) {
   * @param {number} count - Number of songs to return
   * @returns {Promise<Array>} Array of songs
   */
-  async getCachedSongs(channelName, count = 3) {
+  async getCachedSongs(channelName, count = CACHED_SONG_COUNT) {
     const cache = await this.findSongCacheDb(channelName);
     
     const availableSongs = cache?.songs
@@ -67,7 +68,7 @@ async findSongCacheDb(channelName) {
     return songs;
   }
 
-async updateSongCacheDb(channelName, newSongs, returnCount = 3) {
+async updateSongCacheDb(channelName, newSongs, returnCount = CACHED_SONG_COUNT) {
   // Shuffle and select random songs
   const selectedSongs = this.getRandomSongs(newSongs, returnCount);
 
@@ -103,7 +104,7 @@ async updateSongCacheDb(channelName, newSongs, returnCount = 3) {
   * @param {number} returnCount - Number of songs to return
   * @returns {Promise<Array>} Array of songs
   */
-  async refreshCache(channelName, returnCount = 3) {
+  async refreshCache(channelName, returnCount = CACHED_SONG_COUNT) {
     let cache = await this.findSongCacheDb(channelName);
 
     if (!cache) {

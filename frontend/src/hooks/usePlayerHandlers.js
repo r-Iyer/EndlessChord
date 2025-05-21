@@ -1,4 +1,5 @@
 import { useCallback } from 'react';
+import { MINIMUM_QUEUE_SIZE } from '../config/constants';
 
 export default function usePlayerHandlers(
   playerRef,
@@ -76,7 +77,7 @@ export default function usePlayerHandlers(
       setCurrentSong(nextSong);
       setNextSong(queue[0] || null);
       setQueue(queue.slice(1));
-      if (queue.length < 3) fetchMoreSongs();
+      if (queue.length < MINIMUM_QUEUE_SIZE) fetchMoreSongs();
     } else {
       fetchMoreSongs(true);
     }

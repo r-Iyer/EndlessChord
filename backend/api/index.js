@@ -5,7 +5,8 @@ const Channel = require('../models/Channel');
 const { Song } = require('../models/Song');
 const { initializeDbTables, initializeDbConnection } = require('../init/initialiseHelper');
 const { getUniqueAISuggestions, } = require('../utils/aiHelpers');
-const songCacheService = require('../services/songCache');
+const songCacheService = require('../services/songCacheService');
+const { MINIMUM_SONG_COUNT } = require('../config/constants');
 
 const app = express();
 app.use(cors());
@@ -83,7 +84,7 @@ app.get('/api/channels/:id/songs', async (req, res) => {
       videoId: { $nin: allExcludeIds }
     }).sort({ playCount: 1 })
     
-    if (songs.length < 5) {
+    if (songs.length < MINIMUM_SONG_COUNT) {
       try {
         const aiSuggestions = await getUniqueAISuggestions(channel, Song, allExcludeIds, songs, 30);
         console.log(aiSuggestions)

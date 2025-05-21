@@ -1,12 +1,13 @@
 const axios = require('axios');
 const cheerio = require('cheerio');
 const { GoogleGenAI } = require("@google/genai");
+const { AI_SUGGESTION_CONFIG } = require('../config/constants');
 
 
 /**
  * Get AI suggestions with duplicate check and retry logic.
  */
-async function getUniqueAISuggestions(channel, Song, excludeIds, baseSongs, song_count = 30, maxRetries = 3) {
+async function getUniqueAISuggestions(channel, Song, excludeIds, baseSongs, song_count = AI_SUGGESTION_CONFIG.DEFAULT_SONG_COUNT, maxRetries = MAX_RETRIES) {
   let aiSuggestions = [];
   let aiRetryCount = 0;
   do {
