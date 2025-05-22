@@ -9,7 +9,6 @@ import SearchBar from './components/SearchBar/SearchBar'; // Import the new Sear
 import usePlayerHandlers from './hooks/usePlayerHandlers';
 import useSongQueue from './hooks/useSongQueue';
 import useFullscreen from './hooks/useFullscreen';
-
 import useChannelHandlers from './hooks/useChannelHandlers';
 import usePlayerEffects from './hooks/usePlayerEffects';
 import useSearch from './hooks/useSearch'; // Import the new useSearch hook
@@ -200,6 +199,7 @@ function App() {
           <div className="w-full md:w-1/3 order-1 md:order-1">
           <SearchBar 
           onSearch={handleSearch} 
+          searchQuery={searchQuery}  // Add this line
           className="w-full"
           />
           </div>

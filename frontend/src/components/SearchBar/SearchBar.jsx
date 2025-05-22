@@ -1,14 +1,19 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import './SearchBar.css';
 
-export default function SearchBar({ onSearch, className = '' }) {
-  const [query, setQuery] = useState('');
+export default function SearchBar({ onSearch, searchQuery = '', onQueryChange, className = '' }) {
+  const [query, setQuery] = useState(searchQuery);
   const [suggestions, setSuggestions] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const inputRef = useRef(null);
   const suggestionsRef = useRef(null);
   const skipNextFetch = useRef(false);
+  
+  // Sync internal query with external searchQuery prop
+  useEffect(() => {
+    setQuery(searchQuery);
+  }, [searchQuery]);
   
   // Handle clicks outside the suggestions dropdown
   useEffect(() => {
@@ -136,6 +141,13 @@ export default function SearchBar({ onSearch, className = '' }) {
     setShowSuggestions(false);
     setSuggestions([]); // Clear suggestions immediately
   };
+
+  const handleQueryChange = (newQuery) => {
+    setQuery(newQuery);
+    if (onQueryChange) {
+      onQueryChange(newQuery);
+    }
+  };
   
   return (
     <div className={`search-container ${className}`}>
@@ -145,7 +157,7 @@ export default function SearchBar({ onSearch, className = '' }) {
             ref={inputRef}
             type="text"
             value={query}
-            onChange={(e) => setQuery(e.target.value)}
+            onChange={(e) => handleQueryChange(e.target.value)}
             onFocus={() => query.length >= 2 && suggestions.length > 0 && setShowSuggestions(true)}
             placeholder="Search Anything..."
             className="search-input"
