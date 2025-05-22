@@ -41,24 +41,37 @@ export default function usePlayerEffects(
     return () => intervalId && clearInterval(intervalId);
   }, [currentSong, playerRef, setCurrentTime, setDuration]);
 
-  // Show SongInfo at the beginning and when 20s remain
-  useEffect(() => {
-    if (!currentSong || !duration) return;
-    let preEndTimeout = null;
-    if (duration > 30) {
-      const timeLeft = duration - currentTime;
-      if (timeLeft > 20) {
-        preEndTimeout = setTimeout(() => {
-          showSongInfo();
-        }, (timeLeft - 20) * 1000);
-      } else if (timeLeft <= 20 && timeLeft > 0) {
+// Show SongInfo at the beginning and when 20s remain
+useEffect(() => {
+  if (!currentSong || !duration) return;
+  
+  let preEndTimeout = null;
+  
+  // Show at the beginning (first 2 seconds)
+  if (currentTime <= 2) {
+    showSongInfo();
+  }
+  
+  // Show when 20 seconds remain (only for songs longer than 30s)
+  if (duration > 30) {
+    const timeLeft = duration - currentTime;
+    
+    if (timeLeft > 20) {
+      // Set timeout to show info when 20 seconds remain
+      preEndTimeout = setTimeout(() => {
         showSongInfo();
-      }
+      }, (timeLeft - 20) * 1000);
+    } else if (timeLeft <= 20 && timeLeft > 0 && currentTime > 2) {
+      // Show immediately if we're already in the last 20 seconds
+      // (but not if we're still in the beginning)
+      showSongInfo();
     }
-    return () => {
-      if (preEndTimeout) clearTimeout(preEndTimeout);
-    };
-  }, [currentSong, duration, currentTime, showSongInfo]);
+  }
+  
+  return () => {
+    if (preEndTimeout) clearTimeout(preEndTimeout);
+  };
+}, [currentSong, duration, currentTime, showSongInfo]);
 
   return { showSongInfo };
 }
