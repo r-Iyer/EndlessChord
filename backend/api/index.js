@@ -72,7 +72,7 @@ app.get('/api/channels/:id/songs', async (req, res) => {
       try {
         const songs = await songCacheService.getCachedSongs(channel.name);
         await Song.insertMany(songs, { ordered: false })
-          .catch(err => { if (err.code !== 11000) throw err });
+        .catch(err => { if (err.code !== 11000) throw err });
         return sendResponse(res, songs);
       } catch (error) {
         return handleError(res, error, `/api/channels/${req.params.id}/songs`);
@@ -98,7 +98,7 @@ app.get('/api/channels/:id/songs', async (req, res) => {
 app.get('/api/search', async (req, res) => {
   const { q: searchQuery, custom: isCustomSearch, excludeIds: excludeIdsParam } = req.query;
   console.log(`[ROUTE] GET /api/search — Query: ${searchQuery}`);
-
+  
   try {
     if (!searchQuery) {
       return sendResponse(res, { message: 'Search query is required' }, 400);
@@ -125,7 +125,7 @@ app.get('/api/search', async (req, res) => {
     
     // Check if we have enough high-quality results before adding AI suggestions
     const hasHighQualityResults = sortedAndFilteredSongs.length >= MINIMUM_SONG_COUNT && 
-                                 sortingStats.averageConfidence >= CONFIDENCE_THRESHOLD;
+    sortingStats.averageConfidence >= CONFIDENCE_THRESHOLD;
     
     let finalSongs = sortedAndFilteredSongs;
     
@@ -144,9 +144,11 @@ app.get('/api/search', async (req, res) => {
       
       // If AI suggestions were added, re-sort everything
       /*if (enhancedSongs.length > finalSongs.length) {
-        finalSongs = sortByRelevance(enhancedSongs, searchQuery);
+      finalSongs = sortByRelevance(enhancedSongs, searchQuery);
       }*/
-      finalSongs = enhancedSongs;
+      finalSongs =   enhancedSongs.map(song =>
+        song.toObject ? song.toObject() : { ...song }
+      );
     }
     
     // Limit final results
@@ -199,8 +201,8 @@ app.post('/api/songs/played', async (req, res) => {
 // Create search regex
 const createSearchRegex = (searchQuery) => {
   const words = searchQuery.split(/\s+/)
-    .filter(w => w.length > 2)
-    .map(w => w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+  .filter(w => w.length > 2)
+  .map(w => w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
   return new RegExp(`\\b(?:${words.join('|')})\\b`, 'i');
 };
 
