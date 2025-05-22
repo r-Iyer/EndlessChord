@@ -143,9 +143,10 @@ app.get('/api/search', async (req, res) => {
       const enhancedSongs = await addAISuggestionsIfNeeded(finalSongs, searchChannel, existingVideoIds);
       
       // If AI suggestions were added, re-sort everything
-      if (enhancedSongs.length > finalSongs.length) {
+      /*if (enhancedSongs.length > finalSongs.length) {
         finalSongs = sortByRelevance(enhancedSongs, searchQuery);
-      }
+      }*/
+      finalSongs = enhancedSongs;
     }
     
     // Limit final results
