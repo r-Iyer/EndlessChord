@@ -1,4 +1,5 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
+import './SearchBar.css';
 
 export default function SearchBar({ onSearch, className = '' }) {
   const [query, setQuery] = useState('');
@@ -7,21 +8,7 @@ export default function SearchBar({ onSearch, className = '' }) {
   const [showSuggestions, setShowSuggestions] = useState(false);
   const inputRef = useRef(null);
   const suggestionsRef = useRef(null);
-  
-  // Debounce function for search suggestions
-  useEffect(() => {
-    const handler = setTimeout(() => {
-      if (query.length >= 2) {
-        fetchSuggestions(query);
-      } else {
-        setSuggestions([]);
-      }
-    }, 300);
-    
-    return () => {
-      clearTimeout(handler);
-    };
-  }, [query]);
+  const skipNextFetch = useRef(false);
   
   // Handle clicks outside the suggestions dropdown
   useEffect(() => {
@@ -41,64 +28,136 @@ export default function SearchBar({ onSearch, className = '' }) {
     };
   }, []);
   
-  const fetchSuggestions = async (searchQuery) => {
+  const generateMusicSuggestions = useCallback((query) => {
+    // Generate music-specific suggestions based on query patterns
+    const suggestions = [];
+    
+    // Check if query looks like an artist name (two words with capitals)
+    if (/^[A-Z][a-z]+ [A-Z][a-z]+$/.test(query)) {
+      suggestions.push(
+        `${query} songs`,
+        `${query} albums`,
+        `${query} latest`,
+        `${query} greatest hits`,
+        `${query} live`,
+        `${query} acoustic`
+      );
+    }
+    // Check if query contains music-related keywords
+    else if (query.includes('song') || query.includes('music') || query.includes('album')) {
+      suggestions.push(
+        `${query}`,
+        `${query} lyrics`,
+        `${query} remix`,
+        `${query} cover`,
+        `${query} instrumental`,
+        `${query} karaoke`
+      );
+    }
+    // Check for genre-related queries
+    else if (['rock', 'pop', 'jazz', 'hip hop', 'rap', 'country', 'blues', 'classical', 'electronic', 'reggae'].some(genre => query.toLowerCase().includes(genre))) {
+      suggestions.push(
+        `${query} songs`,
+        `${query} playlist`,
+        `${query} best`,
+        `${query} 2024`,
+        `${query} hits`,
+        `${query} artists`
+      );
+    }
+    // General music suggestions
+    else {
+      suggestions.push(
+        `${query} song`,
+        `${query} music`,
+        `${query} lyrics`,
+        `${query} official video`,
+        `${query} live performance`,
+        `${query} acoustic version`
+      );
+    }
+    
+    return suggestions.slice(0, 6);
+  }, []);
+
+  const fetchSuggestions = useCallback(async (searchQuery) => {
     setIsLoading(true);
     try {
-      // Simple mock for suggestions - in real app this would be a backend call
-      // Add a real API call here to get suggestions from your backend
-      const mockSuggestions = [
-        `${searchQuery} songs`,
-        `${searchQuery} music video`,
-        `${searchQuery} live`,
-        `${searchQuery} official`
-      ];
-      setSuggestions(mockSuggestions);
+      // For now, just use music-specific suggestions since CORS blocks Google API
+      // You can implement Chrome suggestions later through your backend
+      const musicSuggestions = generateMusicSuggestions(searchQuery);
+      
+      setSuggestions(musicSuggestions);
       setShowSuggestions(true);
+      
     } catch (error) {
-      console.error('Error fetching suggestions:', error);
+      console.error('Error generating suggestions:', error);
+      setSuggestions([]);
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [generateMusicSuggestions]);
+
+  // Debounce function for search suggestions
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      // Skip fetching if we just clicked a suggestion
+      if (skipNextFetch.current) {
+        skipNextFetch.current = false;
+        return;
+      }
+      
+      if (query.length >= 2) {
+        fetchSuggestions(query);
+      } else {
+        setSuggestions([]);
+        setShowSuggestions(false);
+      }
+    }, 300);
+    
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [query, fetchSuggestions]);
   
   const handleSubmit = (e) => {
     e.preventDefault();
     if (query.trim()) {
       onSearch(query);
       setShowSuggestions(false);
+      setSuggestions([]); // Clear suggestions after search
     }
   };
   
   const handleSuggestionClick = (suggestion) => {
+    skipNextFetch.current = true; // Skip the next fetch triggered by query change
     setQuery(suggestion);
     onSearch(suggestion);
     setShowSuggestions(false);
+    setSuggestions([]); // Clear suggestions immediately
   };
   
   return (
-    <div className={`relative ${className}`}>
-      <form onSubmit={handleSubmit} className="flex w-full">
-        <div className="relative flex-grow">
+    <div className={`search-container ${className}`}>
+      <form onSubmit={handleSubmit} className="search-form">
+        <div className="search-input-container">
           <input
             ref={inputRef}
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            onFocus={() => query.length >= 2 && setShowSuggestions(true)}
+            onFocus={() => query.length >= 2 && suggestions.length > 0 && setShowSuggestions(true)}
             placeholder="Search Anything..."
-            className="w-full px-4 py-2 bg-gray-700 text-white rounded-l-md focus:outline-none focus:ring-2 focus:ring-indigo-500 border border-gray-600"
+            className="search-input"
           />
           {isLoading && (
-            <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
-              <div className="w-4 h-4 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
+            <div className="loading-spinner">
+              <div className="spinner"></div>
             </div>
           )}
         </div>
-        <button 
-          type="submit" 
-          className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-r-md transition duration-150"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <button type="submit" className="search-button">
+          <svg xmlns="http://www.w3.org/2000/svg" className="search-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
           </svg>
         </button>
@@ -106,18 +165,15 @@ export default function SearchBar({ onSearch, className = '' }) {
       
       {/* Suggestions dropdown */}
       {showSuggestions && suggestions.length > 0 && (
-        <div 
-          ref={suggestionsRef}
-          className="absolute z-10 mt-1 w-full bg-gray-800 rounded-md shadow-lg max-h-60 overflow-auto"
-        >
-          <ul className="py-1">
+        <div ref={suggestionsRef} className="suggestions-dropdown">
+          <ul className="suggestions-list">
             {suggestions.map((suggestion, index) => (
               <li 
                 key={index}
                 onClick={() => handleSuggestionClick(suggestion)}
-                className="px-4 py-2 hover:bg-gray-700 cursor-pointer text-white flex items-center"
+                className="suggestion-item"
               >
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg xmlns="http://www.w3.org/2000/svg" className="suggestion-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                 </svg>
                 {suggestion}
