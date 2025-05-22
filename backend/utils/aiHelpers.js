@@ -36,16 +36,17 @@ const addAISuggestionsIfNeeded = async (songs, channel, excludeIds) => {
  * Get AI suggestions with duplicate check and retry logic.
  */
 async function getUniqueAISuggestions(channel, Song, excludeIds, baseSongs, song_count) {
-  let aiSuggestions = [];
-  let aiRetryCount = 0;
-  let maxRetries = MAX_RETRIES;
-  do {
-    aiSuggestions = await getAISuggestions(channel, Song, song_count);
-    aiSuggestions = filterAISuggestions(aiSuggestions, excludeIds, baseSongs);
-    if (!hasDuplicateVideoIds(aiSuggestions)) break;
-    aiRetryCount++;
-  } while (aiRetryCount < maxRetries);
-  return aiSuggestions;
+  let allSuggestions = [];
+  let attempts = 0;
+  
+  while (allSuggestions.length < song_count && attempts < MAX_RETRIES) {
+    const newSuggestions = await getAISuggestions(channel, Song, song_count * 2); // Request more
+    const filtered = filterAISuggestions(newSuggestions, excludeIds, baseSongs);
+    allSuggestions = [...new Set([...allSuggestions, ...filtered])]; // Merge and dedupe
+    attempts++;
+  }
+  
+  return allSuggestions.slice(0, song_count);
 }
 
 async function getAISuggestions(channel, Song, song_count) {
@@ -218,19 +219,5 @@ function filterAISuggestions(aiSuggestions, excludeIds, baseSongs) {
     !excludeIds.includes(s.videoId) && !baseIds.has(s.videoId)
   );
 }
-
-
-/**
- * Returns true if there are duplicate videoIds in the array.
- */
-function hasDuplicateVideoIds(songs) {
-  const seen = new Set();
-  for (const s of songs) {
-    if (seen.has(s.videoId)) return true;
-    seen.add(s.videoId);
-  }
-  return false;
-}
-
 
 module.exports = { addAISuggestionsIfNeeded, getUniqueAISuggestions, searchYouTube, extractTopResultFromHTML };
