@@ -4,6 +4,7 @@ const songSchema = new mongoose.Schema({
   videoId: String,
   title: String,
   artist: String,
+  composer: String,
   album: String,
   year: String,
   genre: String,

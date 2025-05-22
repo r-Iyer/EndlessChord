@@ -1,8 +1,36 @@
 const axios = require('axios');
 const cheerio = require('cheerio');
 const { GoogleGenAI } = require("@google/genai");
-const { MAX_RETRIES } = require('../config/constants');
+const { Song } = require('../models/Song');
+const { MAX_RETRIES, MINIMUM_SONG_COUNT, DEFAULT_SONG_COUNT } = require('../config/constants');
 
+
+// Add AI suggestions when needed
+const addAISuggestionsIfNeeded = async (songs, channel, excludeIds) => {
+  if (songs.length >= MINIMUM_SONG_COUNT) return songs;
+  
+  try {
+    const aiSuggestions = await getUniqueAISuggestions(channel, Song, excludeIds, songs, DEFAULT_SONG_COUNT);
+    console.log(aiSuggestions);
+    
+    const newSongs = await Promise.all(
+      aiSuggestions.map(async (suggestion) => {
+        const exists = await Song.findOne({ videoId: suggestion.videoId });
+        if (!exists) {
+          const newSong = new Song({ ...suggestion, language: channel.language });
+          await newSong.save();
+          return newSong;
+        }
+        return null;
+      })
+    );
+    
+    return [...songs, ...newSongs.filter(Boolean)];
+  } catch (aiError) {
+    console.error('Error getting AI suggestions:', aiError);
+    return songs;
+  }
+};
 
 /**
  * Get AI suggestions with duplicate check and retry logic.
@@ -34,10 +62,11 @@ async function getAISuggestions(channel, Song, song_count) {
       ).join('\n');
       const recommendationPrompt = `I need recommendations for ${song_count} ${channel.language} music having description ${channel.description}
 You can suggest songs from any year.
-For each recommendation, provide only the song title, artist name, album name (if known), release year, and genre in JSON format:
+For each recommendation, provide only the song title, artist name, composer name (if known), album name (if known), release year, and genre in JSON format:
 [{
   "title": "Song Title",
   "artist": "Artist Name", 
+  "composer": "Composer Name",
   "album": "Album Name",
   "year": "Year",
   "genre": "Genre"
@@ -74,6 +103,7 @@ For each recommendation, provide only the song title, artist name, album name (i
                 videoId: bestMatch.id.videoId,
                 title: song.title,
                 artist: song.artist,
+                composer: song.composer,
                 album: song.album || "Unknown",
                 year: song.year,
                 genre: song.genre
@@ -203,4 +233,4 @@ function hasDuplicateVideoIds(songs) {
 }
 
 
-module.exports = { getUniqueAISuggestions, searchYouTube, extractTopResultFromHTML };
+module.exports = { addAISuggestionsIfNeeded, getUniqueAISuggestions, searchYouTube, extractTopResultFromHTML };

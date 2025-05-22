@@ -22,6 +22,7 @@ export default function SongInfo({ song, nextSong, laterSong, visible }) {
           <div className="song-details">
             <h2 className="song-title">{song.title}</h2>
             <p className="song-artist">{song.artist}</p>
+            <p className="song-composer">{song.composer}</p>
             <div className="song-metadata">
               {song.album && (
                 <p className="metadata-item">
@@ -35,7 +36,13 @@ export default function SongInfo({ song, nextSong, laterSong, visible }) {
                   <span className="metadata-value">{song.year}</span>
                 </p>
               )}
-              {song.genre && (
+              {song.composer && (
+                <p className="metadata-item">
+                  <span className="metadata-label">Music:</span>
+                  <span className="metadata-value">{song.composer}</span>
+                </p>
+              )}
+                            {song.genre && (
                 <p className="metadata-item">
                   <span className="metadata-label">Genre:</span>
                   <span className="metadata-value">{song.genre}</span>

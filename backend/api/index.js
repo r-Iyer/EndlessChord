@@ -4,9 +4,11 @@ const cors = require('cors');
 const Channel = require('../models/Channel');
 const { Song } = require('../models/Song');
 const { initializeDbTables, initializeDbConnection } = require('../init/initialiseHelper');
-const { getUniqueAISuggestions } = require('../utils/aiHelpers');
+const { addAISuggestionsIfNeeded } = require('../utils/aiHelpers');
 const songCacheService = require('../services/songCacheService');
 const { MINIMUM_SONG_COUNT, DEFAULT_SONG_COUNT } = require('../config/constants');
+const { sortByRelevance, getSortingStats, CONFIDENCE_THRESHOLD } = require('../utils/sortingHelpers'); 
+const { parseExcludeIds, getRecentlyPlayedIds, getSongsWithExclusions } = require('../utils/songHelpers');
 
 const app = express();
 app.use(cors());
@@ -23,65 +25,12 @@ const sendResponse = (res, data, statusCode = 200) => {
   return res.status(statusCode).json(data);
 };
 
-// Parse exclude IDs safely
-const parseExcludeIds = (excludeIdsParam) => {
-  try {
-    return excludeIdsParam ? JSON.parse(excludeIdsParam) : [];
-  } catch (error) {
-    console.error('Error parsing excludeIds:', error);
-    return [];
-  }
-};
-
-// Get recently played song IDs
-const getRecentlyPlayedIds = async (language) => {
-  const recentlyPlayed = await Song.find({ 
-    language,
-    lastPlayed: { $exists: true }
-  }).sort({ lastPlayed: -1 }).select('videoId');
-  return recentlyPlayed.map(song => song.videoId);
-};
-
-// Get songs with exclusions
-const getSongsWithExclusions = async (language, excludeIds) => {
-  return await Song.find({ 
-    language,
-    videoId: { $nin: excludeIds }
-  }).sort({ playCount: 1 });
-};
-
-// Add AI suggestions when needed
-const addAISuggestionsIfNeeded = async (songs, channel, excludeIds) => {
-  if (songs.length >= MINIMUM_SONG_COUNT) return songs;
-  
-  try {
-    const aiSuggestions = await getUniqueAISuggestions(channel, Song, excludeIds, songs, DEFAULT_SONG_COUNT);
-    console.log(aiSuggestions);
-    
-    const newSongs = await Promise.all(
-      aiSuggestions.map(async (suggestion) => {
-        const exists = await Song.findOne({ videoId: suggestion.videoId });
-        if (!exists) {
-          const newSong = new Song({ ...suggestion, language: channel.language });
-          await newSong.save();
-          return newSong;
-        }
-        return null;
-      })
-    );
-    
-    return [...songs, ...newSongs.filter(Boolean)];
-  } catch (aiError) {
-    console.error('Error getting AI suggestions:', aiError);
-    return songs;
-  }
-};
-
 // Routes
 app.get('/api/channels', async (req, res) => {
   console.log('[ROUTE] GET /api/channels');
   await initializeDbConnection();
-  await initializeDbTables(Channel, Song);
+  //Commented re-initialising song table
+  //await initializeDbTables(Channel, Song);
   
   try {
     const channels = await Channel.find();
@@ -105,6 +54,8 @@ app.get('/api/channels/:id', async (req, res) => {
     handleError(res, error, `/api/channels/${req.params.id}`);
   }
 });
+
+// Updated channel songs route to also use confidence scoring when needed
 
 app.get('/api/channels/:id/songs', async (req, res) => {
   const { source } = req.query;
@@ -133,6 +84,7 @@ app.get('/api/channels/:id/songs', async (req, res) => {
     const allExcludeIds = [...new Set([...recentlyPlayedIds, ...excludeIds])];
     
     let songs = await getSongsWithExclusions(channel.language, allExcludeIds);
+    
     songs = await addAISuggestionsIfNeeded(songs, channel, allExcludeIds);
     
     console.log(`[SONGS] Returning ${songs.length} songs for channel ${channel.name}`);
@@ -142,6 +94,7 @@ app.get('/api/channels/:id/songs', async (req, res) => {
   }
 });
 
+// Updated search route
 app.get('/api/search', async (req, res) => {
   const { q: searchQuery, custom: isCustomSearch, excludeIds: excludeIdsParam } = req.query;
   console.log(`[ROUTE] GET /api/search — Query: ${searchQuery}`);
@@ -155,23 +108,58 @@ app.get('/api/search', async (req, res) => {
     const searchRegex = createSearchRegex(searchQuery);
     const query = buildSearchQuery(searchRegex, excludeIds);
     
-    let songs = await Song.find(query).sort({ playCount: 1 }).limit(20);
+    // Get more songs initially for better filtering
+    let songs = await Song.find(query).sort({ playCount: 1 }).limit(50);
     console.log(`[SEARCH] Found ${songs.length} matching songs in database`);
     
-    // Add AI suggestions for custom searches
-    if (songs.length < MINIMUM_SONG_COUNT && isCustomSearch === 'true') {
+    // Apply sophisticated sorting and confidence filtering
+    const sortedAndFilteredSongs = sortByRelevance(songs, searchQuery);
+    const sortingStats = getSortingStats(songs, sortedAndFilteredSongs, searchQuery);
+    
+    console.log(`[SEARCH] Confidence filtering stats:`, {
+      original: sortingStats.originalCount,
+      filtered: sortingStats.filteredCount,
+      avgConfidence: sortingStats.averageConfidence.toFixed(3),
+      threshold: CONFIDENCE_THRESHOLD
+    });
+    
+    // Check if we have enough high-quality results before adding AI suggestions
+    const hasHighQualityResults = sortedAndFilteredSongs.length >= MINIMUM_SONG_COUNT && 
+                                 sortingStats.averageConfidence >= CONFIDENCE_THRESHOLD;
+    
+    let finalSongs = sortedAndFilteredSongs;
+    
+    // Add AI suggestions only if we don't have enough high-quality results
+    if (!hasHighQualityResults && isCustomSearch === 'true') {
+      console.log(`[SEARCH] Adding AI suggestions - current results: ${finalSongs.length}, avg confidence: ${sortingStats.averageConfidence.toFixed(3)}`);
+      
       const searchChannel = {
         name: null,
         language: "various",
         description: searchQuery
       };
       
-      songs = await addAISuggestionsIfNeeded(songs, searchChannel, songs.map(s => s.videoId));
+      const existingVideoIds = [...excludeIds, ...finalSongs.map(s => s.videoId)];
+      const enhancedSongs = await addAISuggestionsIfNeeded(finalSongs, searchChannel, existingVideoIds);
+      
+      // If AI suggestions were added, re-sort everything
+      if (enhancedSongs.length > finalSongs.length) {
+        finalSongs = sortByRelevance(enhancedSongs, searchQuery);
+      }
     }
     
-    const sortedSongs = sortByRelevance(songs, searchQuery);
-    console.log(`[SEARCH] Returning ${sortedSongs.length} songs for query "${searchQuery}"`);
-    sendResponse(res, sortedSongs);
+    // Limit final results
+    finalSongs = finalSongs.slice(0, DEFAULT_SONG_COUNT);
+    
+    console.log(`[SEARCH] Returning ${finalSongs.length} songs for query "${searchQuery}"`);
+    
+    // Clean up confidence scores from response to maintain original format
+    const cleanedSongs = finalSongs.map(song => {
+      const { confidenceScore, ...cleanSong } = song;
+      return cleanSong;
+    });
+    
+    sendResponse(res, cleanedSongs);
   } catch (error) {
     handleError(res, error, '/api/search');
   }
@@ -221,6 +209,7 @@ const buildSearchQuery = (searchRegex, excludeIds) => {
     $or: [
       { title: searchRegex },
       { artist: searchRegex },
+      { composer: searchRegex },
       { description: searchRegex },
       { tags: searchRegex }
     ]
@@ -233,18 +222,6 @@ const buildSearchQuery = (searchRegex, excludeIds) => {
   return query;
 };
 
-// Sort songs by relevance
-const sortByRelevance = (songs, searchQuery) => {
-  return songs.sort((a, b) => {
-    const aHasTermInTitle = a.title.toLowerCase().includes(searchQuery.toLowerCase());
-    const bHasTermInTitle = b.title.toLowerCase().includes(searchQuery.toLowerCase());
-    
-    if (aHasTermInTitle && !bHasTermInTitle) return -1;
-    if (!aHasTermInTitle && bHasTermInTitle) return 1;
-    
-    return (a.playCount || 0) - (b.playCount || 0);
-  });
-};
 
 if (require.main === module) {
   const PORT = process.env.PORT || 5000;

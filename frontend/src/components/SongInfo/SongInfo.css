@@ -51,6 +51,11 @@
   font-size: 1.125rem;
 }
 
+.song-composer {
+  color: #d1d5db;
+  font-size: 1.125rem;
+}
+
 .song-metadata {
   margin-top: 0.5rem;
   display: flex;
@@ -114,6 +119,11 @@
 }
 
 .queue-artist {
+  color: #d1d5db;
+  font-size: 0.875rem;
+}
+
+.queue-composer {
   color: #d1d5db;
   font-size: 0.875rem;
 }
