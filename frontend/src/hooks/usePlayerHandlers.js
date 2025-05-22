@@ -17,7 +17,8 @@ export default function usePlayerHandlers(
   setCurrentTime,
   setPlayerReady,
   isInitialialLoad,
-  setIsInitialLoad
+  setIsInitialLoad,
+  setShowInfo
 ) {
   const handlePlayerReady = (event) => {
     playerRef.current = event.target;
@@ -96,9 +97,11 @@ export default function usePlayerHandlers(
   const handlePlayerStateChange = useCallback((event) => {
     switch (event.data) {
       case window.YT.PlayerState.PLAYING:
+      setShowInfo(false)
       setIsPlaying(true);
       break;
       case window.YT.PlayerState.PAUSED:
+      setShowInfo(true)
       setIsPlaying(false);
       break;
       case window.YT.PlayerState.ENDED:
@@ -107,7 +110,7 @@ export default function usePlayerHandlers(
       default:
       break;
     }
-  }, [setIsPlaying, handleNextSong]);
+  }, [setShowInfo, setIsPlaying, handleNextSong]);
   
   return {
     handleSeek,

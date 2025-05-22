@@ -70,7 +70,7 @@ function App() {
       handlePlayerStateChange,
     } = usePlayerHandlers(
       playerRef, isPlaying, setIsPlaying, currentSong, setCurrentSong, nextSong, setNextSong, queue, setQueue, fetchMoreSongs, 
-      history, setHistory, setCurrentTime, setPlayerReady, isInitialLoad, setIsInitialLoad);
+      history, setHistory, setCurrentTime, setPlayerReady, isInitialLoad, setIsInitialLoad, setShowInfo);
       
       usePlayerEffects(
         currentSong, setShowInfo, infoTimeoutRef, currentTime, setCurrentTime, duration, setDuration, playerRef);
