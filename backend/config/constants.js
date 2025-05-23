@@ -4,7 +4,7 @@ const MINIMUM_SONG_COUNT = 5;
 const CACHED_SONG_COUNT_LIMIT = 10;
 const CACHED_SONG_COUNT_RETURNED = 4
 // Configuration constants
-const CONFIDENCE_THRESHOLD = 0.1; // Minimum confidence score to include a song
+const CONFIDENCE_THRESHOLD = 0.3; // Minimum confidence score to include a song
 const FIELD_WEIGHTS = {
     title: 1.0,
     artist: 1.0,
