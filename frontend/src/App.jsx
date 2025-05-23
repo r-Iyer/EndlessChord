@@ -55,7 +55,7 @@ function App() {
         setUser(authService.getCurrentUser());
       } else {
         // DO not show popup currently due to issues. TODO
-        setShowAuthModal(false);
+        setShowAuthModal(true);
       }
       setIsAuthChecked(true);
     };
