@@ -80,7 +80,6 @@ export default function useSongQueue(
         // Search mode
         queryUrl = `/api/search`;
         params.append('q', searchQuery);
-        params.append('custom', 'true');
       } else {
         // Channel mode
         queryUrl = `/api/channels/${channelId}/songs`;
@@ -121,11 +120,6 @@ export default function useSongQueue(
       return [];
     } finally {
       setIsFetchingSongs(false);
-      
-      /*// If this was an initial load, update the flag
-      if (initial && isInitialLoad) {
-        setIsInitialLoad(false);
-      }*/
     }
   }, [currentChannel, currentSong, nextSong, queue, isFetchingSongs, setCurrentSong, setNextSong, setQueue, setIsFetchingSongs, searchQuery, history]);
 

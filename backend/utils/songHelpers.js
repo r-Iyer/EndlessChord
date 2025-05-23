@@ -13,16 +13,17 @@ const parseExcludeIds = (excludeIdsParam) => {
 // Get recently played song IDs
 const getRecentlyPlayedIds = async (language) => {
   const recentlyPlayed = await Song.find({ 
-    language,
+    language: { $in: [language] },
     lastPlayed: { $exists: true }
   }).sort({ lastPlayed: -1 }).select('videoId');
   return recentlyPlayed.map(song => song.videoId);
 };
 
 // Get songs with exclusions
-const getSongsWithExclusions = async (language, excludeIds) => {
+const getSongsWithExclusions = async (genre, language, excludeIds) => {
   return await Song.find({ 
-    language,
+    genre: { $in: [genre] },      // Check if genre array contains this value
+    language: { $in: [language] }, // Check if language array contains this value
     videoId: { $nin: excludeIds }
   }).sort({ playCount: 1 });
 };

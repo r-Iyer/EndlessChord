@@ -55,7 +55,6 @@ app.get('/api/channels/:id', async (req, res) => {
 });
 
 // Updated channel songs route to also use confidence scoring when needed
-
 app.get('/api/channels/:id/songs', async (req, res) => {
   const { source } = req.query;
   console.log(`[ROUTE] GET /api/channels/${req.params.id}/songs — Source: ${source}`);
@@ -72,10 +71,8 @@ app.get('/api/channels/:id/songs', async (req, res) => {
     const recentlyPlayedIds = [];
     const allExcludeIds = [...new Set([...recentlyPlayedIds, ...excludeIds])];
     
-    let songs = await getSongsWithExclusions(channel.language, allExcludeIds);
+    let songs = await getSongsWithExclusions(channel.genre, channel.language, allExcludeIds);
     
-  
-
     const { songs: updatedSongs, aiSuggestionsAdded } = await addAISuggestionsIfNeeded(songs, channel, allExcludeIds);
     songs = updatedSongs;
 
@@ -141,7 +138,7 @@ app.get('/api/search', async (req, res) => {
 
       const { songs: enhancedSongs, aiSuggestionsAdded } = await addAISuggestionsIfNeeded(finalSongs, searchChannel, existingVideoIds);
     
-      finalSongs =   enhancedSongs.map(song =>
+      finalSongs = enhancedSongs.map(song =>
         song.toObject ? song.toObject() : { ...song }
       );
     }
@@ -193,7 +190,6 @@ app.post('/api/songs/played', async (req, res) => {
   }
 });
 
-// Create search regex
 const createSearchRegex = (searchQuery) => {
   const words = searchQuery.split(/\s+/)
   .filter(w => w.length > 2)
@@ -201,7 +197,6 @@ const createSearchRegex = (searchQuery) => {
   return new RegExp(`\\b(?:${words.join('|')})\\b`, 'i');
 };
 
-// Build search query
 const buildSearchQuery = (searchRegex, excludeIds) => {
   const query = {
     $or: [
@@ -209,7 +204,9 @@ const buildSearchQuery = (searchRegex, excludeIds) => {
       { artist: searchRegex },
       { composer: searchRegex },
       { description: searchRegex },
-      { tags: searchRegex }
+      { tags: searchRegex },
+      { genre: { $in: [searchRegex] } },
+      { language: { $in: [searchRegex] } }
     ]
   };
   

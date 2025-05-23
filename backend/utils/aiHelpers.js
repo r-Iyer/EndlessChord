@@ -22,11 +22,27 @@ const addAISuggestionsIfNeeded = async (songs, channel, excludeIds) => {
       aiSuggestions.map(async (suggestion) => {
         const exists = await Song.findOne({ videoId: suggestion.videoId });
         if (!exists) {
-          const newSong = new Song({ ...suggestion, language: channel.language });
+          // Create new song with arrays
+          const newSong = new Song({ 
+            ...suggestion, 
+            genre: [suggestion.genre, channel.genre],
+            language: [channel.language] 
+          });
           await newSong.save();
           return newSong;
+        } else {
+          // Update existing song arrays using $addToSet
+          await Song.updateOne(
+            { videoId: suggestion.videoId },
+            { 
+              $addToSet: { 
+                genre: suggestion.genre,
+                language: channel.language
+              }
+            }
+          );
+          return await Song.findOne({ videoId: suggestion.videoId });
         }
-        return null;
       })
     );
     
@@ -69,7 +85,9 @@ async function getAISuggestions(channel, Song, song_count) {
   for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
     try {
       console.log(`[AI] Fetching suggestions for channel: ${channel.name}, attempt ${attempt}`);
+      
       const existingSongs = await Song.find({ language: channel.language });
+      
       // Only use song titles for examples
       const songExamples = existingSongs.map(song =>
         `"${song.title}"`
@@ -120,7 +138,8 @@ For each recommendation, provide only the song title, artist name, composer name
                 composer: song.composer,
                 album: song.album || "Unknown",
                 year: song.year,
-                genre: song.genre
+                genre: song.genre,
+                language: channel.language // Include language from channel
               };
             }
             return null;

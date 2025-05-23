@@ -3,7 +3,7 @@ module.exports = [
     name: 'Hindi Hits',
     description: 'Popular Hindi music from Bollywood and beyond',
     language: 'hindi',
-    genre: 'various',
+    genre: 'Hindi music',
     seedSongs: []
   },
   {
@@ -16,7 +16,7 @@ module.exports = [
   {
     name: 'EDM',
     description: 'Electronic Dance Music playlist',
-    language: 'various',
+    language: 'various',  
     genre: 'edm',
     seedSongs: []
   },
@@ -31,14 +31,14 @@ module.exports = [
     name: 'Tamizh Tunes',
     description: 'All time tamil hit film songs and music and albums',
     language: 'tamil',
-    genre: 'various',
+    genre: 'Tamizh Music',
     seedSongs: []
   },
   {
     name: 'Bangali Baaje',
     description: 'All time Bengali great hit film songs and music and albums',
     language: 'Bengali',
-    genre: 'various',
+    genre: 'Bengali Music',
     seedSongs: []
   },
   // Add more channels here as needed

@@ -44,7 +44,7 @@ export default function SongInfo({ song, nextSong, laterSong, visible }) {
                             {song.genre && (
                 <p className="metadata-item">
                   <span className="metadata-label">Genre:</span>
-                  <span className="metadata-value">{song.genre}</span>
+                  <span className="metadata-value">{song.genre[0]}</span>
                 </p>
               )}
             </div>
