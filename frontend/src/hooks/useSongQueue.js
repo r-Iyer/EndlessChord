@@ -1,4 +1,5 @@
 import { useCallback } from 'react';
+import { api } from '../services/apiService';
 
 export default function useSongQueue(
   currentChannel,
@@ -98,8 +99,8 @@ export default function useSongQueue(
       }
       
       // Fetch the data
-      const response = await fetch(queryUrl);
-      const data = await response.json();
+      const response = await api.get(queryUrl)
+      const data = response.data;
       
       // Handle the results based on options
       if (data.length > 0) {

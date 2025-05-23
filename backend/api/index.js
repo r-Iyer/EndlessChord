@@ -1,17 +1,24 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
+const jwt = require('jsonwebtoken');
 const Channel = require('../models/Channel');
 const { Song } = require('../models/Song');
+const User = require('../models/User');
 const { initializeDbTables, initializeDbConnection } = require('../init/initialiseHelper');
 const { addAISuggestionsIfNeeded } = require('../utils/aiHelpers');
 const { MINIMUM_SONG_COUNT, DEFAULT_SONG_COUNT } = require('../config/constants');
 const { sortByRelevance, getSortingStats, CONFIDENCE_THRESHOLD } = require('../utils/sortingHelpers'); 
 const { parseExcludeIds, getRecentlyPlayedIds, getSongsWithExclusions } = require('../utils/songHelpers');
+const auth = require('./auth');
 
 const app = express();
 app.use(cors());
 app.use(express.json());
+app.use('/api/auth', auth);
+
+// JWT configuration
+const JWT_SECRET = process.env.JWT_SECRET || 'fallback-secret-key';
 
 // Generic error handler
 const handleError = (res, error, message = 'Server error', statusCode = 500) => {
@@ -24,8 +31,36 @@ const sendResponse = (res, data, statusCode = 200) => {
   return res.status(statusCode).json(data);
 };
 
+// Middleware to verify JWT token (optional authentication)
+const optionalAuth = (req, res, next) => {
+  const authHeader = req.headers['authorization'];
+  const token = authHeader && authHeader.split(' ')[1]; // Bearer TOKEN
+  const isGuest = req.headers['x-guest-mode'] === 'true';
+  // Allow guest mode
+  if (isGuest) {
+    req.user = 'guest';
+    return next();
+  }
+
+  // If no token, continue as unauthenticated
+  if (!token) {
+    req.user = null;
+    return next();
+  }
+
+  // Verify token if present
+  jwt.verify(token, JWT_SECRET, (err, user) => {
+    if (err) {
+      req.user = null; // Invalid token, continue as unauthenticated
+    } else {
+      req.user = user;
+    }
+    next();
+  });
+};
+
 // Routes
-app.get('/api/channels', async (req, res) => {
+app.get('/api/channels', optionalAuth, async (req, res) => {
   console.log('[ROUTE] GET /api/channels');
   await initializeDbConnection();
   //Commented re-initialising song table
@@ -39,7 +74,7 @@ app.get('/api/channels', async (req, res) => {
   }
 });
 
-app.get('/api/channels/:id', async (req, res) => {
+app.get('/api/channels/:id', optionalAuth, async (req, res) => {
   console.log(`[ROUTE] GET /api/channels/${req.params.id}`);
   
   try {
@@ -55,7 +90,7 @@ app.get('/api/channels/:id', async (req, res) => {
 });
 
 // Updated channel songs route to also use confidence scoring when needed
-app.get('/api/channels/:id/songs', async (req, res) => {
+app.get('/api/channels/:id/songs', optionalAuth, async (req, res) => {
   const { source } = req.query;
   console.log(`[ROUTE] GET /api/channels/${req.params.id}/songs — Source: ${source}`);
   
@@ -90,7 +125,7 @@ app.get('/api/channels/:id/songs', async (req, res) => {
 });
 
 // Updated search route
-app.get('/api/search', async (req, res) => {
+app.get('/api/search', optionalAuth, async (req, res) => {
   const { q: searchQuery, excludeIds: excludeIdsParam } = req.query;
   console.log(`[ROUTE] GET /api/search — Query: ${searchQuery}`);
   
@@ -160,7 +195,7 @@ app.get('/api/search', async (req, res) => {
   }
 });
 
-app.post('/api/songs/played', async (req, res) => {
+app.post('/api/songs/played', optionalAuth, async (req, res) => {
   console.log('[ROUTE] POST /api/songs/played');
   
   try {

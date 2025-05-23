@@ -1,5 +1,6 @@
 import { useCallback } from 'react';
 import { MINIMUM_QUEUE_SIZE } from '../config/constants';
+import api from '../services/apiService';
 
 export default function usePlayerHandlers(
   playerRef,
@@ -43,13 +44,10 @@ export default function usePlayerHandlers(
   
   const updatePlayCount = useCallback(async (songId) => {
     try {
-      await fetch('/api/songs/played', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ songIds: [songId] }),
+      await api.post('/api/songs/played', {
+        songIds: [songId],
       });
+      
     } catch (error) {
       console.error('Failed to update play count:', error);
     }

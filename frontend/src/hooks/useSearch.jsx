@@ -1,4 +1,5 @@
 import { useState, useCallback } from 'react';
+import { api } from '../services/apiService';
 
 export default function useSearch(
   setUserInteracted,
@@ -54,8 +55,8 @@ export default function useSearch(
       // Build the search URL with query parameters
       const queryUrl = `/api/search?q=${encodeURIComponent(query)}&custom=true`;
       
-      const response = await fetch(queryUrl);
-      const songs = await response.json();
+      const response = api.get(queryUrl);
+      const songs = response.data;
       
       if (songs && songs.length > 0) {
         setCurrentSong(songs[0]);
