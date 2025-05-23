@@ -27,10 +27,10 @@ export default function useSongQueue(
   const fetchSongs = useCallback(async (options = {}) => {
     // Default options
     const {
-      channelId = currentChannel?._id, 
-      initial = isInitialLoad,
+      channelId = currentChannel?._id,
       setAsCurrent = false,
-      appendToQueue = false
+      appendToQueue = false,
+      initial = false,
     } = options;
     
     // Guard clauses - modified to allow null channelId for search
@@ -127,20 +127,20 @@ export default function useSongQueue(
         setIsInitialLoad(false);
       }*/
     }
-  }, [currentChannel, currentSong, nextSong, queue, isFetchingSongs, isInitialLoad, setCurrentSong, setNextSong, setQueue, setIsFetchingSongs, searchQuery, history]);
+  }, [currentChannel, currentSong, nextSong, queue, isFetchingSongs, setCurrentSong, setNextSong, setQueue, setIsFetchingSongs, searchQuery, history]);
 
   // For backward compatibility and convenience
   const fetchSongsForChannel = useCallback((channelId) => {
-    return fetchSongs({ channelId, appendToQueue: false, setAsCurrent: false });
+    return fetchSongs({ channelId, appendToQueue: false, setAsCurrent: false, initial: true });
   }, [fetchSongs]);
 
   const fetchMoreSongs = useCallback((setAsCurrent = false) => {
-    fetchSongs({ setAsCurrent, appendToQueue: !setAsCurrent });
+    fetchSongs({ setAsCurrent, appendToQueue: !setAsCurrent, initial: false  });
   }, [fetchSongs]);
 
   return { 
     fetchSongs,
-    fetchSongsForChannel, // Kept for backward compatibility
-    fetchMoreSongs        // Kept for backward compatibility
+    fetchSongsForChannel,
+    fetchMoreSongs
   };
 }

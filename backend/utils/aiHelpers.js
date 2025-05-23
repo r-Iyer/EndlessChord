@@ -7,7 +7,12 @@ const { MAX_RETRIES, MINIMUM_SONG_COUNT, DEFAULT_SONG_COUNT } = require('../conf
 
 // Add AI suggestions when needed
 const addAISuggestionsIfNeeded = async (songs, channel, excludeIds) => {
-  if (songs.length >= MINIMUM_SONG_COUNT) return songs;
+  if (songs.length >= MINIMUM_SONG_COUNT) {
+    return {
+      songs: shuffle(songs),
+      aiSuggestionsAdded: false
+    };
+  }
   
   try {
     const aiSuggestions = await getUniqueAISuggestions(channel, Song, excludeIds, songs, DEFAULT_SONG_COUNT);
@@ -25,16 +30,24 @@ const addAISuggestionsIfNeeded = async (songs, channel, excludeIds) => {
       })
     );
     
-    return [...songs, ...newSongs.filter(Boolean)];
+    const validNewSongs = newSongs.filter(Boolean);
+    
+    return {
+      songs: [...songs, ...validNewSongs],
+      aiSuggestionsAdded: validNewSongs.length > 0
+    };
   } catch (aiError) {
     console.error('Error getting AI suggestions:', aiError);
-    return songs;
+    return {
+      songs: songs,
+      aiSuggestionsAdded: false
+    };
   }
 };
 
 /**
- * Get AI suggestions with duplicate check and retry logic.
- */
+* Get AI suggestions with duplicate check and retry logic.
+*/
 async function getUniqueAISuggestions(channel, Song, excludeIds, baseSongs, song_count) {
   let allSuggestions = [];
   let attempts = 0;
@@ -72,12 +85,12 @@ For each recommendation, provide only the song title, artist name, composer name
   "year": "Year",
   "genre": "Genre"
 }, ...]`;
-
+      
       const response = await ai.models.generateContent({
         model: "gemini-2.0-flash",
         contents: recommendationPrompt
       });
-
+      
       let recommendedSongs = [];
       try {
         const responseText = await response.text;
@@ -91,7 +104,7 @@ For each recommendation, provide only the song title, artist name, composer name
         console.error('Error parsing AI recommendations:', parseError);
         return [];
       }
-
+      
       const songsWithVideoInfo = await Promise.all(
         recommendedSongs.map(async (song) => {
           try {
@@ -117,9 +130,9 @@ For each recommendation, provide only the song title, artist name, composer name
           }
         })
       );
-
+      
       return songsWithVideoInfo.filter(song => song !== null);
-
+      
     } catch (error) {
       console.error(`[AI] Error on attempt ${attempt}:`, error);
       if (attempt < MAX_RETRIES) {
@@ -150,8 +163,8 @@ async function searchYouTube(query) {
       try {
         const initialData = JSON.parse(match[1]);
         const contents = initialData?.contents?.twoColumnSearchResultsRenderer
-          ?.primaryContents?.sectionListRenderer?.contents?.[0]
-          ?.itemSectionRenderer?.contents;
+        ?.primaryContents?.sectionListRenderer?.contents?.[0]
+        ?.itemSectionRenderer?.contents;
         if (contents && Array.isArray(contents)) {
           for (const item of contents) {
             if (item.videoRenderer) {
@@ -180,6 +193,14 @@ async function searchYouTube(query) {
     return null;
   }
 }
+
+const shuffle = (arr) => {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+};
 
 async function extractTopResultFromHTML(html) {
   try {
@@ -211,8 +232,8 @@ async function extractTopResultFromHTML(html) {
 }
 
 /**
- * Filters out songs with videoIds in excludeIds or already in baseSongs.
- */
+* Filters out songs with videoIds in excludeIds or already in baseSongs.
+*/
 function filterAISuggestions(aiSuggestions, excludeIds, baseSongs) {
   const baseIds = new Set(baseSongs.map(s => s.videoId));
   return aiSuggestions.filter(s =>

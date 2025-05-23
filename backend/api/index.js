@@ -5,7 +5,6 @@ const Channel = require('../models/Channel');
 const { Song } = require('../models/Song');
 const { initializeDbTables, initializeDbConnection } = require('../init/initialiseHelper');
 const { addAISuggestionsIfNeeded } = require('../utils/aiHelpers');
-const songCacheService = require('../services/songCacheService');
 const { MINIMUM_SONG_COUNT, DEFAULT_SONG_COUNT } = require('../config/constants');
 const { sortByRelevance, getSortingStats, CONFIDENCE_THRESHOLD } = require('../utils/sortingHelpers'); 
 const { parseExcludeIds, getRecentlyPlayedIds, getSongsWithExclusions } = require('../utils/songHelpers');
@@ -67,25 +66,24 @@ app.get('/api/channels/:id/songs', async (req, res) => {
       return sendResponse(res, { message: 'Channel not found' }, 404);
     }
     
-    // Handle initial source
-    if (source === 'initial') {
-      try {
-        const songs = await songCacheService.getCachedSongs(channel.name);
-        await Song.insertMany(songs, { ordered: false })
-        .catch(err => { if (err.code !== 11000) throw err });
-        return sendResponse(res, songs);
-      } catch (error) {
-        return handleError(res, error, `/api/channels/${req.params.id}/songs`);
-      }
-    }
-    
     const excludeIds = parseExcludeIds(req.query.excludeIds);
-    const recentlyPlayedIds = await getRecentlyPlayedIds(channel.language);
+    //const recentlyPlayedIds = await getRecentlyPlayedIds(channel.language);
+    //Temporary
+    const recentlyPlayedIds = [];
     const allExcludeIds = [...new Set([...recentlyPlayedIds, ...excludeIds])];
     
     let songs = await getSongsWithExclusions(channel.language, allExcludeIds);
     
-    songs = await addAISuggestionsIfNeeded(songs, channel, allExcludeIds);
+  
+
+    const { songs: updatedSongs, aiSuggestionsAdded } = await addAISuggestionsIfNeeded(songs, channel, allExcludeIds);
+    songs = updatedSongs;
+
+    //If no aiSuggestions were added, and it is initial click, return the minimum number of songs
+    if(aiSuggestionsAdded == false && source == 'initial') {
+      songs = sortSongsByLastPlayed(songs);
+      songs = songs.slice(0, MINIMUM_SONG_COUNT);
+    }
     
     console.log(`[SONGS] Returning ${songs.length} songs for channel ${channel.name}`);
     sendResponse(res, songs);
@@ -96,7 +94,7 @@ app.get('/api/channels/:id/songs', async (req, res) => {
 
 // Updated search route
 app.get('/api/search', async (req, res) => {
-  const { q: searchQuery, custom: isCustomSearch, excludeIds: excludeIdsParam } = req.query;
+  const { q: searchQuery, excludeIds: excludeIdsParam } = req.query;
   console.log(`[ROUTE] GET /api/search — Query: ${searchQuery}`);
   
   try {
@@ -130,7 +128,7 @@ app.get('/api/search', async (req, res) => {
     let finalSongs = sortedAndFilteredSongs;
     
     // Add AI suggestions only if we don't have enough high-quality results
-    if (!hasHighQualityResults && isCustomSearch === 'true') {
+    if (!hasHighQualityResults) {
       console.log(`[SEARCH] Adding AI suggestions - current results: ${finalSongs.length}, avg confidence: ${sortingStats.averageConfidence.toFixed(3)}`);
       
       const searchChannel = {
@@ -140,12 +138,9 @@ app.get('/api/search', async (req, res) => {
       };
       
       const existingVideoIds = [...excludeIds, ...finalSongs.map(s => s.videoId)];
-      const enhancedSongs = await addAISuggestionsIfNeeded(finalSongs, searchChannel, existingVideoIds);
-      
-      // If AI suggestions were added, re-sort everything
-      /*if (enhancedSongs.length > finalSongs.length) {
-      finalSongs = sortByRelevance(enhancedSongs, searchQuery);
-      }*/
+
+      const { songs: enhancedSongs, aiSuggestionsAdded } = await addAISuggestionsIfNeeded(finalSongs, searchChannel, existingVideoIds);
+    
       finalSongs =   enhancedSongs.map(song =>
         song.toObject ? song.toObject() : { ...song }
       );
@@ -225,6 +220,11 @@ const buildSearchQuery = (searchRegex, excludeIds) => {
   return query;
 };
 
+const sortSongsByLastPlayed = songs =>
+  songs.slice().sort((a, b) =>
+    (a.lastPlayed ? 1 : 0) - (b.lastPlayed ? 1 : 0) ||
+    (a.lastPlayed - b.lastPlayed)
+  );
 
 if (require.main === module) {
   const PORT = process.env.PORT || 5000;
