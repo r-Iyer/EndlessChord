@@ -22,7 +22,6 @@ const addAISuggestionsIfNeeded = async (songs, channel, excludeIds) => {
       aiSuggestions.map(async (suggestion) => {
         const exists = await Song.findOne({ videoId: suggestion.videoId });
         if (!exists) {
-          // Create new song with arrays
           const newSong = new Song({ 
             ...suggestion, 
             genre: [suggestion.genre, channel.genre],
@@ -31,7 +30,6 @@ const addAISuggestionsIfNeeded = async (songs, channel, excludeIds) => {
           await newSong.save();
           return newSong;
         } else {
-          // Update existing song arrays using $addToSet
           await Song.updateOne(
             { videoId: suggestion.videoId },
             { 
