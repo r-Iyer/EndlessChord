@@ -51,7 +51,7 @@ export default function useSongQueue(
       // Call service
       let data = [];
       if(searchQuery) {
-        await searchService.searchSongs(searchQuery, {
+        data = await searchService.searchSongs(searchQuery, {
           excludeIds: excludeIds
         });
       }
