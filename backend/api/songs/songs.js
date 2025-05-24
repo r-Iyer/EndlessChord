@@ -36,6 +36,7 @@ router.get('/:channelId', optionalAuth, addFavoriteStatus, async (req, res) => {
     //Exclude IDs involve both user recent songs and existing queue of songs
     const allExcludeIds = [...new Set([...(userRecentIds || []), ...excludeIds])];
     
+    //Get all songs from the DB with exclusions applied
     let songs = await getSongsWithExclusions(channel.genre, channel.language, allExcludeIds);
     
     const { songs: updatedSongs, aiSuggestionsAdded } = await addAISuggestionsIfNeeded(songs, channel, allExcludeIds);
