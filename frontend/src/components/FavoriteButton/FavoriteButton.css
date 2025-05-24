@@ -1,0 +1,48 @@
+/* FavoriteButton.css */
+.favorite-button {
+  background: rgba(40, 40, 40, 0.6);
+  border: none;
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  padding: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  z-index: 1000; /* Ensure it appears above other elements */
+}
+
+.favorite-button:hover {
+  background: rgba(60, 60, 60, 0.8);
+  transform: scale(1.1);
+}
+
+.favorite-button.active {
+  color: #ef4444;
+}
+
+.favorite-button svg {
+  width: 100%;
+  height: 100%;
+}
+
+/* Add these new rules */
+.player-footer__controls-wrapper {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+}
+
+.player-footer__controls-right {
+  margin-left: auto;
+  padding-right: 12px;
+}
+
+/* Optional: Add hover effect consistency */
+.player-footer__controls-right .favorite-button:hover {
+  transform: scale(1.1);
+}

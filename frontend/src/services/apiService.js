@@ -1,7 +1,6 @@
 import axios from 'axios';
 import AuthService from './authService';
-
-const API_URL = process.env.REACT_APP_API_URL || '';
+import { API_URL } from '../constants/constants';
 
 // Axios instance with default config
 export const api = axios.create({

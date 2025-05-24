@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { api } from '../services/apiService';
+import { searchService } from '../services/searchService';
 
 export default function useSearch(
   setUserInteracted,
@@ -16,71 +16,61 @@ export default function useSearch(
 
   const setSearchInURL = useCallback((query) => {
     const params = new URLSearchParams(window.location.search);
-    
     if (query) {
       params.set('search', query);
-      // Remove channel parameter if we're in search mode
       params.delete('channel');
     } else {
       params.delete('search');
     }
-
-    const newUrl = `${window.location.pathname}?${params.toString()}`;
-    window.history.replaceState({}, '', newUrl);
+    window.history.replaceState({}, '', `?${params.toString()}`);
   }, []);
 
   const getSearchFromURL = useCallback(() => {
-    const params = new URLSearchParams(window.location.search);
-    return params.get('search');
+    return new URLSearchParams(window.location.search).get('search');
   }, []);
 
   const handleSearch = useCallback(async (query) => {
     if (!query.trim()) return;
-    
-    setUserInteracted(true);
-    setBackendError(false);
-    setIsPlaying(false);
-    setCurrentSong(null);
-    setNextSong(null);
-    setQueue([]);
-    setIsLoading(true);
-    setCurrentChannel(null); // Clear current channel as we're searching across all
-    setSearchQuery(query);
-    setIsSearchMode(true);
-    
-    // Update URL to show search parameter
-    setSearchInURL(query);
-    
+
     try {
-      // Build the search URL with query parameters
-      const queryUrl = `/api/search?q=${encodeURIComponent(query)}&custom=true`;
-      
-      const response = api.get(queryUrl);
-      const songs = response.data;
-      
-      if (songs && songs.length > 0) {
+      // Reset states
+      setUserInteracted(true);
+      setBackendError(false);
+      setIsPlaying(false);
+      setIsLoading(true);
+      setCurrentChannel(null);
+      setSearchQuery(query);
+      setIsSearchMode(true);
+      setSearchInURL(query);
+
+      // Clear current playback
+      setCurrentSong(null);
+      setNextSong(null);
+      setQueue([]);
+
+      // Use search service
+      const songs = await searchService.searchSongs(query);
+
+      // Update playback state
+      if (songs?.length > 0) {
         setCurrentSong(songs[0]);
         setNextSong(songs[1] || null);
         setQueue(songs.slice(2));
-      } else {
-        setCurrentSong(null);
-        setNextSong(null);
-        setQueue([]);
       }
     } catch (error) {
-      console.error('Error searching songs:', error);
+      console.error('Search failed:', error);
       setBackendError(true);
     } finally {
       setIsLoading(false);
     }
   }, [
-    setUserInteracted, 
-    setBackendError, 
-    setIsPlaying, 
-    setCurrentSong, 
-    setNextSong, 
-    setQueue, 
-    setIsLoading, 
+    setUserInteracted,
+    setBackendError,
+    setIsPlaying,
+    setCurrentSong,
+    setNextSong,
+    setQueue,
+    setIsLoading,
     setCurrentChannel,
     setSearchInURL
   ]);

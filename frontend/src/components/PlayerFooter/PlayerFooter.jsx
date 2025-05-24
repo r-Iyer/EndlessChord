@@ -1,5 +1,6 @@
 import TimerSlider from '../TimerSlider/TimerSlider';
 import PlaybackControls from '../PlaybackControls/PlaybackControls';
+import FavoriteButton from '../FavoriteButton/FavoriteButton';
 import './PlayerFooter.css';
 
 function PlayerFooter({
@@ -15,7 +16,9 @@ function PlayerFooter({
   onFullscreenToggle,
   onPrevious,
   isCCEnabled,
-  onCCToggle
+  onCCToggle,
+  user,
+  currentSong
 }) {
   const handleSeekBackward = () => {
     onSeek(Math.max(currentTime - 5, 0));
@@ -29,7 +32,6 @@ function PlayerFooter({
     <div
       className={`player-footer ${showUI ? 'visible' : 'hidden'}`}
       style={{
-        
         bottom: isFullscreen ? '15%' : 0,
         paddingBottom: isFullscreen ? 0 : 80,
       }}
@@ -84,6 +86,14 @@ function PlayerFooter({
             transition: 'opacity 0.3s',
             zIndex: 2147483647,
           }}
+        />
+      </div>
+
+      {/* FAVORITE BUTTON PINNED */}
+      <div className="player-footer__favorite">
+        <FavoriteButton 
+          song={currentSong} 
+          user={user}
         />
       </div>
     </div>

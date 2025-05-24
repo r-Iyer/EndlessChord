@@ -17,7 +17,7 @@ export default function usePlayerHandlers(
   setHistory,
   setCurrentTime,
   setPlayerReady,
-  isInitialialLoad,
+  isInitialLoad,
   setIsInitialLoad,
   setShowInfo
 ) {
@@ -27,7 +27,7 @@ export default function usePlayerHandlers(
     
     
     // Check if player is actually playing
-    if (isInitialialLoad) {
+    if (isInitialLoad) {
       console.log("Autoplay was prevented. User interaction required.");
       setIsPlaying(false);
       setIsInitialLoad(false);

@@ -1,5 +1,4 @@
-// services/authService.js
-const API_BASE_URL = process.env.REACT_APP_API_URL || '';
+import { API_URL } from '../constants/constants';
 
 class AuthService {
   constructor() {
@@ -11,7 +10,7 @@ class AuthService {
   // Register new user
   async register(userData) {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/auth/register`, {
+      const response = await fetch(`${ API_URL }/api/auth/register`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -44,7 +43,7 @@ class AuthService {
   // Login existing user
   async login(credentials) {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/auth/login`, {
+      const response = await fetch(`${ API_URL }/api/auth/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

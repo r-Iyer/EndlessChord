@@ -3,7 +3,7 @@ import { useState } from 'react';
 import authService from '../../services/authService';
 import './UserProfile.css';
 
-const UserProfile = ({ user, onLogout, onShowAuth }) => {
+const UserProfile = ({ user, onLogout, onShowAuth, onPlayFavorites }) => {
   const [showDropdown, setShowDropdown] = useState(false);
 
   const handleLogout = () => {
@@ -62,10 +62,13 @@ const UserProfile = ({ user, onLogout, onShowAuth }) => {
               // Authenticated user - show full menu with logout
               <>
                 <button
-                  onClick={() => {/* Add favorites view */}}
+                  onClick={() => {
+                    onPlayFavorites();
+                    setShowDropdown(false);
+                  }}
                   className="user-profile__menu-item"
                 >
-                  Favorites
+                  Play Favorites
                 </button>
                 <div className="user-profile__divider">
                   <button
