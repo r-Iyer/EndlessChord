@@ -10,15 +10,6 @@ const parseExcludeIds = (excludeIdsParam) => {
   }
 };
 
-// Get recently played song IDs
-const getRecentlyPlayedIds = async (language) => {
-  const recentlyPlayed = await Song.find({ 
-    language: { $in: [language] },
-    lastPlayed: { $exists: true }
-  }).sort({ lastPlayed: -1 }).select('videoId');
-  return recentlyPlayed.map(song => song.videoId);
-};
-
 // Get songs with exclusions
 const getSongsWithExclusions = async (genre, language, excludeIds) => {
   return await Song.find({ 
@@ -41,4 +32,4 @@ if (require.main === module) {
   });
 }
 
-module.exports = { parseExcludeIds, getRecentlyPlayedIds, getSongsWithExclusions, sortSongsByLastPlayed };
+module.exports = { parseExcludeIds, getSongsWithExclusions, sortSongsByLastPlayed };

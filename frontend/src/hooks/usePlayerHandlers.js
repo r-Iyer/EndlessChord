@@ -60,14 +60,14 @@ export default function usePlayerHandlers(
     if (history.length > 0) {
       const prevSong = history[history.length - 1];
       setHistory(prev => prev.slice(0, -1));
-      setQueue(q => [currentSong, ...q]);
+      setQueue(q => [nextSong, ...q]);
       setNextSong(currentSong);
       setCurrentSong(prevSong);
     } else if (playerRef.current && typeof playerRef.current.seekTo === 'function') {
       playerRef.current.seekTo(0, true);
       setCurrentTime(0);
     }
-  }, [updatePlayCount, currentSong, history, playerRef, setHistory, setQueue, setNextSong, setCurrentSong, setCurrentTime]);
+  }, [updatePlayCount, currentSong, history, playerRef, setHistory, setQueue, setNextSong, setCurrentSong, nextSong, setCurrentTime]);
   // Modified handleNextSong to push currentSong to history
   const handleNextSong = useCallback(() => {
     updatePlayCount(currentSong._id);

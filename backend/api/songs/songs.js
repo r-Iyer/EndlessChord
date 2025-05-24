@@ -4,7 +4,7 @@ const Channel = require('../../models/Channel');
 const User = require('../../models/User');
 const { addAISuggestionsIfNeeded } = require('../../utils/aiHelpers');
 const { MINIMUM_SONG_COUNT, RECENTLY_PLAYED_THRESHOLD } = require('../../config/constants'); 
-const { parseExcludeIds, getRecentlyPlayedIds, getSongsWithExclusions, sortSongsByLastPlayed } = require('../../utils/songHelpers');
+const { parseExcludeIds, getSongsWithExclusions, sortSongsByLastPlayed } = require('../../utils/songHelpers');
 const { optionalAuth } = require('../../utils/authHelpers');
 const { handleError, sendResponse } = require('../../utils/handlers');
 const { addFavoriteStatus } = require('../../utils/favoriteHelpers');
@@ -22,7 +22,7 @@ router.get('/:channelId', optionalAuth, addFavoriteStatus, async (req, res) => {
     }
     
     const excludeIds = parseExcludeIds(req.query.excludeIds);
-    let recentlyPlayedIds = await getRecentlyPlayedIds(channel.language);
+    let userRecentIds = [];
 
     // Add logged-in user's recent playback history
     if (req.user) {
@@ -30,11 +30,10 @@ router.get('/:channelId', optionalAuth, addFavoriteStatus, async (req, res) => {
       const userRecentSongs = user?.history?.filter(entry => 
         new Date(entry.playedAt) > RECENTLY_PLAYED_THRESHOLD
       );
-      const userRecentIds = userRecentSongs?.map(entry => entry.songId.toString());
-      recentlyPlayedIds = [...new Set([...recentlyPlayedIds, ...(userRecentIds ?? [])])];
+      userRecentIds = userRecentSongs?.map(entry => entry.songId.toString());
     }
 
-    const allExcludeIds = [...new Set([...recentlyPlayedIds, ...excludeIds])];
+    const allExcludeIds = [...new Set([...userRecentIds, ...excludeIds])];
     
     let songs = await getSongsWithExclusions(channel.genre, channel.language, allExcludeIds);
     

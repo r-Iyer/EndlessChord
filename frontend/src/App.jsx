@@ -347,9 +347,9 @@ function App() {
             />
             <SongInfo
             song={currentSong}
-            nextSong={currentSong !== nextSong ? nextSong : null}
+            nextSong={ nextSong }
             laterSong={
-              queue && queue.length > 0 && queue[0] !== nextSong ? queue[0] : null
+              queue?.length > 0 ? queue[0] : null
             }
             visible={showInfo}
             />

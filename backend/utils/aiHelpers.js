@@ -6,7 +6,7 @@ const { MAX_RETRIES, MINIMUM_SONG_COUNT, DEFAULT_SONG_COUNT } = require('../conf
 
 
 // Add AI suggestions when needed
-const addAISuggestionsIfNeeded = async (songs, channel, excludeIds) => {
+const addAISuggestionsIfNeeded = async (songs, channel, excludeIds, song_count = DEFAULT_SONG_COUNT) => {
   if (songs.length >= MINIMUM_SONG_COUNT) {
     return {
       songs: shuffle(songs),
@@ -15,7 +15,7 @@ const addAISuggestionsIfNeeded = async (songs, channel, excludeIds) => {
   }
   
   try {
-    const aiSuggestions = await getUniqueAISuggestions(channel, Song, excludeIds, songs, DEFAULT_SONG_COUNT);
+    const aiSuggestions = await getUniqueAISuggestions(channel, Song, excludeIds, songs, song_count);
     console.log(aiSuggestions);
     
     const newSongs = await Promise.all(
@@ -85,11 +85,7 @@ async function getAISuggestions(channel, Song, song_count) {
       console.log(`[AI] Fetching suggestions for channel: ${channel.name}, attempt ${attempt}`);
       
       const existingSongs = await Song.find({ language: channel.language });
-      
-      // Only use song titles for examples
-      const songExamples = existingSongs.map(song =>
-        `"${song.title}"`
-      ).join('\n');
+  
       const recommendationPrompt = `I need recommendations for ${song_count} ${channel.language} music having description ${channel.description}
 You can suggest songs from any year.
 For each recommendation, provide only the song title, artist name, composer name (if known), album name (if known), release year, and genre in JSON format:
