@@ -83,7 +83,7 @@ export default function useSongQueue(
         params.append('q', searchQuery);
       } else {
         // Channel mode
-        queryUrl = `/api/channels/${channelId}/songs`;
+        queryUrl = `/api/songs/${channelId}`;
         if (initial) {
           params.append('source', 'initial');
         }

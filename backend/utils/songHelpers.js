@@ -28,4 +28,17 @@ const getSongsWithExclusions = async (genre, language, excludeIds) => {
   }).sort({ playCount: 1 });
 };
 
-module.exports = { parseExcludeIds, getRecentlyPlayedIds, getSongsWithExclusions };
+const sortSongsByLastPlayed = songs =>
+  songs.slice().sort((a, b) =>
+    (a.lastPlayed ? 1 : 0) - (b.lastPlayed ? 1 : 0) ||
+    (a.lastPlayed - b.lastPlayed)
+  );
+
+if (require.main === module) {
+  const PORT = process.env.PORT || 5000;
+  app.listen(PORT, () => {
+    console.log(`[LOCAL] Server running on port ${PORT}`);
+  });
+}
+
+module.exports = { parseExcludeIds, getRecentlyPlayedIds, getSongsWithExclusions, sortSongsByLastPlayed };

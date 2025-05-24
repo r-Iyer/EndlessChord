@@ -1,6 +1,6 @@
 import { useCallback } from 'react';
 import { MINIMUM_QUEUE_SIZE } from '../config/constants';
-import api from '../services/apiService';
+import { api } from '../services/apiService';
 
 export default function usePlayerHandlers(
   playerRef,

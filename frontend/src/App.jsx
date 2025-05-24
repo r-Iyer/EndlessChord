@@ -22,6 +22,7 @@ function App() {
   const [user, setUser] = useState(null);
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [isAuthChecked, setIsAuthChecked] = useState(false);
+  const [allowGuestAccess, setAllowGuestAccess] = useState(false); // NEW: Track guest access
 
   // Existing state
   const [isCCEnabled, setIsCCEnabled] = useState(false);
@@ -53,8 +54,8 @@ function App() {
     const checkAuth = () => {
       if (authService.isAuthenticated()) {
         setUser(authService.getCurrentUser());
+        setAllowGuestAccess(true); // Authenticated users can access everything
       } else {
-        // DO not show popup currently due to issues. TODO
         setShowAuthModal(true);
       }
       setIsAuthChecked(true);
@@ -67,12 +68,20 @@ function App() {
   const handleAuthSuccess = (userData) => {
     setUser(userData);
     setShowAuthModal(false);
+    setAllowGuestAccess(true);
   };
 
   // Handle logout
   const handleLogout = () => {
     setUser(null);
+    setAllowGuestAccess(false);
     setShowAuthModal(true);
+  };
+
+  // NEW: Handle guest access (when modal is closed without auth)
+  const handleGuestAccess = () => {
+    setShowAuthModal(false);
+    setAllowGuestAccess(true);
   };
 
   const { 
@@ -124,9 +133,9 @@ function App() {
     return params.get('channel');
   };
   
-  // Load initial data only after auth is checked
+  // MODIFIED: Load initial data if auth is checked AND (user is authenticated OR guest access is allowed)
   useEffect(() => {
-    if (!isAuthChecked || !authService.isAuthenticated()) return;
+    if (!isAuthChecked || (!authService.isAuthenticated() && !allowGuestAccess)) return;
 
     let mounted = true;
     
@@ -169,7 +178,7 @@ function App() {
     return () => { mounted = false; };
     
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isAuthChecked]);
+  }, [isAuthChecked, allowGuestAccess]); // MODIFIED: Added allowGuestAccess as dependency
   
   // Auto-hide UI (controls + slider) after inactivity
   useEffect(() => {
@@ -239,11 +248,12 @@ function App() {
   
   return (
     <div ref={fullscreenRef} className="min-h-screen bg-gray-900 text-white flex flex-col">
-      {/* Authentication Modal */}
+      {/* Authentication Modal - MODIFIED: Pass handleGuestAccess */}
       <AuthModal 
         isOpen={showAuthModal}
-        onClose={() => setShowAuthModal(false)}
+        onClose={handleGuestAccess} // This handles the X button click
         onAuthSuccess={handleAuthSuccess}
+        onGuestAccess={handleGuestAccess} // If your AuthModal has a guest button
       />
 
       <header className={`p-4 bg-gray-800 transition-opacity duration-300 ${isFullscreen ? 'hidden' : 'opacity-100'}`}>
