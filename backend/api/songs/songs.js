@@ -33,6 +33,7 @@ router.get('/:channelId', optionalAuth, addFavoriteStatus, async (req, res) => {
       userRecentIds = userRecentSongs?.map(entry => entry.songId.toString());
     }
 
+    //Exclude IDs involve both user recent songs and existing queue of songs
     const allExcludeIds = [...new Set([...(userRecentIds || []), ...excludeIds])];
     
     let songs = await getSongsWithExclusions(channel.genre, channel.language, allExcludeIds);
@@ -40,7 +41,9 @@ router.get('/:channelId', optionalAuth, addFavoriteStatus, async (req, res) => {
     const { songs: updatedSongs, aiSuggestionsAdded } = await addAISuggestionsIfNeeded(songs, channel, allExcludeIds);
     songs = updatedSongs;
 
-																								 
+																								
+    //If AI suggestions were not added and it is an initial request, limit the results to a minimum count 
+    // (Just to speed up the initial loading of songs)
     if (!aiSuggestionsAdded && source === 'initial') {
       songs = sortSongsByLastPlayed(songs);
       songs = songs.slice(0, MINIMUM_SONG_COUNT);

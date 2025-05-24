@@ -27,7 +27,7 @@ router.get('/', optionalAuth, addFavoriteStatus, async (req, res) => {
     const query = buildSearchQuery(searchRegex, excludeIds);
     
     // Get more songs initially for better filtering
-    let songs = await Song.find(query).sort({ playCount: 1 }).limit(50);
+    let songs = await Song.find(query).sort({ playCount: 1 });
     console.log(`[SEARCH] Found ${songs.length} matching songs in database`);
     
     // Apply sophisticated sorting and confidence filtering
@@ -42,6 +42,7 @@ router.get('/', optionalAuth, addFavoriteStatus, async (req, res) => {
     });
     
     // Check if we have enough high-quality results before adding AI suggestions
+    //Note: We did not exclude songs from queue here, but once AI suggestions are added, we will exclude them
     const hasHighQualityResults = sortedAndFilteredSongs.length >= MINIMUM_SONG_COUNT && 
     sortingStats.averageConfidence >= CONFIDENCE_THRESHOLD;
     
@@ -59,9 +60,10 @@ router.get('/', optionalAuth, addFavoriteStatus, async (req, res) => {
       
       const existingVideoIds = [...excludeIds, ...finalSongs.map(s => s.videoId)];
 
+      //If user has searched for songs, to ensure faster initial loading, we will limit the number of AI suggestions
       let song_count = (source === 'initial') ? MINIMUM_SONG_COUNT : DEFAULT_SONG_COUNT;
 
-      const { songs: enhancedSongs, aiSuggestionsAdded } = await addAISuggestionsIfNeeded(finalSongs, searchChannel, existingVideoIds, song_count);
+      const { songs: enhancedSongs } = await addAISuggestionsIfNeeded(finalSongs, searchChannel, existingVideoIds, song_count);
     
       finalSongs = enhancedSongs.map(song =>
         song.toObject ? song.toObject() : { ...song }
