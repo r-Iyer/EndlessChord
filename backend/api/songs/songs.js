@@ -33,7 +33,7 @@ router.get('/:channelId', optionalAuth, addFavoriteStatus, async (req, res) => {
       userRecentIds = userRecentSongs?.map(entry => entry.songId.toString());
     }
 
-    const allExcludeIds = [...new Set([...userRecentIds, ...excludeIds])];
+    const allExcludeIds = [...new Set([...(userRecentIds || []), ...excludeIds])];
     
     let songs = await getSongsWithExclusions(channel.genre, channel.language, allExcludeIds);
     
