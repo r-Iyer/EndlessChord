@@ -76,16 +76,18 @@ async function getUniqueAISuggestions(channel, Song, excludeIds, baseSongs, song
   return allSuggestions.slice(0, song_count);
 }
 
-async function getAISuggestions(channel, Song, song_count) {
+// AI Recommendation Part
+async function getAIRecommendations(channel, Song, song_count) {
   const ai = new GoogleGenAI({ apiKey: process.env.GOOGLE_GENAI_API_KEY });
   const MAX_RETRIES = 5;
   const BACKOFF_FACTOR = 1000;
+
   for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
     try {
       console.log(`[AI] Fetching suggestions for channel: ${channel.name}, attempt ${attempt}`);
       
       const existingSongs = await Song.find({ language: channel.language });
-  
+      
       const recommendationPrompt = `I need recommendations for ${song_count} ${channel.language} music having description ${channel.description}
 You can suggest songs from any year.
 For each recommendation, provide only the song title, artist name, composer name (if known), album name (if known), release year, and genre in JSON format:
@@ -97,55 +99,20 @@ For each recommendation, provide only the song title, artist name, composer name
   "year": "Year",
   "genre": "Genre"
 }, ...]`;
-      
+
       const response = await ai.models.generateContent({
         model: "gemini-2.5-flash-preview-05-20",
         contents: recommendationPrompt
       });
-      
-      let recommendedSongs = [];
-      try {
-        const responseText = await response.text;
-        const jsonMatch = responseText.match(/\[[\s\S]*\]/);
-        if (!jsonMatch) {
-          console.error('No JSON array found in response');
-          return [];
-        }
-        recommendedSongs = JSON.parse(jsonMatch[0]);
-      } catch (parseError) {
-        console.error('Error parsing AI recommendations:', parseError);
+
+      const responseText = await response.text;
+      const jsonMatch = responseText.match(/\[[\s\S]*\]/);
+      if (!jsonMatch) {
+        console.error('No JSON array found in response');
         return [];
       }
       
-      const songsWithVideoInfo = await Promise.all(
-        recommendedSongs.map(async (song) => {
-          try {
-            const searchQuery = `${song.title} ${song.artist} official music video`;
-            const searchResults = await searchYouTube(searchQuery);
-            if (searchResults) {
-              const bestMatch = searchResults;
-              return {
-                videoURL: `https://www.youtube.com/watch?v=${bestMatch.id.videoId}`,
-                videoId: bestMatch.id.videoId,
-                title: song.title,
-                artist: song.artist,
-                composer: song.composer,
-                album: song.album || "Unknown",
-                year: song.year,
-                genre: song.genre,
-                language: channel.language // Include language from channel
-              };
-            }
-            return null;
-          } catch (error) {
-            console.error(`Error searching YouTube for ${song.title}:`, error);
-            return null;
-          }
-        })
-      );
-      
-      return songsWithVideoInfo.filter(song => song !== null);
-      
+      return JSON.parse(jsonMatch[0]);
     } catch (error) {
       console.error(`[AI] Error on attempt ${attempt}:`, error);
       if (attempt < MAX_RETRIES) {
@@ -158,6 +125,49 @@ For each recommendation, provide only the song title, artist name, composer name
     }
   }
   return [];
+}
+
+// YouTube Video Processing Part
+async function getYouTubeVideoDetails(songs, channel) {
+  try {
+    const songsWithVideoInfo = await Promise.all(
+      songs.map(async (song) => {
+        try {
+          const searchQuery = `${song.title} ${song.artist} official music video`;
+          const searchResults = await searchYouTube(searchQuery);
+          if (searchResults) {
+            const bestMatch = searchResults;
+            return {
+              videoURL: `https://www.youtube.com/watch?v=${bestMatch.id.videoId}`,
+              videoId: bestMatch.id.videoId,
+              title: song.title,
+              artist: song.artist,
+              composer: song.composer,
+              album: song.album || "Unknown",
+              year: song.year,
+              genre: song.genre,
+              language: channel.language
+            };
+          }
+          return null;
+        } catch (error) {
+          console.error(`Error searching YouTube for ${song.title}:`, error);
+          return null;
+        }
+      })
+    );
+    return songsWithVideoInfo.filter(song => song !== null);
+  } catch (error) {
+    console.error('Error processing YouTube videos:', error);
+    return [];
+  }
+}
+
+async function getAISuggestions(channel, Song, song_count) {
+  const recommendedSongs = await getAIRecommendations(channel, Song, song_count);
+  if (recommendedSongs.length === 0) return [];
+  
+  return await getYouTubeVideoDetails(recommendedSongs, channel);
 }
 
 async function searchYouTube(query) {
