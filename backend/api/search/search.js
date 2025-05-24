@@ -8,10 +8,11 @@ const { parseExcludeIds, getRecentlyPlayedIds, getSongsWithExclusions, sortSongs
 const { sortByRelevance, getSortingStats, CONFIDENCE_THRESHOLD } = require('../../utils/sortingHelpers');
 const { createSearchRegex, buildSearchQuery } = require('../../utils/searchHelpers');
 const { MINIMUM_SONG_COUNT, DEFAULT_SONG_COUNT } = require('../../config/constants');
+const { addFavoriteStatus } = require('../../utils/favoriteHelpers');
 
 const router = express.Router();
 
-router.get('/', optionalAuth, async (req, res) => {
+router.get('/', optionalAuth, addFavoriteStatus, async (req, res) => {
   const { q: searchQuery, excludeIds: excludeIdsParam } = req.query;
   console.log(`[ROUTE] GET /api/search — Query: ${searchQuery}`);
   

@@ -7,10 +7,11 @@ const { MINIMUM_SONG_COUNT, RECENTLY_PLAYED_THRESHOLD } = require('../../config/
 const { parseExcludeIds, getRecentlyPlayedIds, getSongsWithExclusions, sortSongsByLastPlayed } = require('../../utils/songHelpers');
 const { optionalAuth } = require('../../utils/authHelpers');
 const { handleError, sendResponse } = require('../../utils/handlers');
+const { addFavoriteStatus } = require('../../utils/favoriteHelpers');
 
 const router = express.Router();
 
-router.get('/:channelId', optionalAuth, async (req, res) => {
+router.get('/:channelId', optionalAuth, addFavoriteStatus, async (req, res) => {
   const { source } = req.query;
   console.log(`[ROUTE] GET /api/songs/${req.params.channelId} — Source: ${source}`);
   

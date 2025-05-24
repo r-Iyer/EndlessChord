@@ -8,6 +8,7 @@ const search = require('./search/search');
 const channels = require('./channels/channels');
 const played = require('./songs/played');
 const songs = require('./songs/songs');
+const favorites = require('./favorites/favorites');
 
 const app = express();
 app.use(cors());
@@ -15,9 +16,10 @@ app.use(express.json());
 app.use('/api/auth/', register);
 app.use('/api/auth/', login);
 app.use('/api/channels/', channels);
-app.use('/search/search', search);
+app.use('/api/search', search);
 app.use('/api/songs', songs);
 app.use('/api/songs/played', played);
+app.use('/api/favorites', favorites);
 
 if (require.main === module) {
   const PORT = process.env.PORT || 5000;
