@@ -36,16 +36,19 @@ jobs:
         with:
           java-version: '17'
           distribution: 'temurin'
-      - name: Force Java 17 in capacitor.build.gradle
-        run: |
-          sed -i 's/JavaVersion.VERSION_21/JavaVersion.VERSION_17/g' frontend/android/app/capacitor.build.gradle
 
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v2
+
+      - name: Accept Android Licenses
+        run: |
+          yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses
 
       - name: Build APK
         run: |
           cd frontend/android
           chmod +x gradlew
-          ./gradlew assembleDebug
+          ./gradlew assembleDebug --stacktrace
 
       - name: Upload APK to Firebase App Distribution
         uses: wzieba/Firebase-Distribution-Github-Action@v1
