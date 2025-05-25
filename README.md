@@ -1,10 +1,10 @@
-# 🎵 Endless Chord - A Cinematic Music Streaming Experience
+# 🎵 Endless Chord - An Immersive Audio-Visual Streaming Experience
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 ![React](https://img.shields.io/badge/React-18.2-blue)
 ![Node.js](https://img.shields.io/badge/Node.js-20-green)
 
-**Endless Chord** transforms your music listening into a cinematic journey. This modern, TV-style web application offers a continuous stream of curated music channels, powered by YouTube and enhanced with intelligent, AI-driven recommendations. Immerse yourself in a seamless world of music discovery, presented through a sleek and intuitive interface designed for uninterrupted enjoyment.
+**Endless Chord** provides an immersive, TV-style audio-visual streaming experience. This modern web application offers a continuous, endless stream of curated music channels, powered by YouTube and enhanced with intelligent, AI-driven recommendations. Dive into a seamless world of music and video discovery, presented through a sleek and intuitive interface designed for non-stop enjoyment.
 
 ---
 
@@ -12,9 +12,9 @@
 
 | Feature | Description |
 | :--- | :--- |
-| 🎬 **Cinematic Channel Surfing** | Effortlessly switch between curated, genre-based channels like "Hindi Hits" and "Global Pop." Experience music like watching TV, with a visually rich, full-screen interface. |
+| 🎬 **Seamless Channel Streaming** | Effortlessly switch between curated, genre-based channels like "Hindi Hits" and "Global Pop." Experience a continuous audio-visual stream, with a visually rich, full-screen interface. |
 | 🔁 **Uninterrupted Playback** | Your personal soundtrack never stops. Tracks flow seamlessly one after another, with intuitive controls to skip or revisit songs. |
-| 🎚 **Elegant & Adaptive Controls** | A minimalist UI that stays out of your way. Controls for playback, volume, and progress intelligently appear when needed and fade away to keep the focus on the music. |
+| 🎚 **Elegant & Adaptive Controls** | A minimalist UI that stays out of your way. Controls for playback, volume, and progress intelligently appear when needed and fade away to keep the focus on the content. |
 | 🔍 **Universal Smart Search** | Instantly find any track, artist, album, or composer. Our powerful search delves deep into our extensive music library to bring you exactly what you're looking for. |
 | 🤖 **AI-Powered Discovery** | Let Google's Gemini AI be your personal DJ. Receive tailored recommendations based on your listening habits and discover your next favorite song. |
 | ❤️ **Personalized Favorites** | Found a gem? Save it to your personal collection with a single click. Registered users can build a library of their most-loved tracks for easy access. |
