@@ -12,13 +12,14 @@
 
 | Feature | Description |
 | :--- | :--- |
-| 🎬 **Seamless Channel Streaming** | Effortlessly switch between curated, genre-based channels like "Hindi Hits" and "Global Pop." Experience a continuous audio-visual stream, with a visually rich, full-screen interface. |
+| 🎬 **Seamless Channel Streaming** | Effortlessly switch between curated, genre-based channels like "Hindi Hits" and "English Pop." Experience a continuous audio-visual stream, with a visually rich, full-screen interface. |
 | 🔁 **Uninterrupted Playback** | Your personal soundtrack never stops. Tracks flow seamlessly one after another, with intuitive controls to skip or revisit songs. |
 | 🎚 **Elegant & Adaptive Controls** | A minimalist UI that stays out of your way. Controls for playback, volume, and progress intelligently appear when needed and fade away to keep the focus on the content. |
 | 🔍 **Universal Smart Search** | Instantly find any track, artist, album, or composer. Our powerful search delves deep into our extensive music library to bring you exactly what you're looking for. |
 | 🤖 **AI-Powered Discovery** | Let Google's Gemini AI be your personal DJ. Receive tailored recommendations based on your listening habits and discover your next favorite song. |
 | ❤️ **Personalized Favorites** | Found a gem? Save it to your personal collection with a single click. Registered users can build a library of their most-loved tracks for easy access. |
-| 🔐 **Seamless Authentication** | A secure and flexible login system powered by Firebase. Choose to sign up, log in, or continue as a guest to explore the platform's core features. |
+| 🔐 **Seamless Authentication** | A secure and flexible login system. Choose to sign up, log in, or continue as a guest to explore the platform's core features. |
+| 🎵 **Song Card** | Enjoy a beautifully framed song card showcasing the current track’s title, album, artist, composer, release year, and genre, with gentle previews of the tunes you’ve just heard and the ones coming up. |
 
 ---
 
@@ -86,14 +87,18 @@ Before you begin, ensure you have the following installed and configured:
 
 ### Basic Controls
 -   **Browse Channels**: Click on any channel card on the home screen to start streaming.
--   **Search Music**: Use the magnifying glass icon in the top-right corner to open the search bar.
--   **Fullscreen Mode**: Double-click the video player or use the dedicated fullscreen button for an immersive view.
--   **Skip Tracks**: Use the on-screen previous/next buttons or your keyboard's arrow keys to navigate the playlist.
+-   **Search Music**: Just type any artist, composer, album, or song title into the search bar and click the magnifying-glass icon in the top-right to instantly find and play your music.
+-   **Fullscreen Mode**: Use the dedicated fullscreen button for an immersive view.
+-   **Skip Tracks**: Use the on-screen previous/next buttons or your keyboard's 'q' and 'e' buttons to navigate the playlist.
+-   **Forward / Backward**: Use the on-screen "+5" and "-5" buttons or your keyboard's arrows to move forward or backward a song.
+-   **Captions**: Use the on-screen captions button to toggle on/off captions.
 
 ### User Features
--   **Authentication**: Sign up or log in using email/password or social providers (like Google) to access all features. You can also `Continue as a guest` for limited access.
+-   **Authentication**: Sign up or log in using email/password to access all features. You can also `Continue as a guest` for limited features.
 -   **Favorites**: While a track is playing, click the ♡ icon to add it to your personal collection. Access your saved favorites from the user menu.
 -   **AI Recommendations**: Discover new tracks suggested by our AI under each channel, tailored specifically to your listening history.
+-   **Song Card**: View an elegantly framed card displaying the current track’s title, album, artist, composer, release year, and genre, with subtle previews of what's coming next and later.
+
 
 ---
 
