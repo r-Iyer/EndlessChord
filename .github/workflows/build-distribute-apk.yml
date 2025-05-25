@@ -34,17 +34,9 @@ jobs:
       - name: Setup Java
         uses: actions/setup-java@v3
         with:
-          java-version: '17'
+          java-version: '21'  # Key change here
           distribution: 'temurin'
           cache: 'gradle'
-          check-latest: true
-
-      - name: Setup Android SDK
-        uses: android-actions/setup-android@v2
-
-      - name: Accept Android Licenses
-        run: |
-          yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses
 
       - name: Build APK
         run: |

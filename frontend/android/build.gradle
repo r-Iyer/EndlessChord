@@ -18,13 +18,6 @@ buildscript {
 apply from: "variables.gradle"
 
 allprojects {
-        plugins.withType(JavaBasePlugin).configureEach {
-        java {
-            toolchain {
-                languageVersion = JavaLanguageVersion.of(17) // Force Java 17 for all subprojects
-            }
-        }
-    }
     repositories {
         google()
         mavenCentral()
