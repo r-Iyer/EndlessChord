@@ -38,6 +38,7 @@ router.get('/:channelId', optionalAuth, addFavoriteStatus, async (req, res) => {
     
     //Get all songs from the DB with exclusions applied
     let songs = await getSongsWithExclusions(channel.genre, channel.language, allExcludeIds);
+    console.log(`[SEARCH] Found ${songs.length} matching songs in database`);
     
     const { songs: updatedSongs, aiSuggestionsAdded } = await addAISuggestionsIfNeeded(songs, channel, allExcludeIds);
     songs = updatedSongs;

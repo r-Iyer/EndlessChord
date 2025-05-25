@@ -1,10 +1,9 @@
 require('dotenv').config();
 const express = require('express');
-const User = require('../../models/User');
 const Channel = require('../../models/Channel');
 const { optionalAuth } = require('../../utils/authHelpers');
 const { handleError, sendResponse } = require('../../utils/handlers');
-const { initializeDbTables, initializeDbConnection } = require('../../init/initialiseHelper');
+const { reinitializeDatabase, initializeDbConnection } = require('../../init/initialiseHelper');
 
 const router = express.Router();
 
@@ -12,8 +11,8 @@ const router = express.Router();
 router.get('/', optionalAuth, async (req, res) => {
   console.log('[ROUTE] GET /api/channels');
   await initializeDbConnection();
-  //Commented re-initialising song table
-  //await initializeDbTables(Channel, Song);
+  //Reinitialize database tables if needed
+  //await reinitializeDatabase();
   
   try {
     const channels = await Channel.find();

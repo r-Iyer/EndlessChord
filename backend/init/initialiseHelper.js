@@ -1,4 +1,7 @@
 const connectDB = require('../config/db');
+const Channel = require('../models/Channel');
+const User = require('../models/User');
+const { Song } = require('../models/Song');
 
 let dbInitialized = false;
 
@@ -13,25 +16,16 @@ async function initializeDbConnection() {
 
 const channelSeeds = require('../config/channelSeeds');
 
-async function reinitializeDatabase(User, Song) {
+async function reinitializeDatabase() {
   try {
     
+    // Delete all songs
+    const channelResult = await Channel.deleteMany({});
+    console.log(`Deleted ${channelResult.deletedCount} channels`);
+
     //Create Channels
-    const channelCount = await Channel.countDocuments();
-    if (channelCount === 0) {
-      console.log('[DB] No channels found, seeding...');
-      await Channel.insertMany(channelSeeds);
-      console.log('[DB] Channels seeded.');
-    } else {
-      // Add any missing channels from channelSeeds
-      for (const seed of channelSeeds) {
-        const exists = await Channel.findOne({ name: seed.name });
-        if (!exists) {
-          await new Channel(seed).save();
-          console.log(`[DB] Channel added: ${seed.name}`);
-        }
-      }
-    }
+    await Channel.insertMany(channelSeeds);
+    console.log('[DB] Channels created.');
     
     // Delete all songs
     const songResult = await Song.deleteMany({});
@@ -51,9 +45,6 @@ async function reinitializeDatabase(User, Song) {
     console.log('Database reinitialization complete!');
   } catch (error) {
     console.error('Error during reinitialization:', error);
-  } finally {
-    await mongoose.disconnect();
-    console.log('Database connection closed');
   }
 }
 

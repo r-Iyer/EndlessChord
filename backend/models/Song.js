@@ -7,8 +7,8 @@ const songSchema = new mongoose.Schema({
   composer: String,
   album: String,
   year: String,
-  genre: [String],  // Array of strings
-  language: [String],  // Array of strings
+  genre: [String],
+  language: [String],
   playCount: { type: Number, default: 0 },
   lastPlayed: Date,
 });

@@ -5,25 +5,25 @@ const createSearchRegex = (searchQuery) => {
   return new RegExp(`\\b(?:${words.join('|')})\\b`, 'i');
 };
 
-const buildSearchQuery = (searchRegex, excludeIds) => {
-  const query = {
-    $or: [
-      { title: searchRegex },
-      { artist: searchRegex },
-      { composer: searchRegex },
-      { description: searchRegex },
-      { tags: searchRegex },
-      { genre: { $in: [searchRegex] } },
-      { language: { $in: [searchRegex] } }
-    ]
-  };
-  
-  if (excludeIds.length > 0) {
-    query.videoId = { $nin: excludeIds };
-  }
-  
-  return query;
-};
+const buildSearchQuery = (searchRegex, excludeIds) => ({
+  $and: [
+    {
+      $or: [
+        { title:       searchRegex },
+        { artist:      searchRegex },
+        { composer:    searchRegex },
+        { description: searchRegex },
+        { tags:        searchRegex },
+        { genre:       searchRegex },
+        { language:    searchRegex }
+      ]
+    },
+    {
+      videoId: { $nin: excludeIds }
+    }
+  ]
+});
+
 
 module.exports = {
   createSearchRegex,

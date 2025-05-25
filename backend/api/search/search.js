@@ -53,9 +53,10 @@ router.get('/', optionalAuth, addFavoriteStatus, async (req, res) => {
       console.log(`[SEARCH] Adding AI suggestions - current results: ${finalSongs.length}, avg confidence: ${sortingStats.averageConfidence.toFixed(3)}`);
       
       const searchChannel = {
-        name: null,
+        name: "",
         language: "various",
-        description: searchQuery
+        description: searchQuery,
+        genre: [] 
       };
       
       const existingVideoIds = [...excludeIds, ...finalSongs.map(s => s.videoId)];
