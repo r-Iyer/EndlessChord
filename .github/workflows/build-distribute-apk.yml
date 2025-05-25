@@ -36,6 +36,10 @@ jobs:
         with:
           java-version: '17'
           distribution: 'temurin'
+      - name: Force Java 17 in capacitor.build.gradle
+        run: |
+          sed -i 's/JavaVersion.VERSION_21/JavaVersion.VERSION_17/g' frontend/android/app/capacitor.build.gradle
+
 
       - name: Build APK
         run: |
