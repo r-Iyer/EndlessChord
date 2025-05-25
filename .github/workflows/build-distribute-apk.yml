@@ -29,7 +29,7 @@ jobs:
       - name: Copy build to Android
         run: |
           cd frontend
-          npx cap copy android
+          npx cap sync android
 
       - name: Setup Java
         uses: actions/setup-java@v3
