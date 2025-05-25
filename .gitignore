@@ -52,5 +52,16 @@ frontend/node_modules/
 frontend/.env
 frontend/.env.*
 
+### Android ###
+# Gradle cache and build outputs
+frontend/android/.gradle/
+frontend/android/build/
+frontend/android/app/build/
+frontend/android/app/*.apk
+frontend/android/app/*.keystore
+
+# Local machine-specific config (e.g., SDK paths)
+frontend/android/local.properties
+
 # Ignore test coverage
 coverage/

@@ -3,6 +3,8 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
+    "@capacitor/android": "^7.2.0",
+    "@capacitor/core": "^7.2.0",
     "@testing-library/jest-dom": "^5.16.5",
     "@testing-library/react": "^14.0.0",
     "@testing-library/user-event": "^14.4.3",
@@ -41,6 +43,7 @@
   },
   "proxy": "http://localhost:5000",
   "devDependencies": {
+    "@capacitor/cli": "^7.2.0",
     "postcss-flexbugs-fixes": "^5.0.2",
     "postcss-preset-env": "^10.1.6"
   }
