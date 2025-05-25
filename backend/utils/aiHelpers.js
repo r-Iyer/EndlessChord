@@ -62,7 +62,7 @@ async function getUniqueAISuggestions(channel, excludeIds, baseSongs, song_count
 
 //Get AI suggestions and fetch YouTube video details
 async function getAISuggestions(channel, song_count) {
-  const recommendedSongs = await getAIRecommendations(channel, song_count);
+  const recommendedSongs = await getAIRecommendationsGemini(channel, song_count);
   if (recommendedSongs.length === 0) return [];
   
   return await getYouTubeVideoDetails(recommendedSongs, channel);
@@ -79,7 +79,7 @@ function filterAISuggestions(aiSuggestions, excludeIds, baseSongs) {
 }
 
 // AI Recommendation Part
-async function getAIRecommendations(channel, song_count) {
+async function getAIRecommendationsGemini(channel, song_count) {
   const ai = new GoogleGenAI({ apiKey: process.env.GOOGLE_GENAI_API_KEY });
   const MAX_RETRIES = 5;
   
@@ -87,7 +87,7 @@ async function getAIRecommendations(channel, song_count) {
     console.log(`[AI] Fetching suggestions for channel: ${channel.name}, attempt ${attempt}`);
     
     const recommendationPrompt = `
-I need recommendations for ${song_count} ${channel.language.toUpperCase()} music tracks 
+You are a helpful music expert. I need recommendations for ${song_count} ${channel.language.toUpperCase()} music tracks 
 (description: ${channel.description}). 
       
 Please span across the following genres: ${channel.genre.join(', ')}.

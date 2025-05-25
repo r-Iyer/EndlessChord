@@ -9,8 +9,6 @@ async function initializeDbConnection() {
   if (!dbInitialized) {
     console.log('[INIT] Connecting to MongoDB...');
     await connectDB();
-    const { GoogleGenAI } = require('@google/genai');
-    ai = new GoogleGenAI({ apiKey: process.env.GOOGLE_GENAI_API_KEY });
   }
 }
 
