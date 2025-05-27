@@ -37,8 +37,8 @@ Before you begin, ensure you have the following installed and configured:
 
 1.  **Clone the Repository**
     ```bash
-    git clone [https://github.com/yourusername/music-channel.git](https://github.com/yourusername/music-channel.git)
-    cd music-channel
+    git clone [https://github.com/yourusername/EndlessChord.git](https://github.com/yourusername/EndlessChord.git)
+    cd EndlessChord
     ```
 
 2.  **Backend Configuration**
