@@ -2,9 +2,9 @@ require('dotenv').config();
 const express = require('express');
 const mongoose = require('mongoose');
 const User = require('../../models/User');
-const { handleError, sendResponse } = require('../../utils/handlers');
-const { optionalAuth } = require('../../utils/authHelpers');
-const { addFavoriteStatus } = require('../../utils/favoriteHelpers');
+const { handleError, sendResponse } = require('../../utils/handlerUtils');
+const { optionalAuth } = require('../../utils/authUtils');
+const { addFavoriteStatus } = require('../../utils/favoriteUtils');
 
 
 const router = express.Router();
@@ -39,6 +39,7 @@ router.post('/', optionalAuth, async (req, res) => {
       return sendResponse(res, { error: 'User not found' }, 404);
     }
 
+    console.log(`[ROUTE] POST /api/favorites — Added song ${songId} to user ${req.user.id}'s favorites`);
     sendResponse(res, user.favorites);
   } catch (error) {
     handleError(res, error, '/api/favorites');

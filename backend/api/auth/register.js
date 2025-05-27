@@ -1,8 +1,8 @@
 require('dotenv').config();
 const express = require('express');
 const User = require('../../models/User');
-const { initializeDbConnection } = require('../../init/initialiseHelper');
-const { handleError, sendResponse } = require('../../utils/handlers');
+const { initializeDbConnection } = require('../../utils/initialiseUtils');
+const { handleError, sendResponse } = require('../../utils/handlerUtils');
 const bcrypt = require('bcrypt');
 
 const router = express.Router();

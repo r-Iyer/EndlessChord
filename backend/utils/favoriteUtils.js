@@ -1,8 +1,8 @@
-const mongoose = require('mongoose');
+const { getFavoriteSongIdsFromDb} = require('../helpers/favoriteHelpers');
 
 const addFavoriteStatus = async (req, res, next) => {
   try {
-    const favoriteSongIds = await getFavoriteSongIds(req.user?.id);
+    const favoriteSongIds = await getFavoriteSongIdsFromDb(req.user?.id);
     
     const originalSend = res.send.bind(res);
     
@@ -34,12 +34,6 @@ const addFavoriteStatus = async (req, res, next) => {
     next(error);
   }
 };
-// Get favorite song IDs for a user
-const getFavoriteSongIds = async (userId) => {
-  if (!userId) return [];
-  const user = await mongoose.model('User').findById(userId).select('favorites');
-  return user?.favorites.map(f => f.songId.toString()) || [];
-};
 
 // Add isFavorite flag to songs
 const withFavoriteStatus = (songs, favoriteSongIds) => {
@@ -51,7 +45,6 @@ const withFavoriteStatus = (songs, favoriteSongIds) => {
 };
 
 module.exports = {
-  getFavoriteSongIds,
   withFavoriteStatus,
   addFavoriteStatus
 };

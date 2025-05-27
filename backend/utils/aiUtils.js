@@ -1,7 +1,7 @@
-const { GoogleGenAI } = require("@google/genai");
 const { MAX_RETRIES, MINIMUM_SONG_COUNT, DEFAULT_SONG_COUNT } = require('../config/constants');
-const { upsertSuggestionSong, normalizeBaseFields, shuffle } = require('./songHelpers');
-const { getYouTubeVideoDetails } = require('./youtubeHelpers');
+const { upsertSuggestionSong, normalizeBaseFields, shuffle } = require('./songUtils');
+const { getYouTubeVideoDetails } = require('./youtubeUtils');
+const { getAIRecommendationsGemini } = require('../helpers/aiHelpers');
 
 const addAISuggestionsIfNeeded = async (
   songs,
@@ -32,8 +32,14 @@ const addAISuggestionsIfNeeded = async (
   
   const validNewSongs = newSongs.filter(Boolean);
   
+  let updatedSongs =  [...songs, ...validNewSongs]
+
+  updatedSongs = updatedSongs.map(song =>
+        song.toObject ? song.toObject() : { ...song }
+      );
+
   return {
-    songs: [...songs, ...validNewSongs],
+    songs: updatedSongs,
     aiSuggestionsAdded: validNewSongs.length > 0
   };
 } catch (aiError) {
@@ -50,7 +56,7 @@ async function getUniqueAISuggestions(channel, excludeIds, baseSongs, song_count
   let allSuggestions = [];
   let attempts = 0;
   
-  while (allSuggestions.length < song_count && attempts < MAX_RETRIES) {
+  while (allSuggestions.length < MINIMUM_SONG_COUNT && attempts < MAX_RETRIES) {
     const newSuggestions = await getAISuggestions(channel, song_count * 2); // Request more
     const filtered = filterAISuggestions(newSuggestions, excludeIds, baseSongs);
     allSuggestions = [...new Set([...allSuggestions, ...filtered])]; // Merge and dedupe
@@ -58,14 +64,6 @@ async function getUniqueAISuggestions(channel, excludeIds, baseSongs, song_count
   }
   
   return allSuggestions.slice(0, song_count);
-}
-
-//Get AI suggestions and fetch YouTube video details
-async function getAISuggestions(channel, song_count) {
-  const recommendedSongs = await getAIRecommendationsGemini(channel, song_count);
-  if (recommendedSongs.length === 0) return [];
-  
-  return await getYouTubeVideoDetails(recommendedSongs, channel);
 }
 
 /**
@@ -78,14 +76,18 @@ function filterAISuggestions(aiSuggestions, excludeIds, baseSongs) {
   );
 }
 
-// AI Recommendation Part
-async function getAIRecommendationsGemini(channel, song_count) {
-  const ai = new GoogleGenAI({ apiKey: process.env.GOOGLE_GENAI_API_KEY });
-  const MAX_RETRIES = 5;
+
+//Get AI suggestions and fetch YouTube video details
+async function getAISuggestions(channel, song_count) {
+  const recommendedSongs = await getAIRecommendations(channel, song_count);
+  if (recommendedSongs.length === 0) return [];
   
-  for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
-    console.log(`[AI] Fetching suggestions for channel: ${channel.name}, attempt ${attempt}`);
-    
+  const youtubeIds = await getYouTubeVideoDetails(recommendedSongs, channel);
+  return youtubeIds;
+}
+
+// AI Recommendation Part
+async function getAIRecommendations(channel, song_count) {  
     const recommendationPrompt = `
 You are a helpful music expert. I need recommendations for ${song_count} ${channel.language.toUpperCase()} music tracks 
 (description: ${channel.description}). 
@@ -108,22 +110,9 @@ For each recommendation, provide **only** the following fields in a JSON array:
   …
 ]
 `;
-    
-    const response = await ai.models.generateContent({
-      model: "gemini-2.5-flash-preview-05-20",
-      contents: recommendationPrompt
-    });
-    
-    const responseText = await response.text;
-    const jsonMatch = responseText.match(/\[[\s\S]*\]/);
-    if (!jsonMatch) {
-      console.error('No JSON array found in response');
-      return [];
-    }
-    
-    return JSON.parse(jsonMatch[0]);
-  }
-  return [];
+
+    const recommendedSongs = await getAIRecommendationsGemini(recommendationPrompt, channel.name);
+    return recommendedSongs;
 }
 
 module.exports = { addAISuggestionsIfNeeded };

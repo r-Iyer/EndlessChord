@@ -1,8 +1,8 @@
 require('dotenv').config();
 const express = require('express');
 const User = require('../../models/User');
-const { optionalAuth } = require('../../utils/authHelpers');
-const { handleError, sendResponse } = require('../../utils/handlers');
+const { optionalAuth } = require('../../utils/authUtils');
+const { handleError, sendResponse } = require('../../utils/handlerUtils');
 const { Song } = require('../../models/Song');
 
 const router = express.Router();
@@ -83,13 +83,10 @@ router.post('/', optionalAuth, async (req, res) => {
 																		 
       })
     );
-    
-    const successfulUpdates = updateResults.filter(r => r.success).length;
+
     const userHistoryUpdates = updateResults.filter(r => r.userHistoryUpdate).length;
-    
-    console.log(`[SONGS] Updated play count for ${successfulUpdates} songs globally`);
     if (userId) {
-      console.log(`[USER] Updated history for ${userHistoryUpdates} songs for user ${req.user.name}`);
+      console.log(`[ROUTE] POST /api/songs/played — Updated history for ${userHistoryUpdates} songs for user ${req.user.name}`);
     }
     
 sendResponse(res, { success: true, updates: updateResults });

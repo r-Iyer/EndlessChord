@@ -1,9 +1,9 @@
 require('dotenv').config();
 const express = require('express');
-const Channel = require('../../models/Channel');
-const { optionalAuth } = require('../../utils/authHelpers');
-const { handleError, sendResponse } = require('../../utils/handlers');
-const { reinitializeDatabase, initializeDbConnection } = require('../../init/initialiseHelper');
+const { optionalAuth } = require('../../utils/authUtils');
+const { handleError, sendResponse } = require('../../utils/handlerUtils');
+const { reinitializeDatabase, initializeDbConnection } = require('../../utils/initialiseUtils');
+const { getChannelsInDb, getChannelsInDbById } = require('../../helpers/channelHelpers');
 
 const router = express.Router();
 
@@ -13,9 +13,11 @@ router.get('/', optionalAuth, async (req, res) => {
   await initializeDbConnection();
   //Reinitialize database tables if needed
   //await reinitializeDatabase();
+  //Add indices to song
+  //await Song.initSearchIndex();
   
   try {
-    const channels = await Channel.find();
+    const channels = await getChannelsInDb();
     sendResponse(res, channels);
   } catch (error) {
     handleError(res, error, '/api/channels');
@@ -26,7 +28,8 @@ router.get('/:id', optionalAuth, async (req, res) => {
   console.log(`[ROUTE] GET /api/channels/${req.params.id}`);
   
   try {
-    const channel = await Channel.findById(req.params.id);
+    const channel = await getChannelsInDbById(req.params.id);
+    
     if (!channel) {
       console.warn('[WARN] Channel not found:', req.params.id);
       return sendResponse(res, { message: 'Channel not found' }, 404);

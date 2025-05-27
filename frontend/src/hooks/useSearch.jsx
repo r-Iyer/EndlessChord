@@ -49,9 +49,13 @@ export default function useSearch(
       setQueue([]);
       
       // Use search service
-      const songs = await searchService.searchSongs(query, {
-        source: 'initial'
-      });
+      const songs = await searchService({
+        query: query,
+        options: {
+          excludeIds: [],
+          source: 'initial'
+        }}
+      );
       
       // Update playback state
       if (songs?.length > 0) {

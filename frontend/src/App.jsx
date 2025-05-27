@@ -127,6 +127,7 @@ function App() {
         
         const { toggleFullscreen } = useFullscreen(isFullscreen, setIsFullscreen, fullscreenRef);
         
+        // eslint-disable-next-line no-unused-vars
         const { playFavorites, isLoading: isFavoritesLoading, error: favoritesError } = useFavoritesHandlers(
           getFavorites,
           {
@@ -256,9 +257,12 @@ function App() {
             </div>
           );
         }
-
-        const showLoader = isLoading || isFavoritesLoading;
         
+        const showLoader = isLoading || isFavoritesLoading;
+        const handlePlayerError = (error) => {
+          console.error('❌ Video Player Error:', error); // Log the error for debugging
+          handleNextSong();
+        };
         return (
           <div ref={fullscreenRef} className="min-h-screen bg-gray-900 text-white flex flex-col">
           {/* Authentication Modal - MODIFIED: Pass handleGuestAccess */}
@@ -341,7 +345,7 @@ function App() {
             isPlaying={isPlaying}
             onReady={handlePlayerReady}
             onStateChange={handlePlayerStateChange}
-            onError={() => handleNextSong()}
+            onError={(error) => handlePlayerError(error)} // ✅ pass error to custom handler
             playerRef={playerRef}
             isCCEnabled={isCCEnabled}
             />
@@ -371,14 +375,6 @@ function App() {
             currentSong={ currentSong }
             />
             </>
-          )}
-          
-          {!showLoader && (favoritesError || backendError) && userInteracted && (
-            <div className="flex items-center justify-center h-full w-full">
-            <p className="text-lg text-red-400">
-            {favoritesError?.message || 'Backend is down or not responding.'}
-            </p>
-            </div>
           )}
           
           {/* Show backend error if user interacted and backend failed */}

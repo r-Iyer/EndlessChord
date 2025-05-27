@@ -1,14 +1,12 @@
 require('dotenv').config();
 const express = require('express');
-const { optionalAuth } = require('../../utils/authHelpers');
-const { handleError, sendResponse } = require('../../utils/handlers');
-const { Song } = require('../../models/Song');
-const { addAISuggestionsIfNeeded } = require('../../utils/aiHelpers');
-const { parseExcludeIds } = require('../../utils/songHelpers');
-const { sortByRelevance, getSortingStats, CONFIDENCE_THRESHOLD } = require('../../utils/sortingHelpers');
-const { createSearchRegex, buildSearchQuery } = require('../../utils/searchHelpers');
+const { optionalAuth } = require('../../utils/authUtils');
+const { handleError, sendResponse } = require('../../utils/handlerUtils');
+const { addAISuggestionsIfNeeded } = require('../../utils/aiUtils');
+const { parseExcludeIds, sortSongs } = require('../../utils/songUtils');
+const { searchSongsInDb } = require('../../utils/searchUtils');
 const { MINIMUM_SONG_COUNT, DEFAULT_SONG_COUNT } = require('../../config/constants');
-const { addFavoriteStatus } = require('../../utils/favoriteHelpers');
+const { addFavoriteStatus } = require('../../utils/favoriteUtils');
 
 const router = express.Router();
 
@@ -23,35 +21,13 @@ router.get('/', optionalAuth, addFavoriteStatus, async (req, res) => {
     }
     
     const excludeIds = parseExcludeIds(excludeIdsParam);
-    const searchRegex = createSearchRegex(searchQuery);
-    const query = buildSearchQuery(searchRegex, excludeIds);
-    
-    // Get more songs initially for better filtering
-    let songs = await Song.find(query).sort({ playCount: 1 });
-    console.log(`[SEARCH] Found ${songs.length} matching songs in database`);
-    
-    // Apply sophisticated sorting and confidence filtering
-    const sortedAndFilteredSongs = sortByRelevance(songs, searchQuery);
-    const sortingStats = getSortingStats(songs, sortedAndFilteredSongs, searchQuery);
-    
-    console.log(`[SEARCH] Confidence filtering stats:`, {
-      original: sortingStats.originalCount,
-      filtered: sortingStats.filteredCount,
-      avgConfidence: sortingStats.averageConfidence.toFixed(3),
-      threshold: CONFIDENCE_THRESHOLD
-    });
-    
-    // Check if we have enough high-quality results before adding AI suggestions
-    //Note: We did not exclude songs from queue here, but once AI suggestions are added, we will exclude them
-    const hasHighQualityResults = sortedAndFilteredSongs.length >= MINIMUM_SONG_COUNT && 
-    sortingStats.averageConfidence >= CONFIDENCE_THRESHOLD;
-    
-    let finalSongs = sortedAndFilteredSongs;
+
+    //Find Songs with matching query in the database and exclude songs in current queue
+    let songs = await searchSongsInDb(searchQuery, excludeIds);
+    console.log(`[ROUTE] GET /api/search — Found ${songs.length} matching songs in database`);
     
     // Add AI suggestions only if we don't have enough high-quality results
-    if (!hasHighQualityResults) {
-      console.log(`[SEARCH] Adding AI suggestions - current results: ${finalSongs.length}, avg confidence: ${sortingStats.averageConfidence.toFixed(3)}`);
-      
+    if ( songs.length < MINIMUM_SONG_COUNT) {      
       const searchChannel = {
         name: "",
         language: "various",
@@ -59,30 +35,21 @@ router.get('/', optionalAuth, addFavoriteStatus, async (req, res) => {
         genre: [] 
       };
       
-      const existingVideoIds = [...excludeIds, ...finalSongs.map(s => s.videoId)];
+      const existingVideoIds = [...excludeIds, ...songs.map(s => s.videoId)];
 
       //If user has searched for songs, to ensure faster initial loading, we will limit the number of AI suggestions
       let song_count = (source === 'initial') ? MINIMUM_SONG_COUNT : DEFAULT_SONG_COUNT;
 
-      const { songs: enhancedSongs } = await addAISuggestionsIfNeeded(finalSongs, searchChannel, existingVideoIds, song_count);
-    
-      finalSongs = enhancedSongs.map(song =>
-        song.toObject ? song.toObject() : { ...song }
-      );
+      const { songs: updatedSongs } = await addAISuggestionsIfNeeded(songs, searchChannel, existingVideoIds, song_count);
+      songs = updatedSongs;
     }
+
+    //Sort songs by score and limit to default count
+    songs = sortSongs(songs, searchQuery).slice(0, DEFAULT_SONG_COUNT);
     
-    // Limit final results
-    finalSongs = finalSongs.slice(0, DEFAULT_SONG_COUNT);
+    console.log(`[ROUTE] GET /api/search — Returning ${songs.length} songs for query "${searchQuery}"`);
     
-    console.log(`[SEARCH] Returning ${finalSongs.length} songs for query "${searchQuery}"`);
-    
-    // Clean up confidence scores from response to maintain original format
-    const cleanedSongs = finalSongs.map(song => {
-      const { confidenceScore, ...cleanSong } = song;
-      return cleanSong;
-    });
-    
-    sendResponse(res, cleanedSongs);
+    sendResponse(res, songs);
   } catch (error) {
     handleError(res, error, '/api/search');
   }
