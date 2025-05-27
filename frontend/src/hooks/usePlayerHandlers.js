@@ -76,7 +76,9 @@ export default function usePlayerHandlers(
       setCurrentSong(nextSong);
       setNextSong(queue[0] || null);
       setQueue(queue.slice(1));
-      if (queue.length < MINIMUM_QUEUE_SIZE) fetchMoreSongs();
+      if (queue.length < MINIMUM_QUEUE_SIZE) {
+        fetchMoreSongs();
+      }
     } else {
       fetchMoreSongs(true);
     }

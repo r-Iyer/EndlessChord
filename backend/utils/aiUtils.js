@@ -58,12 +58,11 @@ async function getUniqueAISuggestions(channel, excludeIds, baseSongs, song_count
   let attempts = 0;
   
   while (allSuggestions.length < MINIMUM_SONG_COUNT && attempts < MAX_RETRIES) {
+    console.log(`[getUniqueAISuggestions] Fething Unique AI suggestions, attempt: ${attempts+1}. Current Song count: ${allSuggestions.length}`);
     const newSuggestions = await getAISuggestions(channel, song_count * 2); // Request more
     const filtered = filterAISuggestions(newSuggestions, excludeIds, baseSongs);
     allSuggestions = [...new Set([...allSuggestions, ...filtered])]; // Merge and dedupe
-    attempts++;
-  }
-  
+  }  
   return allSuggestions.slice(0, song_count);
 }
 
@@ -84,6 +83,7 @@ async function getAISuggestions(channel, song_count) {
   if (recommendedSongs.length === 0) return [];
   
   const youtubeIds = await getYouTubeVideoDetails(recommendedSongs, channel);
+  console.log( `[getAISuggestions] Fetched youtubeIds for ${recommendedSongs.length} songs`);
   return youtubeIds;
 }
 

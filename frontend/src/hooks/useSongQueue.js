@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import { fetchSongsService } from '../services/songService';
 import { searchService } from '../services/searchService';
 
@@ -12,20 +12,19 @@ export default function useSongQueue(
   setQueue,
   isFetchingSongs,
   setIsFetchingSongs,
-  isInitialLoad,
-  setIsInitialLoad,
   history,
-  searchQuery // Added search query parameter
+  searchQuery
 ) {
-  /**
-  * Fetches songs for a channel with various options
-  * @param {Object} options - Configuration options
-  * @param {string|null} options.channelId - Channel ID to fetch songs for (uses currentChannel._id if not provided)
-  * @param {boolean} options.initial - Whether this is an initial load
-  * @param {boolean} options.setAsCurrent - Whether to set the first result as current song
-  * @param {boolean} options.appendToQueue - Whether to append results to existing queue
-  * @returns {Promise<Array>} - Array of songs (only if not setting as current or appending)
-  */
+  // Refs to track latest state values
+  const nextSongRef = useRef();
+  const queueRef = useRef();
+
+  // Sync refs with current state
+  useEffect(() => {
+    nextSongRef.current = nextSong;
+    queueRef.current = queue;
+  }, [nextSong, queue]);
+
   const fetchSongs = useCallback(async (options = {}) => {
     const {
       channelId = currentChannel?._id,
@@ -33,69 +32,92 @@ export default function useSongQueue(
       appendToQueue = false,
       initial = false,
     } = options;
-    
+
     if (isFetchingSongs) return [];
     if (!channelId && !searchQuery) return [];
-    
+
     setIsFetchingSongs(true);
-    
+
     try {
-      // Collect exclusion IDs
+      // Collect exclusion IDs using refs for fresh values
       const excludeIds = [
         currentSong?.videoId,
-        nextSong?.videoId,
-        ...(queue || []).map(song => song?.videoId),
+        nextSongRef.current?.videoId,
+        ...(queueRef.current || []).map(song => song?.videoId),
         ...(history || []).map(song => song?.videoId)
       ].filter(Boolean);
-      
+
       // Call service
       let data = [];
-      if(searchQuery) {
+      if (searchQuery) {
         data = await searchService({
           query: searchQuery,
-          options: {
-            excludeIds: excludeIds,
-            source: 'refresh'
-          }
+          options: { excludeIds, source: 'refresh' }
         });
-      }
-      else {
+      } else {
         data = await fetchSongsService({
           channelId,
           excludeIds,
           initial
         });
       }
-      
-      // Handle response
-      if (data.length > 0) {
+
+      // Filter out invalid/null entries
+      const validData = data.filter(song => 
+        song?.videoId && 
+        !excludeIds.includes(song.videoId)
+      );
+
+      if (validData.length > 0) {
         if (setAsCurrent) {
-          setCurrentSong(data[0]);
-          setNextSong(data[1] || null);
-          setQueue(data.slice(2));
+          setCurrentSong(validData[0]);
+          setNextSong(validData[1] || null);
+          setQueue(validData.slice(2));
         } else if (appendToQueue) {
-          setQueue(prev => [...prev, ...data]);
+          setQueue(prev => {
+            // Get fresh state from refs
+            const currentNext = nextSongRef.current;
+            const safePrev = (prev || []).filter(Boolean);
+            const mergedQueue = [...safePrev, ...validData];
+
+            // Update nextSong only if it's currently null/undefined
+            if (!currentNext && mergedQueue.length > 0) {
+              setNextSong(mergedQueue[0]);
+              return mergedQueue.slice(1);
+            }
+
+            return mergedQueue;
+          });
         }
       }
-      
-      return data;
+
+      return validData;
     } catch (error) {
       console.error('Error in fetchSongs:', error);
       return [];
     } finally {
       setIsFetchingSongs(false);
     }
-  }, [currentChannel?._id, isFetchingSongs, searchQuery, setIsFetchingSongs, currentSong?.videoId, nextSong?.videoId, queue, history, setCurrentSong, setNextSong, setQueue]);
-  
-  // For backward compatibility and convenience
+  }, [
+    currentChannel?._id,
+    isFetchingSongs,
+    searchQuery,
+    setIsFetchingSongs,
+    currentSong?.videoId,
+    history,
+    setCurrentSong,
+    setNextSong,
+    setQueue
+  ]);
+
   const fetchSongsForChannel = useCallback((channelId) => {
     return fetchSongs({ channelId, appendToQueue: false, setAsCurrent: false, initial: true });
   }, [fetchSongs]);
-  
+
   const fetchMoreSongs = useCallback((setAsCurrent = false) => {
-    fetchSongs({ setAsCurrent, appendToQueue: !setAsCurrent, initial: false  });
+    fetchSongs({ setAsCurrent, appendToQueue: !setAsCurrent, initial: false });
   }, [fetchSongs]);
-  
+
   return { 
     fetchSongs,
     fetchSongsForChannel,

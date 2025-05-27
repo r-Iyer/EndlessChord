@@ -25,7 +25,7 @@ function App() {
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [isAuthChecked, setIsAuthChecked] = useState(false);
   const [allowGuestAccess, setAllowGuestAccess] = useState(false); // NEW: Track guest access
-  const [isCCEnabled, setIsCCEnabled] = useState(false);
+  const [isCCEnabled, setIsCCEnabled] = useState(true);
   const [currentChannel, setCurrentChannel] = useState(null);
   const [channels, setChannels] = useState([]);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -105,7 +105,7 @@ function App() {
     fetchSongsForChannel, 
     fetchMoreSongs 
   } = useSongQueue( currentChannel, currentSong, setCurrentSong, nextSong, setNextSong, queue, setQueue, 
-    isFetchingSongs, setIsFetchingSongs, isInitialLoad, setIsInitialLoad, history, searchQuery);
+    isFetchingSongs, setIsFetchingSongs, history, searchQuery);
     const {
       handleSeek,
       handlePreviousSong,
