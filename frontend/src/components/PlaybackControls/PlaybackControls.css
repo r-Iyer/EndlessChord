@@ -17,7 +17,7 @@
 
 .control-button {
   border-radius: 9999px; /* rounded-full */
-  background-color: rgba(255, 255, 255, 0.3);
+  background-color: rgba(121, 17, 17, 0.3);
   padding: 0.75rem;
   transition-property: background-color;
   transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);

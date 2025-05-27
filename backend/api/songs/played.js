@@ -8,7 +8,7 @@ const { Song } = require('../../models/Song');
 const router = express.Router();
 
 router.post('/', optionalAuth, async (req, res) => {
-  console.log('[ROUTE] POST /api/songs/played');
+  //console.log('[ROUTE] POST /api/songs/played');
   
   try {
     const { songIds } = req.body;
