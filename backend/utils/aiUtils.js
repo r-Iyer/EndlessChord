@@ -1,5 +1,6 @@
 const { MAX_RETRIES, MINIMUM_SONG_COUNT, DEFAULT_SONG_COUNT } = require('../config/constants');
-const { upsertSuggestionSong, normalizeBaseFields, shuffle } = require('./songUtils');
+const { upsertSuggestionSong, shuffle } = require('./songUtils');
+const { normalizeBaseFields } = require('./channelUtils');
 const { getYouTubeVideoDetails } = require('./youtubeUtils');
 const { getAIRecommendationsGemini } = require('../helpers/aiHelpers');
 

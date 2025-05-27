@@ -5,7 +5,6 @@ const addFavoriteStatus = async (req, res, next) => {
     const favoriteSongIds = await getFavoriteSongIdsFromDb(req.user?.id);
     
     const originalSend = res.send.bind(res);
-    
     res.send = (body) => {
       try {
         // Parse if response is JSON string

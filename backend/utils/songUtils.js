@@ -32,19 +32,32 @@ const sortSongsByLastPlayed = songs =>
 (a.lastPlayed - b.lastPlayed)
 );
 
-// Helpers
-
 /**
-* Ensure the channel’s genres/langs are arrays.
+* Upsert a single suggestion into the Song collection,
+* merging in genres & languages.
 */
-const normalizeBaseFields = (channel) => {
-  const baseGenres = Array.isArray(channel.genre)
-  ? channel.genre
-  : [channel.genre];
-  const baseLangs = Array.isArray(channel.language)
-  ? channel.language
-  : [channel.language];
-  return { baseGenres, baseLangs };
+const upsertSuggestionSong = async (
+  suggestion,
+  baseGenres,
+  baseLangs
+) => {
+  const suggestionGenres = extractSuggestionGenres(suggestion.genre);
+  const suggestionLangs  = extractSuggestionLangs(suggestion.language);
+  
+  let song = await findSongByVideoIdFromDb(suggestion.videoId);
+  if (!song) {
+    song = new Song({
+      ...suggestion,
+      genre:    [...new Set([...baseGenres, ...suggestionGenres])],
+      language: [...new Set([...baseLangs, ...suggestionLangs])]
+    });
+    await saveSongToDb(song);
+  } else {
+    await updateSongInDb(suggestion.videoId, suggestionGenres, suggestionLangs);
+    song = await findSongByVideoIdFromDb(suggestion.videoId);
+  }
+  
+  return song;
 };
 
 /**
@@ -76,34 +89,7 @@ const extractSuggestionLangs = (rawLangField) => {
   return Array.isArray(rawLangField) ? rawLangField : [rawLangField];
 };
 
-/**
-* Upsert a single suggestion into the Song collection,
-* merging in genres & languages.
-*/
-const upsertSuggestionSong = async (
-  suggestion,
-  baseGenres,
-  baseLangs
-) => {
-  const suggestionGenres = extractSuggestionGenres(suggestion.genre);
-  const suggestionLangs  = extractSuggestionLangs(suggestion.language);
-  
-  let song = await findSongByVideoIdFromDb(suggestion.videoId);
-  if (!song) {
-    song = new Song({
-      ...suggestion,
-      genre:    [...new Set([...baseGenres, ...suggestionGenres])],
-      language: [...new Set([...baseLangs, ...suggestionLangs])]
-    });
-    await saveSongToDb(song);
-  } else {
-    await updateSongInDb(suggestion.videoId, suggestionGenres, suggestionLangs);
-    song = await findSongByVideoIdFromDb(suggestion.videoId);
-  }
-  
-  return song;
-};
-
+//Shuffle the songs
 const shuffle = (arr) => {
   for (let i = arr.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
@@ -112,21 +98,6 @@ const shuffle = (arr) => {
   return arr;
 };
 
-/**
-* Compute relevance score of a song given the search term
-* by taking max similarity across multiple fields.
-*/
-function computeRelevanceScore(song, searchTerm) {
-  const fieldsToCheck = ['title', 'artist', 'composer', 'album'];
-  const scores = fieldsToCheck.map(field => {
-    if (!song[field]) return 0;
-    return stringSimilarity.compareTwoStrings(
-      song[field].toLowerCase(),
-      searchTerm.toLowerCase()
-    );
-  });
-  return Math.max(...scores);
-}
 
 /**
 * Sort enhancedSongs by computed relevance score and playCount.
@@ -144,7 +115,22 @@ function sortSongs(enhancedSongs, searchTerm) {
 }
 
 
-module.exports = { parseExcludeIds, getSongsWithExclusions, sortSongsByLastPlayed, 
-  normalizeBaseFields, extractSuggestionGenres, extractSuggestionLangs, upsertSuggestionSong, shuffle,
+/**
+* Compute relevance score of a song given the search term
+* by taking max similarity across multiple fields.
+*/
+function computeRelevanceScore(song, searchTerm) {
+  const fieldsToCheck = ['title', 'artist', 'composer', 'album'];
+  const scores = fieldsToCheck.map(field => {
+    if (!song[field]) return 0;
+    return stringSimilarity.compareTwoStrings(
+      song[field].toLowerCase(),
+      searchTerm.toLowerCase()
+    );
+  });
+  return Math.max(...scores);
+}
+
+module.exports = { parseExcludeIds, getSongsWithExclusions, sortSongsByLastPlayed, upsertSuggestionSong, shuffle,
   computeRelevanceScore, sortSongs };
   

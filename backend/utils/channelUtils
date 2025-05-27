@@ -1,0 +1,16 @@
+/**
+* Ensure the channel’s genres/langs are arrays.
+*/
+const normalizeBaseFields = (channel) => {
+  const baseGenres = Array.isArray(channel.genre)
+  ? channel.genre
+  : [channel.genre];
+  const baseLangs = Array.isArray(channel.language)
+  ? channel.language
+  : [channel.language];
+  return { baseGenres, baseLangs };
+};
+
+module.exports = {
+  normalizeBaseFields,
+};
