@@ -1,13 +1,14 @@
 const { Song } = require('../models/Song');
 const stringSimilarity = require('string-similarity');
 const { getSongsWithExclusionsFromDb, findSongByVideoIdFromDb, saveSongToDb, updateSongInDb} = require('../helpers/songHelpers');
+const logger = require('./loggerUtils');
 
 // Parse exclude IDs safely
 const parseExcludeIds = (excludeIdsParam) => {
   try {
     return excludeIdsParam ? JSON.parse(excludeIdsParam) : [];
   } catch (error) {
-    console.error('Error parsing excludeIds:', error);
+    logger.error('Error parsing excludeIds:', error);
     return [];
   }
 };

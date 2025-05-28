@@ -2,12 +2,13 @@ const connectDB = require('../config/db');
 const { deleteAllChannelsInDb, insertChannelsInDb } = require('../helpers/channelHelpers');
 const { deleteAllSongsInDb } = require('../helpers/songHelpers');
 const { deleteFavoritesAndHistoryForAllUsersInDb } = require('../helpers/userHelpers');
+const logger = require('./loggerUtils');
 
 let dbInitialized = false;
 
 async function initializeDbConnection() {
   if (!dbInitialized) {
-    console.log('[INIT] Connecting to MongoDB...');
+    logger.info('[INIT] Connecting to MongoDB...');
     await connectDB();
   }
 }
@@ -29,9 +30,9 @@ async function reinitializeDatabase() {
     // Clear favorites and history for all users
     await deleteFavoritesAndHistoryForAllUsersInDb();
     
-    console.log('Database reinitialization complete!');
+    logger.info('Database reinitialization complete!');
   } catch (error) {
-    console.error('Error during reinitialization:', error);
+    logger.error('Error during reinitialization:', error);
   }
 }
 

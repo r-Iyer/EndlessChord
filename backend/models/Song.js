@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const logger = require('../utils/loggerUtils');
 
 const songSchema = new mongoose.Schema({
   videoId:    String,
@@ -29,7 +30,7 @@ songSchema.statics.initSearchIndex = async function() {
       }
     }
   });
-  console.log('✅ Atlas Search index “default” is ready');
+  logger.info('✅ Atlas Search index “default” is ready');
 };
 
 // 2) Compile & export your Model

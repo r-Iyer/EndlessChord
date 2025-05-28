@@ -1,5 +1,6 @@
 const { MAX_RETRIES } = require('../config/constants');
 const { GoogleGenAI } = require("@google/genai");
+const logger = require('../utils/loggerUtils');
 
 /**
  * Fetch AI recommendations from Gemini model with retries.
@@ -14,7 +15,7 @@ const getAIRecommendationsGemini = async (recommendationPrompt, channelName) => 
 
   for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
     try {
-      console.log(`[AI] Fetching suggestions for channel: ${channelName}, attempt ${attempt}`);
+      logger.info(`[AI] Fetching suggestions for channel: ${channelName}, attempt ${attempt}`);
       
       // Call AI model to generate content
       const response = await ai.models.generateContent({
@@ -31,19 +32,19 @@ const getAIRecommendationsGemini = async (recommendationPrompt, channelName) => 
         try {
           // Parse and return the JSON array if found
           const parsedJson = JSON.parse(jsonMatch[0]);
-          console.log(`[AI] Successfully parsed suggestions: ${parsedJson.length} items`);
+          logger.info(`[AI] Successfully parsed suggestions: ${parsedJson.length} items`);
           return parsedJson;
 
         } catch (jsonErr) {
-          console.error('[AI] JSON parse error:', jsonErr);
+          logger.error('[AI] JSON parse error:', jsonErr);
           // Continue to retry if parsing fails
         }
       } else {
-        console.error('[AI] No JSON array found in response');
+        logger.error('[AI] No JSON array found in response');
         // Continue to retry if no JSON array found
       }
     } catch (err) {
-      console.error(`[AI] Error fetching suggestions (attempt ${attempt}):`, err);
+      logger.error(`[AI] Error fetching suggestions (attempt ${attempt}):`, err);
       // Continue to retry on error
     }
     

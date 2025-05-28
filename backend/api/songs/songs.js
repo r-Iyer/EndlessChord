@@ -8,12 +8,13 @@ const { handleError, sendResponse } = require('../../utils/handlerUtils');
 const { addFavoriteStatus } = require('../../utils/favoriteUtils');
 const { getChannelsInDbById } = require('../../helpers/channelHelpers');
 const { getUserRecentSongsInDb } = require('../../helpers/userHelpers');
+const logger = require('../../utils/loggerUtils');
 
 const router = express.Router();
 
 router.get('/:channelId', optionalAuth, addFavoriteStatus, async (req, res) => {
   const { source } = req.query;
-  console.log(`[ROUTE] GET /api/songs/${req.params.channelId} — Source: ${source}`);
+  logger.info(`[ROUTE] GET /api/songs/${req.params.channelId} — Source: ${source}`);
   
   try {
     const channel = await getChannelsInDbById(req.params.channelId);
@@ -30,7 +31,7 @@ router.get('/:channelId', optionalAuth, addFavoriteStatus, async (req, res) => {
     
     //Get all songs from the DB with exclusions applied
     let songs = await getSongsWithExclusions(channel.genre, channel.language, allExcludeIds);
-    console.log(`[ROUTE] GET /api/songs/${req.params.channelId} — Found ${songs.length} matching songs in database`);
+    logger.info(`[ROUTE] GET /api/songs/${req.params.channelId} — Found ${songs.length} matching songs in database`);
     
     //Append AI suggested songs if needed
     let { songs: updatedSongs, aiSuggestionsAdded } = await addAISuggestionsIfNeeded(songs, channel, allExcludeIds);
@@ -42,7 +43,7 @@ router.get('/:channelId', optionalAuth, addFavoriteStatus, async (req, res) => {
       updatedSongs = updatedSongs.slice(0, MINIMUM_SONG_COUNT);
     }
     
-    console.log(`[ROUTE] GET /api/songs/${req.params.channelId} — Returning ${updatedSongs.length} songs for channel ${channel.name}`);
+    logger.info(`[ROUTE] GET /api/songs/${req.params.channelId} — Returning ${updatedSongs.length} songs for channel ${channel.name}`);
     sendResponse(res, updatedSongs);
   } catch (error) {
     handleError(res, error, `/api/songs/${req.params.channelId}`);

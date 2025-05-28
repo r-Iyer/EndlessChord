@@ -1,4 +1,5 @@
 const Channel = require('../models/Channel');
+const logger = require('../utils/loggerUtils');
 
 /**
 * Fetch all channels from the database.
@@ -8,10 +9,10 @@ const getChannelsInDb = async () => {
   try {
     // Fetch all channels
     const channels = await Channel.find().exec();
-    console.log(`[getChannelsInDb] Retrieved ${channels.length} channels`);
+    logger.debug(`[getChannelsInDb] Retrieved ${channels.length} channels`);
     return channels;
   } catch (error) {
-    console.error('[getChannelsInDb ERROR]', error);
+    logger.error('[getChannelsInDb ERROR]', error);
     // Return empty array on error
     return [];
   }
@@ -26,17 +27,17 @@ const getChannelsInDbById = async (channelId) => {
   try {
     
     if (!channelId) {
-      console.warn('[getChannelsInDbById] No channelId provided in request parameters');
+      logger.warn('[getChannelsInDbById] No channelId provided in request parameters');
       // If no channelId provided, return null or handle as needed
       return null;
     }
     
     // Find channel by ID
     const channel = await Channel.findById(channelId).exec();
-    console.log(`[getChannelsInDbById] Retrieved channel: ${channel ? channel.name : 'not found'}`);
+    logger.debug(`[getChannelsInDbById] Retrieved channel: ${channel ? channel.name : 'not found'}`);
     return channel;
   } catch (error) {
-    console.error('[getChannelsInDbById ERROR]', error);
+    logger.error('[getChannelsInDbById ERROR]', error);
     // Return null on error to indicate not found / failure
     return null;
   }
@@ -44,12 +45,12 @@ const getChannelsInDbById = async (channelId) => {
 
 const deleteAllChannelsInDb = async () => {
   await Channel.deleteMany({})
-  console.log(`Deleted ${channelResult.deletedCount} channels`);
+  logger.debug(`Deleted ${channelResult.deletedCount} channels`);
 }
 
 const insertChannelsInDb = async(channelSeeds) => {
     await Channel.insertMany(channelSeeds);
-    console.log('[DB] Channels created.');
+    logger.debug('[DB] Channels created.');
 };
 
 

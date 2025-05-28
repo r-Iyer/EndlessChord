@@ -5,13 +5,14 @@ const { initializeDbConnection } = require('../../utils/initialiseUtils');
 const { handleError, sendResponse } = require('../../utils/handlerUtils');
 const bcrypt = require('bcrypt');
 const { generateToken } = require('../../utils/authUtils');
+const logger = require('../../utils/loggerUtils');
 
 
 const router = express.Router();
 
 // Login route - POST /api/auth/login
 router.post('/login', async (req, res) => {
-  console.log('[ROUTE] POST /api/auth/login');
+  logger.info('[ROUTE] POST /api/auth/login');
   await initializeDbConnection();
   
   try {
@@ -50,7 +51,7 @@ router.post('/login', async (req, res) => {
       lastLogin: user.lastLogin
     };
     
-    console.log(`[AUTH] User logged in successfully: ${email}`);
+    logger.info(`[AUTH] User logged in successfully: ${email}`);
     sendResponse(res, { 
       token,
       user: userData 

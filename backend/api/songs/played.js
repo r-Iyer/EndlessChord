@@ -4,11 +4,12 @@ const User = require('../../models/User');
 const { optionalAuth } = require('../../utils/authUtils');
 const { handleError, sendResponse } = require('../../utils/handlerUtils');
 const { Song } = require('../../models/Song');
+const logger = require('../../utils/loggerUtils');
 
 const router = express.Router();
 
 router.post('/', optionalAuth, async (req, res) => {
-  //console.log('[ROUTE] POST /api/songs/played');
+  logger.debug('[ROUTE] POST /api/songs/played');
   
   try {
     const { songIds } = req.body;
@@ -73,7 +74,7 @@ router.post('/', optionalAuth, async (req, res) => {
           };
           
         } catch (error) {
-          console.error(`[ERROR] Failed to update song ${songId}:`, error);
+          logger.error(`[ERROR] Failed to update song ${songId}:`, error);
           return { 
             id: songId, 
             success: false, 
@@ -86,7 +87,7 @@ router.post('/', optionalAuth, async (req, res) => {
 
     const userHistoryUpdates = updateResults.filter(r => r.userHistoryUpdate).length;
     if (userId) {
-      console.log(`[ROUTE] POST /api/songs/played — Updated history for ${userHistoryUpdates} songs for user ${req.user.name}`);
+      logger.info(`[ROUTE] POST /api/songs/played — Updated history for ${userHistoryUpdates} songs for user ${req.user.name}`);
     }
     
 sendResponse(res, { success: true, updates: updateResults });

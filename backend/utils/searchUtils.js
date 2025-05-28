@@ -1,5 +1,6 @@
 const { Song } = require('../models/Song');
 const { runSongAggregationInDb } = require('../helpers/songHelpers');
+const logger = require('./loggerUtils');
 
 /**
  * Search songs with strict word-by-word fuzzy matching across multiple fields,
@@ -67,7 +68,7 @@ async function searchSongsInDb(searchTerm, excludeIds = []) {
 
     return await runSongAggregationInDb(pipeline);
   } catch (err) {
-    console.error('[SEARCH ERROR]', err);
+    logger.error('[SEARCH ERROR]', err);
     return [];
   }
 }

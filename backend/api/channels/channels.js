@@ -4,12 +4,13 @@ const { optionalAuth } = require('../../utils/authUtils');
 const { handleError, sendResponse } = require('../../utils/handlerUtils');
 const { reinitializeDatabase, initializeDbConnection } = require('../../utils/initialiseUtils');
 const { getChannelsInDb, getChannelsInDbById } = require('../../helpers/channelHelpers');
+const logger = require('../../utils/loggerUtils');
 
 const router = express.Router();
 
 // Routes
 router.get('/', optionalAuth, async (req, res) => {
-  console.log('[ROUTE] GET /api/channels');
+  logger.info('[ROUTE] GET /api/channels');
   await initializeDbConnection();
   //Reinitialize database tables if needed
   //await reinitializeDatabase();
@@ -25,13 +26,13 @@ router.get('/', optionalAuth, async (req, res) => {
 });
 
 router.get('/:id', optionalAuth, async (req, res) => {
-  console.log(`[ROUTE] GET /api/channels/${req.params.id}`);
+  logger.info(`[ROUTE] GET /api/channels/${req.params.id}`);
   
   try {
     const channel = await getChannelsInDbById(req.params.id);
     
     if (!channel) {
-      console.warn('[WARN] Channel not found:', req.params.id);
+      logger.warn('[WARN] Channel not found:', req.params.id);
       return sendResponse(res, { message: 'Channel not found' }, 404);
     }
     sendResponse(res, channel);

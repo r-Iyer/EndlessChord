@@ -5,19 +5,20 @@ const User = require('../../models/User');
 const { handleError, sendResponse } = require('../../utils/handlerUtils');
 const { optionalAuth } = require('../../utils/authUtils');
 const { addFavoriteStatus } = require('../../utils/favoriteUtils');
+const logger = require('../../utils/loggerUtils');
 
 
 const router = express.Router();
 
 // Add to favorites
 router.post('/', optionalAuth, async (req, res) => {
-  console.log('[ROUTE] POST /api/favorites');
+  logger.info('[ROUTE] POST /api/favorites');
   
   try {
     const { songId } = req.body;
     
     if (!mongoose.Types.ObjectId.isValid(songId)) {
-      console.warn('[WARN] Invalid song ID:', songId);
+      logger.warn('[WARN] Invalid song ID:', songId);
       return sendResponse(res, { error: 'Invalid song ID' }, 400);
     }
 
@@ -35,11 +36,11 @@ router.post('/', optionalAuth, async (req, res) => {
     ).populate('favorites.songId');
 
     if (!user) {
-      console.warn('[WARN] User not found:', req.user.id);
+      logger.warn('[WARN] User not found:', req.user.id);
       return sendResponse(res, { error: 'User not found' }, 404);
     }
 
-    console.log(`[ROUTE] POST /api/favorites — Added song ${songId} to user ${req.user.id}'s favorites`);
+    logger.info(`[ROUTE] POST /api/favorites — Added song ${songId} to user ${req.user.id}'s favorites`);
     sendResponse(res, user.favorites);
   } catch (error) {
     handleError(res, error, '/api/favorites');
@@ -48,13 +49,13 @@ router.post('/', optionalAuth, async (req, res) => {
 
 // Remove from favorites
 router.delete('/:songId', optionalAuth, async (req, res) => {
-  console.log(`[ROUTE] DELETE /api/favorites/${req.params.songId}`);
+  logger.info(`[ROUTE] DELETE /api/favorites/${req.params.songId}`);
   
   try {
     const { songId } = req.params;
 
     if (!mongoose.Types.ObjectId.isValid(songId)) {
-      console.warn('[WARN] Invalid song ID:', songId);
+      logger.warn('[WARN] Invalid song ID:', songId);
       return sendResponse(res, { error: 'Invalid song ID' }, 400);
     }
 
@@ -71,7 +72,7 @@ router.delete('/:songId', optionalAuth, async (req, res) => {
     ).populate('favorites.songId');
 
     if (!user) {
-      console.warn('[WARN] User not found:', req.user.id);
+      logger.warn('[WARN] User not found:', req.user.id);
       return sendResponse(res, { error: 'User not found' }, 404);
     }
 
@@ -104,7 +105,7 @@ router.get('/', optionalAuth, addFavoriteStatus, async (req, res) => {
 
     res.json(favorites);
   } catch (error) {
-    console.error('[Favorites Error]', error);
+    logger.error('[Favorites Error]', error);
     res.status(500).json({ error: 'Server error' });
   }
 });

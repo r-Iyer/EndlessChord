@@ -4,12 +4,13 @@ const User = require('../../models/User');
 const { initializeDbConnection } = require('../../utils/initialiseUtils');
 const { handleError, sendResponse } = require('../../utils/handlerUtils');
 const bcrypt = require('bcrypt');
+const logger = require('../../utils/loggerUtils');
 
 const router = express.Router();
 
 // Register route - POST /api/auth/register
 router.post('/register', async (req, res) => {
-  console.log('[ROUTE] POST /api/auth/register');
+  logger.info('[ROUTE] POST /api/auth/register');
   await initializeDbConnection();
   
   try {
@@ -58,7 +59,7 @@ router.post('/register', async (req, res) => {
       createdAt: newUser.createdAt
     };
     
-    console.log(`[AUTH] User registered successfully: ${email}`);
+    logger.info(`[AUTH] User registered successfully: ${email}`);
     sendResponse(res, { 
       token,
       user: userData 

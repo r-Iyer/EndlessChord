@@ -1,4 +1,5 @@
 const User = require('../models/User');
+const logger = require('../utils/loggerUtils');
 
 const getFavoriteSongIdsFromDb = async (userId) => {
   if (!userId) return [];
@@ -12,20 +13,20 @@ const getFavoriteSongIdsFromDb = async (userId) => {
 
     // 2. If no user or no favorites, return empty array
     if (!user?.favorites?.length) {
-      console.log(`[getFavoriteSongIdsFromDb] No favorites found for user ${userId}`);
+      logger.debug(`[getFavoriteSongIdsFromDb] No favorites found for user ${userId}`);
       return [];
     }
 
     // 3. Map and return string IDs
     const favoriteSongIds = user.favorites.map(f => f.songId.toString());
-    console.log(
+    logger.debug(
       `[getFavoriteSongIdsFromDb] User ${userId} favorite song IDs: ${favoriteSongIds.length}`
     );
     return favoriteSongIds;
 
   } catch (err) {
     // 4. On error, log and return an empty array
-    console.error(
+    logger.error(
       `[getFavoriteSongIdsFromDb] Error fetching favorites for user ${userId}:`,
       err
     );

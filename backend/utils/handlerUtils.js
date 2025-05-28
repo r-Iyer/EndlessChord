@@ -1,6 +1,8 @@
+const logger = require('./loggerUtils');
+
 // Generic error handler
 const handleError = (res, error, message = 'Server error', statusCode = 500) => {
-  console.error(`[ERROR] ${message}:`, error);
+  logger.error(`[ERROR] ${message}:`, error);
   return res.status(statusCode).json({ message });
 };
 

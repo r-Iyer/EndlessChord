@@ -1,4 +1,5 @@
 const { Song } = require('../models/Song');
+const logger = require('../utils/loggerUtils');
 
 const getSongsWithExclusionsFromDb = async (genreFilter, languageFilter, excludeIds) => {
   const song = await Song.find({
@@ -9,19 +10,19 @@ const getSongsWithExclusionsFromDb = async (genreFilter, languageFilter, exclude
     ]
   })
   .sort({ playCount: 1 });  
-  //console.log(`[getSongsWithExclusionsFromDb] Found ${song.length} songs with exclusions`);
+  logger.debug(`[getSongsWithExclusionsFromDb] Found ${song.length} songs with exclusions`);
   return song;                // least-played first
 }
 
 const findSongByVideoIdFromDb = async (videoId) => {
     const song = await Song.findOne({ videoId: videoId });
-    //console.log(`[findSongByVideoIdFromDb] Found song with videoId: ${videoId}`);
+    logger.debug(`[findSongByVideoIdFromDb] Found song with videoId: ${videoId}`);
     return song;
 }
 
 const saveSongToDb = async (song) => {
     song.save();
-    //console.log(`[saveSongToDb] Saved song with videoId: ${song.videoId}`);
+    logger.debug(`[saveSongToDb] Saved song with videoId: ${song.videoId}`);
 }
 
 const updateSongInDb = async (videoId, suggestionGenres, suggestionLangs) => {
@@ -34,7 +35,7 @@ const updateSongInDb = async (videoId, suggestionGenres, suggestionLangs) => {
         }
       }
     );
-    //console.log(`[updateSongInDb] Updated song with videoId: ${videoId}`);
+    logger.debug(`[updateSongInDb] Updated song with videoId: ${videoId}`);
 }
 
 /**
@@ -45,17 +46,17 @@ const updateSongInDb = async (videoId, suggestionGenres, suggestionLangs) => {
 const runSongAggregationInDb = async (pipeline) => {
   try {
     const results = await Song.aggregate(pipeline).exec();
-    console.log(`[runSongAggregationInDb] Aggregated ${results.length} songs`);
+    logger.debug(`[runSongAggregationInDb] Aggregated ${results.length} songs`);
     return results;
   } catch (error) {
-    console.error('Aggregation error:', error);
+    logger.error('Aggregation error:', error);
     throw error;
   }
 }
 
 const deleteAllSongsInDb = async () => {
   await Song.deleteMany({});
-  console.log(`Deleted ${songResult.deletedCount} songs`);
+  logger.debug(`Deleted ${songResult.deletedCount} songs`);
 }
 
 

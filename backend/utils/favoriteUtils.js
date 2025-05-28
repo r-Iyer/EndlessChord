@@ -1,4 +1,5 @@
 const { getFavoriteSongIdsFromDb} = require('../helpers/favoriteHelpers');
+const logger = require('./loggerUtils');
 
 const addFavoriteStatus = async (req, res, next) => {
   try {
@@ -23,7 +24,7 @@ const addFavoriteStatus = async (req, res, next) => {
         const newBody = isJson ? JSON.stringify(data) : data;
         originalSend(newBody);
       } catch (error) {
-        console.error('Response processing error:', error);
+        logger.error('Response processing error:', error);
         originalSend(body); // Fallback to original response
       }
     };

@@ -7,13 +7,14 @@ const { parseExcludeIds, sortSongs } = require('../../utils/songUtils');
 const { searchSongsInDb } = require('../../utils/searchUtils');
 const { MINIMUM_SONG_COUNT, DEFAULT_SONG_COUNT } = require('../../config/constants');
 const { addFavoriteStatus } = require('../../utils/favoriteUtils');
+const logger = require('../../utils/loggerUtils');
 
 const router = express.Router();
 
 router.get('/', optionalAuth, addFavoriteStatus, async (req, res) => {
   const { q: searchQuery, excludeIds: excludeIdsParam, source: source } = req.query;
-  console.log(`[ROUTE] GET /api/search — Query: ${searchQuery}`);
-  console.log(`[ROUTE] GET /api/search — source: ${source}`);
+  logger.info(`[ROUTE] GET /api/search — Query: ${searchQuery}`);
+  logger.info(`[ROUTE] GET /api/search — source: ${source}`);
 
   try {
     if (!searchQuery) {
@@ -24,7 +25,7 @@ router.get('/', optionalAuth, addFavoriteStatus, async (req, res) => {
 
     //Find Songs with matching query in the database and exclude songs in current queue
     let songs = await searchSongsInDb(searchQuery, excludeIds);
-    console.log(`[ROUTE] GET /api/search — Found ${songs.length} matching songs in database`);
+    logger.info(`[ROUTE] GET /api/search — Found ${songs.length} matching songs in database`);
     
     // Add AI suggestions only if we don't have enough high-quality results
     if ( songs.length < MINIMUM_SONG_COUNT) {      
@@ -47,7 +48,7 @@ router.get('/', optionalAuth, addFavoriteStatus, async (req, res) => {
     //Sort songs by score and limit to default count
     songs = sortSongs(songs, searchQuery).slice(0, DEFAULT_SONG_COUNT);
     
-    console.log(`[ROUTE] GET /api/search — Returning ${songs.length} songs for query "${searchQuery}"`);
+    logger.info(`[ROUTE] GET /api/search — Returning ${songs.length} songs for query "${searchQuery}"`);
     
     sendResponse(res, songs);
   } catch (error) {

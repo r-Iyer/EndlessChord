@@ -1,5 +1,6 @@
 const User = require('../models/User');
 const { RECENTLY_PLAYED_THRESHOLD } = require('../config/constants');
+const logger = require('../utils/loggerUtils');
 
 const getUserRecentSongsInDb = async (req) => {
   try {
@@ -19,12 +20,12 @@ const getUserRecentSongsInDb = async (req) => {
         userRecentIds = userRecentSongs.map(entry => entry.songId.toString());
       }
     }
-    console.log(`[getUserRecentSongsInDb] User recent song IDs: ${userRecentIds.length}`);
+    logger.info(`[getUserRecentSongsInDb] User recent song IDs: ${userRecentIds.length}`);
     
     return userRecentIds;
   } catch (error) {
     // Log the error, can replace with your logger
-    console.error('[getUserRecentSongsInDb ERROR]', error);
+    logger.error('[getUserRecentSongsInDb ERROR]', error);
     // Return empty array on error so caller can safely proceed
     return [];
   }
@@ -40,7 +41,7 @@ const deleteFavoritesAndHistoryForAllUsersInDb = async () => {
       }
     }
   );
-  console.log(`Cleared favorites/history for ${userResult.modifiedCount} users`);    
+  logger.info(`Cleared favorites/history for ${userResult.modifiedCount} users`);    
 };
 
 module.exports = { getUserRecentSongsInDb, deleteFavoritesAndHistoryForAllUsersInDb };

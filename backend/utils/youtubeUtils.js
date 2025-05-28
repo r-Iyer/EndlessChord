@@ -1,5 +1,6 @@
 const cheerio = require('cheerio');
 const axios = require('axios');
+const logger = require('./loggerUtils');
 
 // YouTube Video Processing Part
 async function getYouTubeVideoDetails(songs, channel) {
@@ -25,14 +26,14 @@ async function getYouTubeVideoDetails(songs, channel) {
           }
           return null;
         } catch (error) {
-          console.error(`Error searching YouTube for ${song.title}:`, error);
+          logger.error(`Error searching YouTube for ${song.title}:`, error);
           return null;
         }
       })
     );
     return songsWithVideoInfo.filter(song => song !== null);
   } catch (error) {
-    console.error('Error processing YouTube videos:', error);
+    logger.error('Error processing YouTube videos:', error);
     return [];
   }
 }
@@ -74,12 +75,12 @@ async function searchYouTube(query) {
           }
         }
       } catch (e) {
-        console.error('Failed to parse YouTube initial data:', e);
+        logger.error('Failed to parse YouTube initial data:', e);
       }
     }
     return extractTopResultFromHTML(html);
   } catch (error) {
-    console.error('YouTube alternative search error:', error);
+    logger.error('YouTube alternative search error:', error);
     return null;
   }
 }
@@ -108,7 +109,7 @@ async function extractTopResultFromHTML(html) {
     }
     return null;
   } catch (error) {
-    console.error('HTML extraction error:', error);
+    logger.error('HTML extraction error:', error);
     return null;
   }
 }
