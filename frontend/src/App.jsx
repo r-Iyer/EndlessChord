@@ -231,23 +231,8 @@ function App() {
           }
           return () => intervalId && clearInterval(intervalId);
         }, [currentSong, playerReady, setCurrentTime, setDuration]);
+
         
-        
-        // Keyboard shortcuts for previous (Q) and next (E)
-        useEffect(() => {
-          const handleKeyDown = (e) => {
-            if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.isContentEditable) return;
-            if (e.key === 'q' || e.key === 'Q') {
-              e.preventDefault();
-              handlePreviousSong();
-            } else if (e.key === 'e' || e.key === 'E') {
-              e.preventDefault();
-              handleNextSong();
-            }
-          };
-          window.addEventListener('keydown', handleKeyDown);
-          return () => window.removeEventListener('keydown', handleKeyDown);
-        }, [handlePreviousSong, handleNextSong]);
         
         // Don't render anything until auth is checked
         if (!isAuthChecked) {

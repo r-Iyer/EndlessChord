@@ -1,9 +1,11 @@
+import React, { useCallback } from 'react';
 import TimerSlider from '../TimerSlider/TimerSlider';
 import PlaybackControls from '../PlaybackControls/PlaybackControls';
 import FavoriteButton from '../FavoriteButton/FavoriteButton';
+import { usePlayerControls } from '../../hooks/usePlayerControls';
 import './PlayerFooter.css';
 
-function PlayerFooter({
+export default function PlayerFooter({
   currentTime,
   duration,
   onSeek,
@@ -20,32 +22,40 @@ function PlayerFooter({
   user,
   currentSong
 }) {
-  const handleSeekBackward = () => {
-    onSeek(Math.max(currentTime - 5, 0));
-  };
+  // Seek helpers
+  const seekBackward = useCallback(() => onSeek(Math.max(currentTime - 5, 0)), [currentTime, onSeek]);
+  const seekForward  = useCallback(() => onSeek(Math.min(currentTime + 5, duration)), [currentTime, duration, onSeek]);
 
-  const handleSeekForward = () => {
-    onSeek(Math.min(currentTime + 5, duration));
-  };
+  // Attach keyboard & double-click handlers
+  const { handleDoubleClick } = usePlayerControls({
+    onPrevious,
+    onNext,
+    onPlayPause,
+    onFullscreenToggle,
+    onCCToggle,
+    onSeekBackward: seekBackward,
+    onSeekForward: seekForward
+  });
 
   return (
     <div
       className={`player-footer ${showUI ? 'visible' : 'hidden'}`}
+      onDoubleClick={handleDoubleClick}
       style={{
         bottom: isFullscreen ? '15%' : 0,
-        paddingBottom: isFullscreen ? 0 : 80,
+        paddingBottom: isFullscreen ? 0 : 80
       }}
     >
       <div className="slider-container">
         <button
           className="seek-button"
           aria-label="Seek backward 5 seconds"
-          onClick={handleSeekBackward}
+          onClick={seekBackward}
           tabIndex={0}
         >
           -5
         </button>
-        
+
         <TimerSlider
           currentTime={currentTime}
           duration={duration}
@@ -55,20 +65,20 @@ function PlayerFooter({
             pointerEvents: 'auto',
             zIndex: 2147483647,
             flex: 1,
-            fontSize: 12,
+            fontSize: 12
           }}
         />
-        
+
         <button
           className="seek-button"
           aria-label="Seek forward 5 seconds"
-          onClick={handleSeekForward}
+          onClick={seekForward}
           tabIndex={0}
         >
-          +5
+          5s
         </button>
       </div>
-      
+
       <div className="controls-container">
         <PlaybackControls
           isPlaying={isPlaying}
@@ -84,20 +94,14 @@ function PlayerFooter({
             opacity: showUI ? 1 : 0,
             pointerEvents: showUI ? 'auto' : 'none',
             transition: 'opacity 0.3s',
-            zIndex: 2147483647,
+            zIndex: 2147483647
           }}
         />
       </div>
 
-      {/* FAVORITE BUTTON PINNED */}
       <div className="player-footer__favorite">
-        <FavoriteButton 
-          song={currentSong} 
-          user={user}
-        />
+        <FavoriteButton song={currentSong} user={user} />
       </div>
     </div>
   );
 }
-
-export default PlayerFooter;
