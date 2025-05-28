@@ -16,10 +16,37 @@
 }
 
 .control-button {
+  position: relative;
   border-radius: 9999px; /* rounded-full */
   background-color: rgba(121, 17, 17, 0.3);
   padding: 0.75rem;
   transition-property: background-color;
   transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
   transition-duration: 300ms;
+}
+
+.control-button::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%) translateY(-8px);
+  background: rgba(0, 0, 0, 0.75); /* soft dark overlay */
+  color: #f1f1f1;
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  font-family: 'Segoe UI', sans-serif;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s ease, transform 0.25s ease;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  z-index: 20;
+}
+
+.control-button:hover::after {
+  opacity: 1;
+  transform: translateX(-50%) translateY(-12px); /* animate upward */
 }
