@@ -231,13 +231,13 @@ function App() {
           }
           return () => intervalId && clearInterval(intervalId);
         }, [currentSong, playerReady, setCurrentTime, setDuration]);
-
+        
         
         
         // Don't render anything until auth is checked
         if (!isAuthChecked) {
           return (
-            <div className="min-h-screen bg-gray-900 text-white flex items-center justify-center">
+            <div className="full-center-screen">
             <Spinner />
             </div>
           );
@@ -248,33 +248,31 @@ function App() {
           console.error('❌ Video Player Error:', error); // Log the error for debugging
           handleNextSong();
         };
+        // App.js (only the return block shown)
         return (
-          <div ref={fullscreenRef} className="min-h-screen bg-gray-900 text-white flex flex-col">
-          {/* Authentication Modal - MODIFIED: Pass handleGuestAccess */}
-          <AuthModal 
+          <div ref={fullscreenRef} className="app-container">
+          {/* Authentication Modal */}
+          <AuthModal
           isOpen={showAuthModal}
-          onClose={handleGuestAccess} // This handles the X button click
+          onClose={handleGuestAccess}
           onAuthSuccess={handleAuthSuccess}
-          onGuestAccess={handleGuestAccess} // If your AuthModal has a guest button
+          onGuestAccess={handleGuestAccess}
           />
           
-          <header className={`p-4 bg-gray-800 transition-opacity duration-300 ${isFullscreen ? 'hidden' : 'opacity-100'}`}>
-          <div className="container mx-auto">
-          <div className="flex flex-col gap-4">
+          <header className={`app-header ${isFullscreen ? 'app-header--hidden' : ''}`}>
+          <div className="header-container">
+          <div className="layout-column-gap">
           {/* Top row: Search Bar and User Profile */}
-          <div className="flex items-center gap-4">
-          {/* Search Bar */}
-          <div className="flex-1">
-          <SearchBar 
-          onSearch={handleSearch} 
+          <div className="layout-row-gap align-center">
+          <div className="full-width">
+          <SearchBar
+          onSearch={handleSearch}
           searchQuery={searchQuery}
-          className="w-full"
+          className="full-width"
           />
           </div>
-          
-          {/* User Profile */}
-          <div className="flex-shrink-0">
-          <UserProfile 
+          <div className="no-shrink">
+          <UserProfile
           user={user}
           onLogout={handleLogout}
           onShowAuth={() => setShowAuthModal(true)}
@@ -284,23 +282,21 @@ function App() {
           </div>
           
           {/* Bottom row: Channel Selector */}
-          <div className="w-full">
-          <div className="flex items-center">
+          <div className="full-width">
           <ChannelSelector
           channels={channels}
           currentChannel={currentChannel}
-          onSelectChannel={channelIdOrName => {
+          onSelectChannel={(channelIdOrName) => {
             setUserInteracted(true);
             setBackendError(false);
-            clearSearch(); // Clear any active search
-            
-            // Find channel by id or name, then update URL and select
-            let channel = channels.find(c => c._id === channelIdOrName);
-            if (!channel) {
-              channel = channels.find(
-                c => c.name.replace(/\s+/g, '-').toLowerCase() === channelIdOrName.replace(/\s+/g, '-').toLowerCase()
-              );
-            }
+            clearSearch();
+            const channel =
+            channels.find((c) => c._id === channelIdOrName) ||
+            channels.find(
+              (c) =>
+                c.name.replace(/\s+/g, '-').toLowerCase() ===
+              channelIdOrName.replace(/\s+/g, '-').toLowerCase()
+            );
             if (channel) {
               setChannelNameInURL(channel.name.replace(/\s+/g, '-'));
               selectChannel(channel._id);
@@ -311,18 +307,15 @@ function App() {
           </div>
           </div>
           </div>
-          </div>
           </header>
           
-          <main className="flex-1 flex flex-col items-stretch justify-start relative">
-          {/* Show spinner while loading */}
+          <main className="main-container">
           {showLoader && (
-            <div className="flex items-center justify-center h-full w-full absolute top-0 left-0 z-50 bg-black bg-opacity-70">
+            <div className="loader-overlay">
             <Spinner />
             </div>
           )}
           
-          {/* Show player UI only if currentSong exists and not loading */}
           {currentSong && !showLoader && (
             <>
             <VideoPlayer
@@ -330,16 +323,14 @@ function App() {
             isPlaying={isPlaying}
             onReady={handlePlayerReady}
             onStateChange={handlePlayerStateChange}
-            onError={(error) => handlePlayerError(error)} // ✅ pass error to custom handler
+            onError={handlePlayerError}
             playerRef={playerRef}
             isCCEnabled={isCCEnabled}
             />
             <SongInfo
             song={currentSong}
-            nextSong={ nextSong }
-            laterSong={
-              queue?.length > 0 ? queue[0] : null
-            }
+            nextSong={nextSong}
+            laterSong={queue?.[0] ?? null}
             visible={showInfo}
             />
             <PlayerFooter
@@ -349,54 +340,52 @@ function App() {
             isFullscreen={isFullscreen}
             showUI={showUI}
             isPlaying={isPlaying}
-            currentChannel={isSearchMode ? { name: `Search: ${searchQuery}` } : currentChannel}
+            currentChannel={
+              isSearchMode ? { name: `Search: ${searchQuery}` } : currentChannel
+            }
             onPlayPause={togglePlayPause}
             onNext={handleNextSong}
             onFullscreenToggle={toggleFullscreen}
             onPrevious={handlePreviousSong}
             isCCEnabled={isCCEnabled}
-            onCCToggle={() => setIsCCEnabled(prev => !prev)}
-            user = {user}
-            currentSong={ currentSong }
+            onCCToggle={() => setIsCCEnabled((prev) => !prev)}
+            user={user}
+            currentSong={currentSong}
             />
             </>
           )}
           
-          {/* Show backend error if user interacted and backend failed */}
           {!showLoader && backendError && userInteracted && (
-            <div className="flex items-center justify-center h-full w-full">
-            <p className="text-lg text-red-400">Backend is down or not responding.</p>
+            <div className="centered-fullscreen">
+            <p className="error-message">Backend is down or not responding.</p>
             </div>
           )}
           
-          {/* Show "no song" message only if user has NOT interacted */}
           {!showLoader && !backendError && !currentSong && !userInteracted && (
-            <div className="flex items-center justify-center h-full w-full">
-            <p className="text-lg">Please select a channel or search for songs.</p>
+            <div className="centered-fullscreen">
+            <p className="text-message">Please select a channel or search for songs.</p>
             </div>
           )}
           
-          {/* If user interacted, not loading, not backend error, but no song */}
           {!showLoader && !backendError && !currentSong && userInteracted && (
-            <div className="flex items-center justify-center h-full w-full">
+            <div className="centered-fullscreen">
             {isSearchMode ? (
-              <div className="text-center">
-              <p className="text-lg">No songs found for "{searchQuery}".</p>
-              <button 
-              onClick={clearSearch}
-              className="mt-4 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md transition duration-150"
-              >
+              <>
+              <p className="text-message">No songs found for “{searchQuery}”.</p>
+              <button onClick={clearSearch} className="clear-search-button">
               Clear Search
               </button>
-              </div>
+              </>
             ) : (
-              <p className="text-lg">No songs found for this channel.</p>
+              <p className="text-message">No songs found for this channel.</p>
             )}
             </div>
           )}
           </main>
           </div>
         );
+        
+        
       }
       
       export default App;
