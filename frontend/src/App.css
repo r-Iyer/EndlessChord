@@ -42,14 +42,6 @@ body {
 
 /* App Layout */
 .app-container       { @apply min-h-screen bg-gray-900 text-white flex flex-col; }
-.app-header          { @apply p-4 bg-gray-800 transition-opacity duration-300; }
-.app-header--hidden  { @apply hidden; }
-.header-container    { @apply container mx-auto; }
-.layout-column-gap   { @apply flex flex-col gap-4; }
-.layout-row-gap      { @apply flex gap-4; }
-.align-center        { @apply items-center justify-center; }
-.full-width          { @apply w-full; }
-.no-shrink           { @apply flex-shrink-0; }
 .main-container      { @apply flex-1 flex flex-col items-stretch justify-start relative; }
 
 /* Centered messages */

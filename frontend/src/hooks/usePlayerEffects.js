@@ -1,6 +1,6 @@
 import { useEffect, useCallback } from 'react';
 
-export default function usePlayerEffects(
+export default function usePlayerEffects({
   currentSong,
   setShowInfo,
   infoTimeoutRef,
@@ -9,69 +9,103 @@ export default function usePlayerEffects(
   duration,
   setDuration,
   playerRef,
-) {
-  // Show/hide song info
+  setShowUI,
+  uiTimeoutRef,
+  setPlayerReady,
+  playerReady,
+}) {
+  // --- Show/hide song info ---
   const showSongInfo = useCallback(() => {
     setShowInfo(true);
     if (infoTimeoutRef.current) clearTimeout(infoTimeoutRef.current);
     infoTimeoutRef.current = setTimeout(() => setShowInfo(false), 8000);
   }, [setShowInfo, infoTimeoutRef]);
-
+  
   useEffect(() => {
     if (currentSong) {
       showSongInfo();
     }
-    return () => { if (infoTimeoutRef.current) clearTimeout(infoTimeoutRef.current); };
-    // eslint-disable-next-line
-  }, [currentSong, showSongInfo]);
-
-  // Timer update
+    return () => {
+      if (infoTimeoutRef.current) clearTimeout(infoTimeoutRef.current);
+    };
+  }, [currentSong, infoTimeoutRef, showSongInfo]);
+  
+  // --- Auto-hide UI after inactivity ---
+  useEffect(() => {
+    const showAndResetTimer = () => {
+      setShowUI(true);
+      if (uiTimeoutRef.current) clearTimeout(uiTimeoutRef.current);
+      uiTimeoutRef.current = setTimeout(() => setShowUI(false), 2500);
+    };
+    
+    window.addEventListener('mousemove', showAndResetTimer);
+    window.addEventListener('touchstart', showAndResetTimer, { passive: true });
+    
+    return () => {
+      window.removeEventListener('mousemove', showAndResetTimer);
+      window.removeEventListener('touchstart', showAndResetTimer);
+      if (uiTimeoutRef.current) clearTimeout(uiTimeoutRef.current);
+    };
+  }, [setShowUI, uiTimeoutRef]);
+  
+  // --- Reset playerReady on song change ---
+  useEffect(() => {
+    setPlayerReady(false);
+  }, [currentSong, setPlayerReady]);
+  
+  // --- Timer update: currentTime + duration ---
   useEffect(() => {
     let intervalId;
-    if (currentSong && playerRef.current && playerRef.current.getCurrentTime) {
+    const getPlayer = () => playerRef.current;
+    
+    if (
+      currentSong &&
+      playerReady &&
+      getPlayer() &&
+      typeof getPlayer().getCurrentTime === 'function'
+    ) {
       intervalId = setInterval(() => {
         try {
-          const time = playerRef.current.getCurrentTime() || 0;
-          const dur = playerRef.current.getDuration() || 0;
+          const player = getPlayer();
+          const time = player.getCurrentTime() || 0;
+          const dur = player.getDuration() || 0;
           setCurrentTime(Math.floor(time));
           if (dur) setDuration(Math.floor(dur));
         } catch {}
       }, 500);
     }
-    return () => intervalId && clearInterval(intervalId);
-  }, [currentSong, playerRef, setCurrentTime, setDuration]);
-
-// Show SongInfo at the beginning and when 20s remain
-useEffect(() => {
-  if (!currentSong || !duration) return;
-  
-  let preEndTimeout = null;
-  
-  // Show at the beginning (first 2 seconds)
-  if (currentTime <= 2) {
-    showSongInfo();
-  }
-  
-  // Show when 20 seconds remain (only for songs longer than 30s)
-  if (duration > 30) {
-    const timeLeft = duration - currentTime;
     
-    if (timeLeft > 20) {
-      // Set timeout to show info when 20 seconds remain
-      preEndTimeout = setTimeout(() => {
-        showSongInfo();
-      }, (timeLeft - 20) * 1000);
-    } else if (timeLeft <= 20 && timeLeft > 0 && currentTime > 2) {
-      // Show immediately if we're already in the last 20 seconds
-      // (but not if we're still in the beginning)
+    return () => intervalId && clearInterval(intervalId);
+  }, [currentSong, playerReady, setCurrentTime, setDuration, playerRef]);
+  
+  // --- Show SongInfo at beginning and near end ---
+  useEffect(() => {
+    if (!currentSong || !duration) return;
+    
+    let preEndTimeout = null;
+    
+    // Show at the beginning (first 2 seconds)
+    if (currentTime <= 2) {
       showSongInfo();
     }
-  }
+    
+    // Show when 20 seconds remain (for songs > 30s)
+    if (duration > 30) {
+      const timeLeft = duration - currentTime;
+      
+      if (timeLeft > 20) {
+        preEndTimeout = setTimeout(() => {
+          showSongInfo();
+        }, (timeLeft - 20) * 1000);
+      } else if (timeLeft <= 20 && timeLeft > 0 && currentTime > 2) {
+        showSongInfo();
+      }
+    }
+    
+    return () => {
+      if (preEndTimeout) clearTimeout(preEndTimeout);
+    };
+  }, [currentSong, duration, currentTime, showSongInfo]);
   
-  return () => {
-    if (preEndTimeout) clearTimeout(preEndTimeout);
-  };
-}, [currentSong, duration, currentTime, showSongInfo]);
-
   return { showSongInfo };
 }
