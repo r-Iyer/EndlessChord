@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import authService from '../services/authService';
-import { fetchChannels } from '../services/apiService';
+import { fetchChannels } from '../services/channelService';
 
 const useInitialLoad = ({
   isAuthChecked,

@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react';
-import { fetchChannelById } from './services/apiService';
+import { fetchChannelById } from './services/channelService';
 import Spinner from './components/Spinner/Spinner';
 import AuthModal from './components/AuthModal/AuthModal';
 import usePlayerHandlers from './hooks/usePlayerHandlers';

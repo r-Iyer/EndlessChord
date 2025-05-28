@@ -1,4 +1,4 @@
-  import { useCallback } from 'react';
+import { useCallback } from 'react';
 
 export default function useChannelHandlers(
     setUserInteracted,
@@ -26,13 +26,13 @@ export default function useChannelHandlers(
 
     const newUrl = `${window.location.pathname}?${params.toString()}`;
     window.history.replaceState({}, '', newUrl);
-  }, []); // no dependencies, so the function is stable
+  }, []);
 
   const selectChannel = useCallback(
     async (channelIdOrName) => {
       setUserInteracted(true);
       setBackendError(false);
-      setIsPlaying(false); // <-- always set to false here
+      setIsPlaying(false);
       setCurrentSong(null);
       setNextSong(null);
       setQueue([]);
@@ -47,7 +47,6 @@ export default function useChannelHandlers(
         if (!channelData) {
           channelData = await fetchChannelById(channelIdOrName);
         }
-        // Prevent unnecessary re-selection
         if (currentChannel && currentChannel._id === channelData._id) {
           setIsLoading(false);
           return;
@@ -59,7 +58,6 @@ export default function useChannelHandlers(
           setCurrentSong(songs[0]);
           setNextSong(songs[1] || null);
           setQueue(songs.slice(2));
-          // Do NOT set isPlaying here!
         } else {
           setCurrentSong(null);
           setNextSong(null);
