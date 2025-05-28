@@ -1,27 +1,27 @@
 /* FavoriteButton.css */
 .favorite-button {
-  background: rgba(40, 40, 40, 0.6);
+  position: relative;
+  color: white;
+  background: rgba(38, 28, 63, 0.8) !important;
   border: none;
   border-radius: 50%;
-  width: 32px;
-  height: 32px;
+  width: 35px  !important;
+  height: 35px  !important;
   padding: 6px;
   cursor: pointer;
   transition: all 0.2s ease;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: white;
   z-index: 1000; /* Ensure it appears above other elements */
 }
 
 .favorite-button:hover {
-  background: rgba(60, 60, 60, 0.8);
   transform: scale(1.1);
 }
 
 .favorite-button.active {
-  color: #ef4444;
+  color:rgb(178, 10, 113)
 }
 
 .favorite-button svg {
@@ -29,7 +29,6 @@
   height: 100%;
 }
 
-/* Add these new rules */
 .player-footer__controls-wrapper {
   display: flex;
   justify-content: space-between;

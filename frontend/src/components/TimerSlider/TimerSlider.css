@@ -20,7 +20,7 @@
   -webkit-appearance: none;
   background: linear-gradient(
     to right,
-    rgba(255, 255, 255, 0.7) var(--progress-percentage), /* Fill color */
+    rgba(38, 28, 63, 0.8) var(--progress-percentage), /* Fill color */
     rgba(255, 255, 255, 0.2) var(--progress-percentage) /* Unfilled color */
   );
   border-radius: 9999px;
