@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import "./SongInfo.css";
 
 export default function SongInfo({ song, nextSong, laterSong, visible }) {

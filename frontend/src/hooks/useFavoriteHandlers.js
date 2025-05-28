@@ -1,4 +1,3 @@
-// hooks/useFavoritesHandlers.js
 import { useState, useCallback } from 'react';
 
 export const useFavoritesHandlers = (getFavorites, setters) => {

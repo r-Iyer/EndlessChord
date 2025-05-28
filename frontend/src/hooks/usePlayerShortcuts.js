@@ -1,4 +1,3 @@
-// usePlaybackShortcuts.js
 import { useEffect, useCallback } from 'react';
 
 function usePlayerShortcuts({ onSeek, onPlayPause, onNext, onPrevious, currentTime, duration }) {

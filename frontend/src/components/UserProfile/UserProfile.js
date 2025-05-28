@@ -1,4 +1,3 @@
-// components/UserProfile/UserProfile.js
 import { useState } from 'react';
 import authService from '../../services/authService';
 import './UserProfile.css';

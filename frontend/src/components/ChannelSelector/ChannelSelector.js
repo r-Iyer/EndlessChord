@@ -1,4 +1,3 @@
-import React from 'react';
 import './ChannelSelector.css';
 
 export function slugify(name) {

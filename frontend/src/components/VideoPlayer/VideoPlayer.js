@@ -1,5 +1,4 @@
-// VideoPlayer.js
-import React, { useRef, useEffect, useState, useMemo } from 'react';
+import { useRef, useEffect, useState, useMemo } from 'react';
 import YouTube from 'react-youtube';
 import './VideoPlayer.css';
 

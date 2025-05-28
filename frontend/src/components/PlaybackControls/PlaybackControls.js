@@ -1,4 +1,3 @@
-// PlaybackControls.js
 import React, { forwardRef } from 'react';
 import { Play, Pause, SkipForward, SkipBack, Maximize, Minimize, Captions, CaptionsOff  } from 'lucide-react';
 import './PlaybackControls.css';
