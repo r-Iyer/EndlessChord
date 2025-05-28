@@ -14,7 +14,6 @@ export const fetchSongsService = async ({
     params.append('excludeIds', JSON.stringify(excludeIds));
   }
 
-  // Determine endpoint
   const endpoint = `/api/songs/${channelId}`;
   const url = params.toString() ? `${endpoint}?${params.toString()}` : endpoint;
 
@@ -23,6 +22,6 @@ export const fetchSongsService = async ({
     return response.data;
   } catch (error) {
     console.error('API Error in fetchSongsService:', error);
-    throw error; // Rethrow for component handling
+    throw error;
   }
 };

@@ -3,6 +3,7 @@ import PlaybackControls from '../PlaybackControls/PlaybackControls';
 import FavoriteButton from '../FavoriteButton/FavoriteButton';
 import SeekButton from '../SeekButton/SeekButton';
 import usePlayerShortcuts from '../../hooks/usePlayerShortcuts';
+import AuthService from '../../services/authService';
 import './PlayerFooter.css';
 
 function PlayerFooter({
@@ -88,9 +89,11 @@ function PlayerFooter({
     />
     </div>
     
-    <div className="player-footer__favorite">
-    <FavoriteButton song={currentSong} user={user} />
-    </div>
+    {user && !AuthService.isGuest && (
+      <div className="player-footer__favorite">
+      <FavoriteButton song={currentSong} user={user} />
+      </div>
+    )}
     </div>
   );
 }
