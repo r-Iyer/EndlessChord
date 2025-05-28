@@ -75,20 +75,20 @@ function VideoPlayer({
     };
   }, []);
   
-  const opts = useMemo(() => ({
-    width: '100%',
-    height: '100%',
-    playerVars: {
-      autoplay: 1,
-      controls: 0,
-      fs: 0,
-      modestbranding: 1,
-      rel: 0,
-      iv_load_policy: 3,
-      showinfo: 0,
-      cc_load_policy: 3
-    }
-  }), []);
+const opts = useMemo(() => ({
+  width: '100%',            // Player width fills its container
+  height: '100%',           // Player height fills its container
+  playerVars: {
+    autoplay: 1,            // 1 = start playing automatically when ready
+    controls: 0,            // 0 = hide playback controls (play/pause, scrub bar)
+    fs: 0,                  // 0 = disable full-screen button
+    modestbranding: 1,      // 1 = minimize YouTube logo branding
+    rel: 0,                 // 0 = don’t show related videos at the end
+    iv_load_policy: 3,      // 3 = disable video annotations/interactive cards
+    showinfo: 0,            // 0 = hide video title and uploader before play (deprecated but still honored)
+    cc_load_policy: 1       // 1 = force closed captions to be shown by default
+  }
+}), []);
   
   const handleReady = (event) => {
     playerRef.current = event.target;
