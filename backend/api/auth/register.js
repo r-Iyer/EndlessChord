@@ -5,6 +5,7 @@ const { initializeDbConnection } = require('../../utils/initialiseUtils');
 const { handleError, sendResponse } = require('../../utils/handlerUtils');
 const bcrypt = require('bcrypt');
 const logger = require('../../utils/loggerUtils');
+const { generateToken } = require('../../utils/authUtils');
 
 const router = express.Router();
 
