@@ -1,51 +1,79 @@
-const { MAX_RETRIES, MINIMUM_SONG_COUNT, DEFAULT_SONG_COUNT } = require('../config/constants');
-const { upsertSuggestionSong, shuffle } = require('./songUtils');
-const { normalizeBaseFields } = require('./channelUtils');
+const { MAX_RETRIES, MINIMUM_SONG_COUNT, DEFAULT_SONG_COUNT, SONG_PATH, INITIAL_LOAD, INITIAL_SONG_COUNT } = require('../config/constants');
+const { upsertSuggestionSong, selectSongsFromHistory } = require('./songUtils');
+const { normalizeBaseFields } = require('./channelUtils.js');
 const { getYouTubeVideoDetails } = require('./youtubeUtils');
 const { getAIRecommendationsGemini } = require('../helpers/aiHelpers');
 const logger = require('./loggerUtils');
+
 
 const addAISuggestionsIfNeeded = async (
   songs,
   channel,
   excludeIds,
-  song_count = DEFAULT_SONG_COUNT
+  source = null,
+  userId = null,
+  entity = null,
 ) => {
-  if (songs.length >= MINIMUM_SONG_COUNT) {
-    return { songs: shuffle(songs), aiSuggestionsAdded: false };
+
+  // Rule II.1.c.ii, Rule III.1.c.ii
+  let song_count = (source === INITIAL_LOAD) ? INITIAL_SONG_COUNT : DEFAULT_SONG_COUNT;
+
+  // If the request is not for songs (/songs) for a particular channel (e.g. /search) OR it's an initial load,
+  // and we already have enough songs, skip AI suggestions and return early.
+  if ((entity !== SONG_PATH || source === INITIAL_LOAD) && songs.length >= MINIMUM_SONG_COUNT) {
+    songs = songs.slice(0, INITIAL_SONG_COUNT)
+    return { songs, aiSuggestionsAdded: false };
   }
   
+  let aiSuggestions = [];
+  let aiSuggestionsNeeded = song_count - songs.length;
+  
   try {
-    const aiSuggestions = await getUniqueAISuggestions(
-      channel,
-      excludeIds,
-      songs,
-      song_count
-    );
-    logger.info('AI suggestions:', aiSuggestions);
+    if (entity === SONG_PATH && userId) {
+      const { songs: selectedSongs, remainingToFill } = await selectSongsFromHistory( songs, userId, excludeIds );
+      // Rule II.2.b, Rule II.2.c
+      songs = selectedSongs;
+      aiSuggestionsNeeded = remainingToFill;
+    }
     
-    const { baseGenres, baseLangs } = normalizeBaseFields(channel);
-    
-    const newSongs = await Promise.all(
-      aiSuggestions.map((sugg) =>
-        upsertSuggestionSong(sugg, baseGenres, baseLangs)
-    )
-  );
-  
-  const validNewSongs = newSongs.filter(Boolean);
-  
-  let updatedSongs =  [...songs, ...validNewSongs]
-
-  updatedSongs = updatedSongs.map(song =>
-        song.toObject ? song.toObject() : { ...song }
+    // Rule II.1.c.i, Rule III.1.c.i, Rule II.2.d, Rule III.2.b
+    if (aiSuggestionsNeeded > 0) {
+      aiSuggestions = await getUniqueAISuggestions(
+        channel,
+        excludeIds,
+        songs,
+        /* Rule II.2.e */ 
+        aiSuggestionsNeeded,  // Minimum number of songs required
+        /* Rule II.2.f, Rule III.2.c */
+        aiSuggestionsNeeded   // Maximum number of songs required
       );
-
+      logger.debug('[addAISuggestionsIfNeeded] AI suggestions:', aiSuggestions);
+      
+      const { baseGenres, baseLangs } = normalizeBaseFields(channel);
+      
+      // Save new Songs to DB
+      const newSongs = await Promise.all(
+        aiSuggestions.map((sugg) =>
+          upsertSuggestionSong(sugg, baseGenres, baseLangs)
+      )
+    ).then(results => results.filter(Boolean));
+    
+    // Merge the songs from DB and existing list
+    let updatedSongs = [...songs, ...newSongs].map(
+      (song) => song.toObject?.() || { ...song }
+    );
+    
+    return {
+      songs: updatedSongs,
+      aiSuggestionsAdded: newSongs.length > 0,
+    };
+  }
   return {
-    songs: updatedSongs,
-    aiSuggestionsAdded: validNewSongs.length > 0
+    songs,
+    aiSuggestionsAdded: false,
   };
-} catch (aiError) {
-  logger.error('Error getting AI suggestions:', aiError);
+} catch (err) {
+  logger.error('Error in addAISuggestionsIfNeeded:', err);
   return { songs, aiSuggestionsAdded: false };
 }
 };
@@ -54,17 +82,17 @@ const addAISuggestionsIfNeeded = async (
 /**
 * Get AI suggestions with duplicate check and retry logic.
 */
-async function getUniqueAISuggestions(channel, excludeIds, baseSongs, song_count) {
+async function getUniqueAISuggestions(channel, excludeIds, baseSongs, minimum_song_count = MINIMUM_SONG_COUNT (), maximum_song_count = DEFAULT_SONG_COUNT ()) {
   let allSuggestions = [];
   let attempts = 0;
   
-  while (allSuggestions.length < MINIMUM_SONG_COUNT && attempts < MAX_RETRIES) {
+  while (allSuggestions.length < minimum_song_count && attempts < MAX_RETRIES) {
     logger.info(`[getUniqueAISuggestions] Fething Unique AI suggestions, attempt: ${attempts+1}. Current Song count: ${allSuggestions.length}`);
-    const newSuggestions = await getAISuggestions(channel, song_count * 2); // Request more
+    const newSuggestions = await getAISuggestions(channel, maximum_song_count * 2); // Request double the required maximum_song_count
     const filtered = filterAISuggestions(newSuggestions, excludeIds, baseSongs);
     allSuggestions = [...new Set([...allSuggestions, ...filtered])]; // Merge and dedupe
   }  
-  return allSuggestions.slice(0, song_count);
+  return allSuggestions.slice(0, maximum_song_count);
 }
 
 /**
@@ -90,7 +118,7 @@ async function getAISuggestions(channel, song_count) {
 
 // AI Recommendation Part
 async function getAIRecommendations(channel, song_count) {  
-    const recommendationPrompt = `
+  const recommendationPrompt = `
 You are a helpful music expert. I need recommendations for ${song_count} ${channel.language.toUpperCase()} music tracks 
 (description: ${channel.description}). 
       
@@ -112,9 +140,9 @@ For each recommendation, provide **only** the following fields in a JSON array:
   …
 ]
 `;
-
-    const recommendedSongs = await getAIRecommendationsGemini(recommendationPrompt, channel.name);
-    return recommendedSongs;
+  
+  const recommendedSongs = await getAIRecommendationsGemini(recommendationPrompt, channel.name);
+  return recommendedSongs;
 }
 
 module.exports = { addAISuggestionsIfNeeded };

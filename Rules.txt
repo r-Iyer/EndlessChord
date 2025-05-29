@@ -1,0 +1,43 @@
+
+I. Applying exclusions (RECENTLY_PLAYED_THRESHOLD) in all cases.
+
+II. /songs:
+
+	1. Initial Load:
+		Both User & Guest:
+			a. Fetch Songs from DB.
+			b. Return only INITIAL_SONG_COUNT songs from DB and shuffling the results.
+			c.	i. If song count is less than MINIMUM_SONG_COUNT, fetch suggestions from AI.
+				ii. Return INITIAL_SONG_COUNT.
+
+	2. Subsequent Load:
+		User
+			a. Fetch songs from DB.
+			b. New songs not heard by user, but present in DB. (Maximum of (NEW_SONG_RATIO) * DEFAULT_SONG_COUNT).
+			c. Maximum of (1 - NEW_SONG_RATIO) * DEFAULT_SONG_COUNT already heard songs by user.
+			d. If still the total songs selected less than DEFAULT_SONG_COUNT, we will fetch suggestions from AI.
+			e. Lower cap - DEFAULT_SONG_COUNT.
+			f. Upper cap  - DEFAULT_SONG_COUNT.
+		
+		Guest:
+			a. Fetch songs from DB.
+			b. If still the total songs selected less than DEFAULT_SONG_COUNT, we will fetch suggestions from AI.
+			c. Lower cap - DEFAULT_SONG_COUNT.
+			d. Upper cap  - DEFAULT_SONG_COUNT.
+
+III. /search:
+
+	Applying exclusions (RECENTLY_PLAYED_THRESHOLD) in all cases.
+
+	1.Initial Load:
+		Both User & Guest:
+			a. Fetch Songs from DB.
+			b. Return Any Count of songs from DB if available.
+			c.	i. If song count is less than MINIMUM_SONG_COUNT, fetch suggestions from AI.
+				ii. Return INITIAL_SONG_COUNT.
+
+	2. Subsequent Load:
+		Both User & Guest:
+			a. Fetch songs from DB. 
+			b. If song count is less than MINIMUM_SONG_COUNT, fetch suggestions from AI
+			c. Upper cap - DEFAULT_SONG_COUNT.

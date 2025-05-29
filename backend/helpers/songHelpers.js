@@ -9,40 +9,51 @@ const getSongsWithExclusionsFromDb = async (genreFilter, languageFilter, exclude
       { videoId:  { $nin: excludeIds } }     // exclude these IDs
     ]
   })
-  .sort({ playCount: 1 });  
   logger.debug(`[getSongsWithExclusionsFromDb] Found ${song.length} songs with exclusions`);
   return song;                // least-played first
 }
 
-const findSongByVideoIdFromDb = async (videoId) => {
-    const song = await Song.findOne({ videoId: videoId });
-    logger.debug(`[findSongByVideoIdFromDb] Found song with videoId: ${videoId}`);
-    return song;
+const getSongByVideoIdFromDb = async (videoId) => {
+  const song = await Song.findOne({ videoId: videoId });
+  logger.debug(`[getSongByVideoIdFromDb] Found song with videoId: ${videoId}`);
+  return song;
 }
 
+const getSongByIdFromDb = async (videoId) => {
+  try {
+    const song = await Song.findById(videoId);
+    logger.debug(`[getSongByIdFromDb] Found song with videoId: ${videoId}`);
+    return song;
+  } catch (err) {
+    logger.error(`[getSongByIdFromDb] Error fetching song with videoId: ${videoId}`, err);
+    return null;
+  }
+};
+
+
 const saveSongToDb = async (song) => {
-    song.save();
-    logger.debug(`[saveSongToDb] Saved song with videoId: ${song.videoId}`);
+  song.save();
+  logger.debug(`[saveSongToDb] Saved song with videoId: ${song.videoId}`);
 }
 
 const updateSongInDb = async (videoId, suggestionGenres, suggestionLangs) => {
-    await Song.updateOne(
-      { videoId: videoId },
-      {
-        $addToSet: {
-          genre:    { $each: suggestionGenres },
-          language: { $each: suggestionLangs }
-        }
+  await Song.updateOne(
+    { videoId: videoId },
+    {
+      $addToSet: {
+        genre:    { $each: suggestionGenres },
+        language: { $each: suggestionLangs }
       }
-    );
-    logger.debug(`[updateSongInDb] Updated song with videoId: ${videoId}`);
+    }
+  );
+  logger.debug(`[updateSongInDb] Updated song with videoId: ${videoId}`);
 }
 
 /**
- * Run an aggregation pipeline on the Song collection
- * @param {Array} pipeline - MongoDB aggregation pipeline stages
- * @returns {Promise<Array>} - Aggregated results
- */
+* Run an aggregation pipeline on the Song collection
+* @param {Array} pipeline - MongoDB aggregation pipeline stages
+* @returns {Promise<Array>} - Aggregated results
+*/
 const runSongAggregationInDb = async (pipeline) => {
   try {
     const results = await Song.aggregate(pipeline).exec();
@@ -62,9 +73,10 @@ const deleteAllSongsInDb = async () => {
 
 module.exports = {
   getSongsWithExclusionsFromDb,
-  findSongByVideoIdFromDb,
+  getSongByVideoIdFromDb,
   saveSongToDb,
   updateSongInDb,
   runSongAggregationInDb,
-  deleteAllSongsInDb
+  deleteAllSongsInDb,
+  getSongByIdFromDb
 };

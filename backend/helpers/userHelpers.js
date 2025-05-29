@@ -9,11 +9,11 @@ const getUserRecentSongsInDb = async (req) => {
     // Ensure req.user and req.user.id exist before querying
     if (req.user && req.user.id) {
       // Fetch user with only 'history' field for efficiency
-      const user = await User.findById(req.user.id).select('history').exec();
+      const history = await getUserHistoryInDb(req.user.id);
       
       // Defensive check if user and user.history exist
-      if (user && Array.isArray(user.history)) {
-        const userRecentSongs = user.history.filter(entry => 
+      if (history && Array.isArray(history)) {
+        const userRecentSongs = history.filter(entry => 
           new Date(entry.playedAt) > RECENTLY_PLAYED_THRESHOLD
         );
         
@@ -31,6 +31,10 @@ const getUserRecentSongsInDb = async (req) => {
   }
 };
 
+const getUserHistoryInDb = async (userId) => {
+  const user = await User.findById(userId).select('history').exec();
+  return user.history;
+}
 const deleteFavoritesAndHistoryForAllUsersInDb = async () => {
   await User.updateMany(
     {},
@@ -44,4 +48,15 @@ const deleteFavoritesAndHistoryForAllUsersInDb = async () => {
   logger.info(`Cleared favorites/history for ${userResult.modifiedCount} users`);    
 };
 
-module.exports = { getUserRecentSongsInDb, deleteFavoritesAndHistoryForAllUsersInDb };
+const getUserByIdFromDb = async (userId) => {
+    const user = await User.findById(userId);
+    logger.debug(`[getUserByIdFromDb] Found user with userId: ${userId}`);
+    return user;
+}
+
+const saveUserToDb = async (user) => {
+    user.save();
+    logger.debug(`[saveUserToDb] Saved user with userId: ${user.userId}`);
+}
+
+module.exports = { getUserRecentSongsInDb, deleteFavoritesAndHistoryForAllUsersInDb , getUserByIdFromDb, saveUserToDb, getUserHistoryInDb};

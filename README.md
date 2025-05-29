@@ -53,6 +53,7 @@ Before you begin, ensure you have the following installed and configured:
     JWT_SECRET=your_super_secret_jwt_key
     JWT_EXPIRES_IN=90d
     GOOGLE_GENAI_API_KEY=your_gemini_api_key
+    LOG_LEVEL="info"
     ```
     Now, start the backend server:
     ```bash

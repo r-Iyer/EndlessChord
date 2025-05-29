@@ -1,7 +1,9 @@
 const { Song } = require('../models/Song');
-const stringSimilarity = require('string-similarity');
-const { getSongsWithExclusionsFromDb, findSongByVideoIdFromDb, saveSongToDb, updateSongInDb} = require('../helpers/songHelpers');
+const { getSongsWithExclusionsFromDb, getSongByVideoIdFromDb, saveSongToDb, updateSongInDb} = require('../helpers/songHelpers');
 const logger = require('./loggerUtils');
+const Fuse = require('fuse.js');
+const { INITIAL_LOAD, INITIAL_SONG_COUNT, SONG_PATH, DEFAULT_SONG_COUNT, NEW_SONG_RATIO } = require('../config/constants');
+const { getUserHistoryInDb } = require('../helpers/userHelpers');
 
 // Parse exclude IDs safely
 const parseExcludeIds = (excludeIdsParam) => {
@@ -13,28 +15,95 @@ const parseExcludeIds = (excludeIdsParam) => {
   }
 };
 
-// Get songs with exclusions (now genre & language can be arrays)
-const getSongsWithExclusions = async (genres, languages, excludeIds) => {
+// Get songs with exclusions and shuffled
+const getSongsWithExclusions = async ( genres, languages, excludeIds , source, entity ) => {
   const genreFilter    = Array.isArray(genres)    ? genres    : [genres];
   const languageFilter = Array.isArray(languages) ? languages : [languages];
   
+  // Rule I
+  // Rule II.1.a, Rule II.2.a, Rule III.1.a, Rule III.2.a
   let songs = await getSongsWithExclusionsFromDb(genreFilter, languageFilter, excludeIds);
   
   songs = songs.map(song =>
     song.toObject ? song.toObject() : { ...song }
   );
+  songs = shuffle(songs);
+  
+  // Rule II.1.b
+  if(entity == SONG_PATH && source === INITIAL_LOAD)
+      songs = songs.slice(0, INITIAL_SONG_COUNT)
   return songs;
 };
 
 
-const sortSongsByLastPlayed = songs =>
-  songs.slice().sort((a, b) =>
-    (a.lastPlayed ? 1 : 0) - (b.lastPlayed ? 1 : 0) ||
-(a.lastPlayed - b.lastPlayed)
-);
+const selectSongsFromHistory = async (
+  songs,
+  userId,
+  excludeIds,
+) => {
+  // 1. Get user history
+  const rawHistory = await getUserHistoryInDb(userId);
+
+  // 2. Extract and filter song IDs from history
+  const excludeSet = new Set(excludeIds.map((id) => id.toString()));
+  const historySongIds = new Set(
+    rawHistory
+      .map((h) => h.songId.toString())
+      .filter((id) => !excludeSet.has(id))
+  );
+
+  // 3. Split songs into new and old
+  const newSongs = [];
+  const oldSongs = [];
+
+  for (const song of songs) {
+    const id = song._id.toString();
+    if (historySongIds.has(id)) {
+      oldSongs.push(song);
+    } else {
+      newSongs.push(song);
+    }
+  }
+
+  // 4. Calculate targets
+  const newTarget = Math.floor(DEFAULT_SONG_COUNT * NEW_SONG_RATIO);
+  const oldTarget = DEFAULT_SONG_COUNT - newTarget;
+
+  let selectedNewSongs = newSongs;
+  let selectedOldSongs = [];
+
+  if (newSongs.length >= newTarget) {
+    selectedNewSongs = shuffle(newSongs).slice(0, newTarget);
+    selectedOldSongs = shuffle(oldSongs).slice(0, oldTarget);
+  } else {
+    const remaining = DEFAULT_SONG_COUNT - selectedNewSongs.length;
+    const maxOldAllowed = Math.floor(DEFAULT_SONG_COUNT * (1 - NEW_SONG_RATIO));
+    const oldFillCount = Math.min(remaining, maxOldAllowed);
+    selectedOldSongs = shuffle(oldSongs).slice(0, oldFillCount);
+  }
+
+  const combined = [...selectedNewSongs, ...selectedOldSongs];
+
+  return {
+    songs: combined,
+    remainingToFill: DEFAULT_SONG_COUNT - combined.length,
+    selectedNewSongs,
+    selectedOldSongs,
+  };
+};
+
+
+//Shuffle the songs
+const shuffle = (arr) => {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+};
 
 /**
-* Upsert a single suggestion into the Song collection,
+* Upsert (Update / Insert) a single suggestion into the Song collection,
 * merging in genres & languages.
 */
 const upsertSuggestionSong = async (
@@ -42,10 +111,11 @@ const upsertSuggestionSong = async (
   baseGenres,
   baseLangs
 ) => {
+  //Appending new Genre and Language
   const suggestionGenres = extractSuggestionGenres(suggestion.genre);
   const suggestionLangs  = extractSuggestionLangs(suggestion.language);
   
-  let song = await findSongByVideoIdFromDb(suggestion.videoId);
+  let song = await getSongByVideoIdFromDb(suggestion.videoId);
   if (!song) {
     song = new Song({
       ...suggestion,
@@ -55,7 +125,7 @@ const upsertSuggestionSong = async (
     await saveSongToDb(song);
   } else {
     await updateSongInDb(suggestion.videoId, suggestionGenres, suggestionLangs);
-    song = await findSongByVideoIdFromDb(suggestion.videoId);
+    song = await getSongByVideoIdFromDb(suggestion.videoId);
   }
   
   return song;
@@ -90,48 +160,5 @@ const extractSuggestionLangs = (rawLangField) => {
   return Array.isArray(rawLangField) ? rawLangField : [rawLangField];
 };
 
-//Shuffle the songs
-const shuffle = (arr) => {
-  for (let i = arr.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [arr[i], arr[j]] = [arr[j], arr[i]];
-  }
-  return arr;
-};
-
-
-/**
-* Sort enhancedSongs by computed relevance score and playCount.
-*/
-function sortSongs(enhancedSongs, searchTerm) {
-  enhancedSongs.forEach(song => {
-    song.score = computeRelevanceScore(song, searchTerm);
-  });
-  
-  return enhancedSongs
-  .sort((a, b) => {
-    if (b.score !== a.score) return b.score - a.score;  // relevance desc
-    return a.playCount - b.playCount;                   // playCount asc
-  });
-}
-
-
-/**
-* Compute relevance score of a song given the search term
-* by taking max similarity across multiple fields.
-*/
-function computeRelevanceScore(song, searchTerm) {
-  const fieldsToCheck = ['title', 'artist', 'composer', 'album'];
-  const scores = fieldsToCheck.map(field => {
-    if (!song[field]) return 0;
-    return stringSimilarity.compareTwoStrings(
-      song[field].toLowerCase(),
-      searchTerm.toLowerCase()
-    );
-  });
-  return Math.max(...scores);
-}
-
-module.exports = { parseExcludeIds, getSongsWithExclusions, sortSongsByLastPlayed, upsertSuggestionSong, shuffle,
-  computeRelevanceScore, sortSongs };
+module.exports = { parseExcludeIds, getSongsWithExclusions, upsertSuggestionSong, selectSongsFromHistory };
   

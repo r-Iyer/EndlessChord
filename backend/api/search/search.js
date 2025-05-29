@@ -3,10 +3,11 @@ const express = require('express');
 const { optionalAuth } = require('../../utils/authUtils');
 const { handleError, sendResponse } = require('../../utils/handlerUtils');
 const { addAISuggestionsIfNeeded } = require('../../utils/aiUtils');
-const { parseExcludeIds, sortSongs } = require('../../utils/songUtils');
+const { parseExcludeIds, sortSongsByRelevance } = require('../../utils/songUtils');
 const { searchSongsInDb } = require('../../utils/searchUtils');
-const { MINIMUM_SONG_COUNT, DEFAULT_SONG_COUNT } = require('../../config/constants');
+const { MINIMUM_SONG_COUNT, DEFAULT_SONG_COUNT, INITIAL_SONG_COUNT } = require('../../config/constants');
 const { addFavoriteStatus } = require('../../utils/favoriteUtils');
+const { createChannelWithSearchQuery } = require('../../utils/channelUtils.js');
 const logger = require('../../utils/loggerUtils');
 
 const router = express.Router();
@@ -24,29 +25,24 @@ router.get('/', optionalAuth, addFavoriteStatus, async (req, res) => {
     const excludeIds = parseExcludeIds(excludeIdsParam);
 
     //Find Songs with matching query in the database and exclude songs in current queue
+    //Note: Songs returned are sorted by score and last played
+    // Rule III.1.b
     let songs = await searchSongsInDb(searchQuery, excludeIds);
+
     logger.info(`[ROUTE] GET /api/search — Found ${songs.length} matching songs in database`);
     
     // Add AI suggestions only if we don't have enough high-quality results
     if ( songs.length < MINIMUM_SONG_COUNT) {      
-      const searchChannel = {
-        name: "",
-        language: "various",
-        description: searchQuery,
-        genre: [] 
-      };
+
+      //Create dummy channel with search query
+      const searchChannel = createChannelWithSearchQuery(searchQuery);
       
       const existingVideoIds = [...excludeIds, ...songs.map(s => s.videoId)];
 
-      //If user has searched for songs, to ensure faster initial loading, we will limit the number of AI suggestions
-      let song_count = (source === 'initial') ? MINIMUM_SONG_COUNT : DEFAULT_SONG_COUNT;
-
-      const { songs: updatedSongs } = await addAISuggestionsIfNeeded(songs, searchChannel, existingVideoIds, song_count);
+      let { songs: updatedSongs } = await addAISuggestionsIfNeeded(songs, searchChannel, existingVideoIds, source, req.user.id, null);
+      updatedSongs = sortSongsByRelevance(updatedSongs, searchTerm);
       songs = updatedSongs;
     }
-
-    //Sort songs by score and limit to default count
-    songs = sortSongs(songs, searchQuery).slice(0, DEFAULT_SONG_COUNT);
     
     logger.info(`[ROUTE] GET /api/search — Returning ${songs.length} songs for query "${searchQuery}"`);
     
