@@ -26,7 +26,7 @@ router.get('/', optionalAuth, addFavoriteStatus, async (req, res) => {
 
     //Find Songs with matching query in the database and exclude songs in current queue
     //Note: Songs returned are sorted by score and last played
-    // Rule III.1.b
+    // Rule III.1.b, Rule III.2.b
     let songs = await searchSongsInDb(searchQuery, excludeIds);
 
     logger.info(`[ROUTE] GET /api/search — Found ${songs.length} matching songs in database`);

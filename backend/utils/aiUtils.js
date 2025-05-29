@@ -15,18 +15,21 @@ const addAISuggestionsIfNeeded = async (
   entity = null,
 ) => {
 
-  // Rule II.1.c.ii, Rule III.1.c.ii
-  let song_count = (source === INITIAL_LOAD) ? INITIAL_SONG_COUNT : DEFAULT_SONG_COUNT;
+  /* Rule III.2.d */
+  let minimum_song_count = MINIMUM_SONG_COUNT;
+  /* Rule II.2.f, Rule III.2.e */
+  let maximum_song_count = (source === INITIAL_LOAD) ? INITIAL_SONG_COUNT : DEFAULT_SONG_COUNT;
 
   // If the request is not for songs (/songs) for a particular channel (e.g. /search) OR it's an initial load,
   // and we already have enough songs, skip AI suggestions and return early.
   if ((entity !== SONG_PATH || source === INITIAL_LOAD) && songs.length >= MINIMUM_SONG_COUNT) {
+    // Rule II.1.d, Rule III.1.d
     songs = songs.slice(0, INITIAL_SONG_COUNT)
     return { songs, aiSuggestionsAdded: false };
   }
   
   let aiSuggestions = [];
-  let aiSuggestionsNeeded = song_count - songs.length;
+  let aiSuggestionsNeeded = maximum_song_count - songs.length;
   
   try {
     if (entity === SONG_PATH && userId) {
@@ -34,18 +37,18 @@ const addAISuggestionsIfNeeded = async (
       // Rule II.2.b, Rule II.2.c
       songs = selectedSongs;
       aiSuggestionsNeeded = remainingToFill;
+      /* Rule II.2.e */ 
+      minimum_song_count = aiSuggestionsNeeded;
     }
     
-    // Rule II.1.c.i, Rule III.1.c.i, Rule II.2.d, Rule III.2.b
+    // Rule II.1.c, Rule III.1.c, Rule II.2.d, Rule III.2.c
     if (aiSuggestionsNeeded > 0) {
       aiSuggestions = await getUniqueAISuggestions(
         channel,
         excludeIds,
         songs,
-        /* Rule II.2.e */ 
-        aiSuggestionsNeeded,  // Minimum number of songs required
-        /* Rule II.2.f, Rule III.2.c */
-        aiSuggestionsNeeded   // Maximum number of songs required
+        minimum_song_count,  // Minimum number of songs required
+        maximum_song_count   // Maximum number of songs required
       );
       logger.debug('[addAISuggestionsIfNeeded] AI suggestions:', aiSuggestions);
       
