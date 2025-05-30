@@ -51,7 +51,6 @@ export default function Header({
               onSelectChannel={(channelIdOrName) => {
                 setUserInteracted(true);
                 setBackendError(false);
-                clearSearch();
                 const channel =
                   channels.find((c) => c._id === channelIdOrName) ||
                   channels.find(
@@ -64,6 +63,7 @@ export default function Header({
                   selectChannel(channel._id);
                 }
               }}
+              clearSearch={clearSearch}
               disabled={isSearchMode}
             />
           </div>

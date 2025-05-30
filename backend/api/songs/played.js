@@ -12,7 +12,7 @@ router.post('/', optionalAuth, async (req, res) => {
   
   try {
     const { songIds } = req.body;
-    const userId = req.user.id;
+    const userId = req.user?.id;
     
     if (!songIds || !Array.isArray(songIds) || songIds.length === 0) {
       return sendResponse(res, { message: 'Invalid request. songIds array is required.' }, 400);
@@ -21,12 +21,12 @@ router.post('/', optionalAuth, async (req, res) => {
     const updateResults = await Promise.all(
       songIds.map(async (songId) => {
         try {
-          // Update global song play count
           logger.debug('[ROUTE] POST /api/songs/played — Updating Global Song Play Count and Last Played');
-          await updateGlobalSongPlayCount(songId)
+          await updateGlobalSongPlayCount(songId);
           
-          // Update user history if user is logged in
-          const historyResult = await updateUserHistory(userId, songId);
+          const historyResult = userId
+            ? await updateUserHistory(userId, songId)
+            : { userHistoryUpdate: false, message: 'User not logged in' };
           
           return {
             id: songId,

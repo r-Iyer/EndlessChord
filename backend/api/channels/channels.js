@@ -11,11 +11,18 @@ const router = express.Router();
 // Routes
 router.get('/', optionalAuth, async (req, res) => {
   logger.info('[ROUTE] GET /api/channels');
-  await initializeDbConnection();
-  //Reinitialize database tables if needed
-  //await reinitializeDatabase();
-  //Add indices to song
-  //await Song.initSearchIndex();
+  
+  try {
+    await initializeDbConnection();
+  } catch (err) {
+    logger.error('[DB] Failed to initialize database connection:', err);
+    return handleError(res, err, 'Database connection failed');
+  }
+  
+  // Reinitialize database tables if needed
+  // await reinitializeDatabase();
+  // Add indices to song
+  // await Song.initSearchIndex();
   
   try {
     const channels = await getChannelsInDb();

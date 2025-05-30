@@ -1,12 +1,11 @@
 require('dotenv').config();
 const express = require('express');
-const mongoose = require('mongoose');
 const User = require('../../models/User');
 const { handleError, sendResponse } = require('../../utils/handlerUtils');
 const { optionalAuth } = require('../../utils/authUtils');
-const { addFavoriteStatus } = require('../../utils/favoriteUtils');
+const { getUserFavorites, addSongToFavorites, removeSongFromFavorites } = require('../../helpers/userHelpers')
+const { addFavoriteStatus } = require('../../utils/userUtils');
 const logger = require('../../utils/loggerUtils');
-
 
 const router = express.Router();
 
@@ -16,24 +15,8 @@ router.post('/', optionalAuth, async (req, res) => {
   
   try {
     const { songId } = req.body;
-    
-    if (!mongoose.Types.ObjectId.isValid(songId)) {
-      logger.warn('[WARN] Invalid song ID:', songId);
-      return sendResponse(res, { error: 'Invalid song ID' }, 400);
-    }
 
-    const user = await User.findByIdAndUpdate(
-      req.user.id,
-      {
-        $addToSet: { 
-          favorites: { 
-            songId: new mongoose.Types.ObjectId(songId),
-            addedAt: new Date()
-          }
-        }
-      },
-      { new: true, select: 'favorites' }
-    ).populate('favorites.songId');
+    const user = await addSongToFavorites(req.user.id, songId);
 
     if (!user) {
       logger.warn('[WARN] User not found:', req.user.id);
@@ -54,22 +37,7 @@ router.delete('/:songId', optionalAuth, async (req, res) => {
   try {
     const { songId } = req.params;
 
-    if (!mongoose.Types.ObjectId.isValid(songId)) {
-      logger.warn('[WARN] Invalid song ID:', songId);
-      return sendResponse(res, { error: 'Invalid song ID' }, 400);
-    }
-
-    const user = await User.findByIdAndUpdate(
-      req.user.id,
-      {
-        $pull: { 
-          favorites: { 
-            songId: new mongoose.Types.ObjectId(songId)
-          }
-        }
-      },
-      { new: true, select: 'favorites' }
-    ).populate('favorites.songId');
+    const user = await removeSongFromFavorites(req.user.id, songId);
 
     if (!user) {
       logger.warn('[WARN] User not found:', req.user.id);
@@ -84,29 +52,27 @@ router.delete('/:songId', optionalAuth, async (req, res) => {
 
 // Get favorites
 router.get('/', optionalAuth, addFavoriteStatus, async (req, res) => {
+  logger.info('[ROUTE] GET /api/favorites');
   try {
-    const user = await User.findById(req.user.id)
-      .populate({
-        path: 'favorites.songId',
-        // Explicitly select fields to match Song schema
-        select: 'videoId title artist composer album year genre language playCount lastPlayed'
-      })
-      .sort({ 'favorites.addedAt': -1 });
-
-    if (!user) {
-      return res.status(404).json({ error: 'User not found' });
+    const userId = req.user?.id;
+    if (!userId) {
+      logger.warn('[WARN] Unauthorized access to favorites');
+      return sendResponse(res, { error: 'User not authenticated' }, 401);
     }
 
-    // Format response to match Song schema
-    const favorites = user.favorites.map(fav => ({
-      ...fav.songId.toObject(),  // Convert Mongoose document to plain object
-      addedAt: fav.addedAt
-    }));
+    const favorites = await getUserFavorites(userId);
 
-    res.json(favorites);
+    if (!favorites) {
+      logger.warn('[WARN] Favorites not found or empty for user:', userId);
+      return sendResponse(res, []);
+    }
+
+    logger.info(`[ROUTE] GET /api/favorites — Returning ${favorites.length} songs`);
+
+    sendResponse(res, favorites);
   } catch (error) {
     logger.error('[Favorites Error]', error);
-    res.status(500).json({ error: 'Server error' });
+    handleError(res, error, '/api/favorites');
   }
 });
 

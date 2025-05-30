@@ -4,8 +4,9 @@ export function slugify(name) {
   return name.replace(/\s+/g, '-').toLowerCase();
 }
 
-function ChannelSelector({ channels, currentChannel, onSelectChannel }) {
+function ChannelSelector({ channels, currentChannel, onSelectChannel, clearSearch }) {
   const handleChannelClick = (channelName) => {
+    clearSearch();
     onSelectChannel(slugify(channelName));
   };
 

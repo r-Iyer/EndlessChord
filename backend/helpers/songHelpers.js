@@ -2,22 +2,32 @@ const { Song } = require('../models/Song');
 const logger = require('../utils/loggerUtils');
 
 const getSongsWithExclusionsFromDb = async (genreFilter, languageFilter, excludeIds) => {
-  const song = await Song.find({
-    $and: [
-      { genre:    { $in: genreFilter } },    // genre must match one of these
-      { language: { $in: languageFilter } }, // language must match one of these
-      { videoId:  { $nin: excludeIds } }     // exclude these IDs
-    ]
-  })
-  logger.debug(`[getSongsWithExclusionsFromDb] Found ${song.length} songs with exclusions`);
-  return song;                // least-played first
-}
+  try {
+    const song = await Song.find({
+      $and: [
+        { genre:    { $in: genreFilter } },    // genre must match one of these
+        { language: { $in: languageFilter } }, // language must match one of these
+        { videoId:  { $nin: excludeIds } }     // exclude these IDs
+      ]
+    });
+    logger.debug(`[getSongsWithExclusionsFromDb] Found ${song.length} songs with exclusions`);
+    return song;
+  } catch (error) {
+    logger.error('[getSongsWithExclusionsFromDb] Error fetching songs:', error);
+    return [];
+  }
+};
 
 const getSongByVideoIdFromDb = async (videoId) => {
-  const song = await Song.findOne({ videoId: videoId });
-  logger.debug(`[getSongByVideoIdFromDb] Found song with videoId: ${videoId}`);
-  return song;
-}
+  try {
+    const song = await Song.findOne({ videoId: videoId });
+    logger.debug(`[getSongByVideoIdFromDb] Found song with videoId: ${videoId}`);
+    return song;
+  } catch (error) {
+    logger.error(`[getSongByVideoIdFromDb] Error fetching song with videoId: ${videoId}`, error);
+    return null;
+  }
+};
 
 const getSongByIdFromDb = async (videoId) => {
   try {
@@ -30,24 +40,31 @@ const getSongByIdFromDb = async (videoId) => {
   }
 };
 
-
 const saveSongToDb = async (song) => {
-  song.save();
-  logger.debug(`[saveSongToDb] Saved song with videoId: ${song.videoId}`);
-}
+  try {
+    await song.save();
+    logger.debug(`[saveSongToDb] Saved song with videoId: ${song.videoId}`);
+  } catch (error) {
+    logger.error(`[saveSongToDb] Error saving song with videoId: ${song.videoId}`, error);
+  }
+};
 
 const updateSongInDb = async (videoId, suggestionGenres, suggestionLangs) => {
-  await Song.updateOne(
-    { videoId: videoId },
-    {
-      $addToSet: {
-        genre:    { $each: suggestionGenres },
-        language: { $each: suggestionLangs }
+  try {
+    await Song.updateOne(
+      { videoId: videoId },
+      {
+        $addToSet: {
+          genre:    { $each: suggestionGenres },
+          language: { $each: suggestionLangs }
+        }
       }
-    }
-  );
-  logger.debug(`[updateSongInDb] Updated song with videoId: ${videoId}`);
-}
+    );
+    logger.debug(`[updateSongInDb] Updated song with videoId: ${videoId}`);
+  } catch (error) {
+    logger.error(`[updateSongInDb] Error updating song with videoId: ${videoId}`, error);
+  }
+};
 
 /**
 * Run an aggregation pipeline on the Song collection
@@ -60,16 +77,19 @@ const runSongAggregationInDb = async (pipeline) => {
     logger.debug(`[runSongAggregationInDb] Aggregated ${results.length} songs`);
     return results;
   } catch (error) {
-    logger.error('Aggregation error:', error);
+    logger.error('[runSongAggregationInDb] Aggregation error:', error);
     throw error;
   }
-}
+};
 
 const deleteAllSongsInDb = async () => {
-  await Song.deleteMany({});
-  logger.debug(`Deleted ${songResult.deletedCount} songs`);
-}
-
+  try {
+    const songResult = await Song.deleteMany({});
+    logger.debug(`[deleteAllSongsInDb] Deleted ${songResult.deletedCount} songs`);
+  } catch (error) {
+    logger.error('[deleteAllSongsInDb] Error deleting songs:', error);
+  }
+};
 
 module.exports = {
   getSongsWithExclusionsFromDb,

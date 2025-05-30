@@ -10,6 +10,7 @@ async function initializeDbConnection() {
   if (!dbInitialized) {
     logger.info('[INIT] Connecting to MongoDB...');
     await connectDB();
+    dbInitialized = true;
   }
 }
 
@@ -17,24 +18,23 @@ const channelSeeds = require('../config/channelSeeds');
 
 async function reinitializeDatabase() {
   try {
-    
-    // Delete all songs
+    // Delete all channels
     const channelResult = await deleteAllChannelsInDb();
+    logger.info(`Deleted ${channelResult?.deletedCount || 'unknown number of'} channels`);
 
-    //Create Channels
-    await insertChannelsInDb(channelSeeds)
+    // Create Channels
+    await insertChannelsInDb(channelSeeds);
     
     // Delete all songs
     await deleteAllSongsInDb();
-    
+
     // Clear favorites and history for all users
     await deleteFavoritesAndHistoryForAllUsersInDb();
-    
+
     logger.info('Database reinitialization complete!');
   } catch (error) {
     logger.error('Error during reinitialization:', error);
   }
 }
-
 
 module.exports = { initializeDbConnection, reinitializeDatabase };

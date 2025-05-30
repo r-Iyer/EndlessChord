@@ -1,4 +1,4 @@
-const { Song } = require('../models/Song');
+const stringSimilarity = require('string-similarity');
 const { runSongAggregationInDb } = require('../helpers/songHelpers');
 const logger = require('./loggerUtils');
 
@@ -12,7 +12,16 @@ const logger = require('./loggerUtils');
  */
 async function searchSongsInDb(searchTerm, excludeIds = []) {
   try {
+    if (!searchTerm || typeof searchTerm !== 'string') {
+      logger.warn('[searchSongsInDb] Invalid searchTerm provided');
+      return [];
+    }
+
     const words = searchTerm.trim().split(/\s+/); // Split input into words
+
+    if (words.length === 0) {
+      return [];
+    }
 
     const pipeline = [
       {
@@ -60,12 +69,13 @@ async function searchSongsInDb(searchTerm, excludeIds = []) {
       },
       {
         $sort: {
-          score: -1,       // Sort by relevance
-          playCount: 1     // Break ties using play count (ascending)
+          score: -1,       // Sort by relevance descending
+          playCount: 1     // Break ties by playCount ascending (optional, maybe descending?)
         }
       }
     ];
 
+    // Run aggregation and return results
     return await runSongAggregationInDb(pipeline);
   } catch (err) {
     logger.error('[SEARCH ERROR]', err);
@@ -73,6 +83,54 @@ async function searchSongsInDb(searchTerm, excludeIds = []) {
   }
 }
 
+/**
+ * Sort songs by how closely they match a given search query (based on title, artist, composer, album).
+ * Songs with very low relevance retain their original order.
+ *
+ * @param {Array<Object>} songs - Array of song objects
+ * @param {string} searchQuery - The search string
+ * @param {number} threshold - Relevance score threshold below which original order is preserved
+ * @returns {Array<Object>} - Sorted array of songs
+ */
+const sortSongsBySearchRelevance = (songs, searchQuery, threshold = 0.2) => {
+  if (!searchQuery || typeof searchQuery !== 'string') return songs;
+
+  const query = searchQuery.toLowerCase();
+
+  const scored = songs.map((song, index) => {
+    const fields = [song.title, song.artist, song.composer, song.album]
+      .filter(Boolean)
+      .map(field => field.toLowerCase());
+
+    const maxSimilarity = Math.max(
+      ...fields.map(field => stringSimilarity.compareTwoStrings(field, query)),
+      0
+    );
+
+    return {
+      song: {
+        ...song,
+        _searchQuery: searchQuery, // optional field for debugging or logging
+        _relevanceScore: maxSimilarity
+      },
+      index,
+      relevance: maxSimilarity
+    };
+  });
+
+  const highRelevance = scored.filter(item => item.relevance >= threshold);
+  const lowRelevance = scored.filter(item => item.relevance < threshold);
+
+  highRelevance.sort((a, b) => b.relevance - a.relevance);
+
+  const finalOrder = [...highRelevance, ...lowRelevance]
+    .sort((a, b) => a.index - b.index)
+    .map(item => item.song);
+
+  return finalOrder;
+};
+
 module.exports = {
-  searchSongsInDb
+  searchSongsInDb,
+  sortSongsBySearchRelevance 
 };

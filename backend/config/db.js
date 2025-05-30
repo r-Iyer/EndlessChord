@@ -8,7 +8,7 @@ const connectDB = async () => {
       useUnifiedTopology: true,
       serverSelectionTimeoutMS: 30000, // 30s for initial server selection
       socketTimeoutMS: 60000,          // 60s max time for operations
-    });    
+    });
     logger.info('MongoDB connected');
   } catch (err) {
     logger.error('MongoDB connection error:', err);

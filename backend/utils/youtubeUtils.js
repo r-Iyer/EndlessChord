@@ -54,8 +54,8 @@ async function searchYouTube(query) {
       try {
         const initialData = JSON.parse(match[1]);
         const contents = initialData?.contents?.twoColumnSearchResultsRenderer
-        ?.primaryContents?.sectionListRenderer?.contents?.[0]
-        ?.itemSectionRenderer?.contents;
+          ?.primaryContents?.sectionListRenderer?.contents?.[0]
+          ?.itemSectionRenderer?.contents;
         if (contents && Array.isArray(contents)) {
           for (const item of contents) {
             if (item.videoRenderer) {

@@ -7,7 +7,12 @@ const logsDir = path.join(__dirname, '../logs');
 
 // Only create logs directory if not in production and if it doesn't exist
 if (!isProd && !fs.existsSync(logsDir)) {
-  fs.mkdirSync(logsDir);
+  try {
+    fs.mkdirSync(logsDir);
+  } catch (err) {
+    console.error(`Failed to create logs directory: ${err.message}`);
+    // In production, you might want to handle this differently
+  }
 }
 
 const loggerTransports = [

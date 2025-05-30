@@ -35,4 +35,5 @@ songSchema.statics.initSearchIndex = async function() {
 
 // 2) Compile & export your Model
 const Song = mongoose.model('Song', songSchema);
+
 module.exports = { Song, songSchema };
