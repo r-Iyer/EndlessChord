@@ -4,7 +4,7 @@ const { optionalAuth } = require('../../utils/authUtils');
 const { handleError, sendResponse } = require('../../utils/handlerUtils');
 const { addAISuggestionsIfNeeded } = require('../../utils/aiUtils');
 const { parseExcludeIds } = require('../../utils/songUtils');
-const { searchSongsInDb, sortSongsBySearchRelevance } = require('../../utils/searchUtils');
+const { searchSongsWithPostProcessing } = require('../../utils/searchUtils');
 const { MINIMUM_SONG_COUNT } = require('../../config/constants');
 const { addFavoriteStatus } = require('../../utils/userUtils');
 const { createChannelWithSearchQuery } = require('../../utils/channelUtils.js');
@@ -26,8 +26,9 @@ router.get('/', optionalAuth, addFavoriteStatus, async (req, res) => {
 
     // Find Songs with matching query in the database and exclude songs in current queue
     // Note: Songs returned are sorted by score and last played
+    // Beyond a certain threshold, songs are shuffled
     // Rule III.1.b, Rule III.2.b
-    let songs = await searchSongsInDb(searchQuery, excludeIds);
+    let songs = await searchSongsWithPostProcessing(searchQuery, excludeIds);
 
     logger.info(`[ROUTE] GET /api/search — Found ${songs.length} matching songs in database`);
     
@@ -39,7 +40,7 @@ router.get('/', optionalAuth, addFavoriteStatus, async (req, res) => {
       const existingVideoIds = [...excludeIds, ...songs.map(s => s.videoId)];
 
       let { songs: updatedSongs } = await addAISuggestionsIfNeeded(songs, searchChannel, existingVideoIds, source, req.user?.id, null);
-      updatedSongs = sortSongsBySearchRelevance(updatedSongs, searchQuery);
+      //updatedSongs = sortSongsBySearchRelevance(updatedSongs, searchQuery);
       songs = updatedSongs;
     }
     

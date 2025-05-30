@@ -6,6 +6,7 @@ const MAX_RETRIES = 3;
 const NEW_SONG_RATIO = 0.4;
 const CACHED_SONG_COUNT_LIMIT = 10;
 const CACHED_SONG_COUNT_RETURNED = 4;
+const SHUFFLE_SCORE_THRESHOLD = 0.95
 
 // JWT and auth
 const JWT_SECRET = process.env.JWT_SECRET || 'fallback-secret-key';
@@ -31,5 +32,6 @@ module.exports = {
   JWT_EXPIRES_IN,
   RECENTLY_PLAYED_THRESHOLD,
   SONG_PATH,
-  INITIAL_LOAD
+  INITIAL_LOAD,
+  SHUFFLE_SCORE_THRESHOLD
 };

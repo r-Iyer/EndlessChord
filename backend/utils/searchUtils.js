@@ -1,6 +1,8 @@
 const stringSimilarity = require('string-similarity');
 const { runSongAggregationInDb } = require('../helpers/songHelpers');
 const logger = require('./loggerUtils');
+const { SHUFFLE_SCORE_THRESHOLD } = require('../config/constants');
+const { shuffle } = require('./songUtils');
 
 /**
  * Search songs with strict word-by-word fuzzy matching across multiple fields,
@@ -110,7 +112,7 @@ const sortSongsBySearchRelevance = (songs, searchQuery, threshold = 0.2) => {
     return {
       song: {
         ...song,
-        _searchQuery: searchQuery, // optional field for debugging or logging
+        _searchQuery: searchQuery,
         _relevanceScore: maxSimilarity
       },
       index,
@@ -121,16 +123,46 @@ const sortSongsBySearchRelevance = (songs, searchQuery, threshold = 0.2) => {
   const highRelevance = scored.filter(item => item.relevance >= threshold);
   const lowRelevance = scored.filter(item => item.relevance < threshold);
 
-  highRelevance.sort((a, b) => b.relevance - a.relevance);
+  highRelevance.sort((a, b) => {
+    if (b.relevance === a.relevance) {
+      // Randomize when scores are equal
+      return Math.random() - 0.5;
+    }
+    return b.relevance - a.relevance;
+  });
 
-  const finalOrder = [...highRelevance, ...lowRelevance]
-    .sort((a, b) => a.index - b.index)
-    .map(item => item.song);
+  // Preserve original order for low relevance
+  lowRelevance.sort((a, b) => a.index - b.index);
+
+  const finalOrder = [...highRelevance, ...lowRelevance].map(item => item.song);
 
   return finalOrder;
 };
 
+/**
+ * Searches songs and shuffles results if all scores are above a threshold.
+ *
+ * @param {string} searchQuery - The search string.
+ * @param {string[]} excludeIds - List of video IDs to exclude.
+ * @param {number} threshold - Minimum score to trigger shuffle.
+ * @returns {Promise<Array>} - The processed song list.
+ */
+const searchSongsWithPostProcessing = async (searchQuery, excludeIds = [], threshold = SHUFFLE_SCORE_THRESHOLD) => {
+  let songs = await searchSongsInDb(searchQuery, excludeIds);
+
+  if (!Array.isArray(songs) || songs.length === 0) return [];
+
+  const allAboveThreshold = songs.every(song => song?.score >= threshold);
+
+  if (allAboveThreshold) {
+    songs = shuffle(songs); // Use your existing shuffle function
+  }
+
+  return songs;
+}
+
 module.exports = {
   searchSongsInDb,
-  sortSongsBySearchRelevance 
+  sortSongsBySearchRelevance,
+  searchSongsWithPostProcessing
 };
