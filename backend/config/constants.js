@@ -20,6 +20,30 @@ const RECENTLY_PLAYED_THRESHOLD = new Date(Date.now() - HOURS_FOR_RECENTLY_PLAYE
 const SONG_PATH = "songs";
 const INITIAL_LOAD = "initial";
 
+//AI Prompt
+
+const RECOMMENDATION_PROMPT_TEMPLATE = `
+You are a helpful music expert. I need recommendations for {{SONG_COUNT}} {{LANGUAGE}} music tracks 
+(description: {{DESCRIPTION}}). 
+
+Please span across the following genres: {{GENRES}}.
+
+You can suggest songs from any year or region.  
+
+For each recommendation, provide **only** the following fields in a JSON array:
+
+[
+  {
+    "title": "Song Title",
+    "artist": "Artist Name",
+    "composer": "Composer Name",
+    "album": "Album Name",
+    "year": "Year",
+    "genre": "One of the above genres"
+  }
+]
+`;
+
 module.exports = {
   DEFAULT_SONG_COUNT,
   INITIAL_SONG_COUNT,
@@ -33,5 +57,6 @@ module.exports = {
   RECENTLY_PLAYED_THRESHOLD,
   SONG_PATH,
   INITIAL_LOAD,
-  SHUFFLE_SCORE_THRESHOLD
+  SHUFFLE_SCORE_THRESHOLD,
+  RECOMMENDATION_PROMPT_TEMPLATE
 };

@@ -4,7 +4,8 @@ const {
   DEFAULT_SONG_COUNT,
   SONG_PATH,
   INITIAL_LOAD,
-  INITIAL_SONG_COUNT
+  INITIAL_SONG_COUNT,
+  RECOMMENDATION_PROMPT_TEMPLATE
 } = require('../config/constants');
 const { upsertSuggestionSong, selectSongsFromHistory } = require('./songUtils');
 const { normalizeBaseFields } = require('./channelUtils.js');
@@ -140,28 +141,11 @@ async function getAISuggestions(channel, song_count) {
 // AI Recommendation Part
 async function getAIRecommendations(channel, song_count) {  
   try {
-    const recommendationPrompt = `
-You are a helpful music expert. I need recommendations for ${song_count} ${channel.language.toUpperCase()} music tracks 
-(description: ${channel.description}). 
-      
-Please span across the following genres: ${channel.genre.join(', ')}.
-      
-You can suggest songs from any year or region.  
-      
-For each recommendation, provide **only** the following fields in a JSON array:
-      
-[
-  {
-    "title": "Song Title",
-    "artist": "Artist Name",
-    "composer": "Composer Name",
-    "album": "Album Name",
-    "year": "Year",
-    "genre": "One of the above genres"
-  },
-  …
-]
-`;
+    const recommendationPrompt = RECOMMENDATION_PROMPT_TEMPLATE
+      .replace('{{SONG_COUNT}}', song_count)
+      .replace('{{LANGUAGE}}', channel.language.toUpperCase())
+      .replace('{{DESCRIPTION}}', channel.description)
+      .replace('{{GENRES}}', channel.genre.join(', '));
 
     const recommendedSongs = await getAIRecommendationsGemini(recommendationPrompt, channel.name);
     return recommendedSongs;
