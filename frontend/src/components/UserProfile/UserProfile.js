@@ -1,9 +1,10 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import authService from '../../services/authService';
 import './UserProfile.css';
 
 const UserProfile = ({ user, onLogout, onShowAuth, onPlayFavorites }) => {
   const [showDropdown, setShowDropdown] = useState(false);
+  const dropdownRef = useRef(null);
 
   const handleLogout = () => {
     authService.logout();
@@ -16,11 +17,30 @@ const UserProfile = ({ user, onLogout, onShowAuth, onPlayFavorites }) => {
     setShowDropdown(false);
   };
 
-  // Check if user is a guest (no user data or explicitly marked as guest)
   const isGuest = !user || !user.id || authService.isGuest;
 
+  // Close dropdown on outside click
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target)
+      ) {
+        setShowDropdown(false);
+      }
+    };
+
+    if (showDropdown) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showDropdown]);
+
   return (
-    <div className="user-profile">
+    <div className="user-profile" ref={dropdownRef}>
       <button
         onClick={() => setShowDropdown(!showDropdown)}
         className="user-profile__button"
@@ -32,7 +52,12 @@ const UserProfile = ({ user, onLogout, onShowAuth, onPlayFavorites }) => {
           {user?.name || 'Guest'}
         </span>
         <svg className="user-profile__chevron" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d={showDropdown ? 'M19 15l-7-7-7 7' : 'M19 9l-7 7-7-7'}
+          />
         </svg>
       </button>
 
@@ -48,9 +73,8 @@ const UserProfile = ({ user, onLogout, onShowAuth, onPlayFavorites }) => {
                 <div className="user-profile__guest-mode">Guest Mode</div>
               )}
             </div>
-            
+
             {isGuest ? (
-              // Guest user - only show login option
               <button
                 onClick={handleLogin}
                 className="user-profile__menu-item"
@@ -58,7 +82,6 @@ const UserProfile = ({ user, onLogout, onShowAuth, onPlayFavorites }) => {
                 Login / Sign Up
               </button>
             ) : (
-              // Authenticated user - show full menu with logout
               <>
                 <button
                   onClick={() => {
