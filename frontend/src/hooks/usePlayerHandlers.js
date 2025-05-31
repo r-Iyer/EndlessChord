@@ -227,8 +227,8 @@ export default function usePlayerHandlers(
     }
 
     if (queue.length >= 1) {
-      // Add currentSong and nextSong (if any) to history
-      setHistory((prev) => [...prev, currentSong, nextSong].filter(Boolean));
+      // Add currentSong to history
+      setHistory((prev) => [...prev, currentSong].filter(Boolean));
 
       // Promote the first song in queue
       const [laterSong, ...remainingQueue] = queue;
@@ -246,7 +246,6 @@ export default function usePlayerHandlers(
     }
   }, [
     currentSong,
-    nextSong,
     queue,
     setCurrentSong,
     setNextSong,
