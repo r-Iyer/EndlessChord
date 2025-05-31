@@ -47,6 +47,7 @@ const addAISuggestionsIfNeeded = async (
       aiSuggestionsNeeded = remainingToFill;
       /* Rule II.2.e */ 
       minimum_song_count = aiSuggestionsNeeded;
+      maximum_song_count = aiSuggestionsNeeded;
     }
 
     // Rule II.1.c, Rule III.1.c, Rule II.2.d, Rule III.2.c
