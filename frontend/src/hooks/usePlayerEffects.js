@@ -13,13 +13,24 @@ export default function usePlayerEffects({
   uiTimeoutRef,
   setPlayerReady,
   playerReady,
+  isPlaying
 }) {
   // --- Show/hide song info ---
-  const showSongInfo = useCallback(() => {
-    setShowInfo(true);
-    if (infoTimeoutRef.current) clearTimeout(infoTimeoutRef.current);
-    infoTimeoutRef.current = setTimeout(() => setShowInfo(false), 8000);
-  }, [setShowInfo, infoTimeoutRef]);
+const showSongInfo = useCallback(() => {
+  setShowInfo(true);
+  
+  if (infoTimeoutRef.current) {
+    clearTimeout(infoTimeoutRef.current);
+  }
+
+  // Only auto-hide if playing
+  if (isPlaying) {
+    infoTimeoutRef.current = setTimeout(() => {
+      setShowInfo(false);
+    }, 8000);
+  }
+}, [setShowInfo, infoTimeoutRef, isPlaying]);
+
   
   useEffect(() => {
     if (currentSong) {

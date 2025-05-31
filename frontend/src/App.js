@@ -73,7 +73,7 @@ function App() {
   usePlayerEffects({
     currentSong, setShowInfo, infoTimeoutRef, currentTime, setCurrentTime,
     duration, setDuration, playerRef, setShowUI, uiTimeoutRef,
-    setPlayerReady, playerReady,
+    setPlayerReady, playerReady, isPlaying
   });
   
   const { setChannelNameInURL, selectChannel } = useChannelHandlers(
