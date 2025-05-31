@@ -1,7 +1,6 @@
 const { Song } = require('../models/Song');
 const { getSongsWithExclusionsFromDb, getSongByVideoIdFromDb, saveSongToDb, updateSongInDb } = require('../helpers/songHelpers');
 const logger = require('./loggerUtils');
-const Fuse = require('fuse.js');
 const { INITIAL_LOAD, INITIAL_SONG_COUNT, SONG_PATH, DEFAULT_SONG_COUNT, NEW_SONG_RATIO } = require('../config/constants');
 const { getUserHistoryInDb } = require('../helpers/userHelpers');
 
