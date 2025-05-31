@@ -62,7 +62,7 @@ function App() {
   );
   
   const {
-    handleSeek, handlePreviousSong, handleNextSong, togglePlayPause,
+    handleSeek, handlePreviousSong, handleNextSong, handleLaterSong, togglePlayPause,
     handlePlayerReady, handlePlayerStateChange, handlePlayerError
   } = usePlayerHandlers(
     playerRef, isPlaying, setIsPlaying, currentSong, setCurrentSong, nextSong,
@@ -153,6 +153,7 @@ function App() {
     user={user}
     onPlayPause={togglePlayPause}
     onNext={handleNextSong}
+    onLater = {handleLaterSong}
     onFullscreenToggle={toggleFullscreen}
     onPrevious={handlePreviousSong}
     onCCToggle={() => setIsCCEnabled((prev) => !prev)}

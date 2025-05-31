@@ -1,16 +1,28 @@
-/* SongInfo.css */
-
 .song-info-container {
   position: fixed;
   bottom: 0rem;
-  left: 2rem;
+  left: 0.5rem;
   background-color: rgba(0, 0, 0, 0.7);
   padding: 1rem;
   border-radius: 0.5rem;
   max-width: 28rem;
   transform: translateY(0);
   transition: opacity 1s, transform 1s;
-  z-index: 10;
+  z-index: 2147483641;
+  width: calc(100% - 4rem); /* Prevents overflow on small screens */
+}
+
+@media (max-width: 768px), (max-width: 1024px) and (orientation: landscape) {
+  .song-info-container {
+    width: auto;
+    max-width: 28rem;
+    z-index: 10;
+  }
+  :fullscreen{
+    z-index: 10; /* Keep z-index low on mobile fullscreen */
+    bottom: 7rem; /* Optional: adjust position */
+  }
+  
 }
 
 .song-info-container.visible {
@@ -141,4 +153,8 @@
   bottom: 7rem;
   left: 2rem;
   z-index: 10;
+}
+
+.song-button * {
+  text-align: left;
 }

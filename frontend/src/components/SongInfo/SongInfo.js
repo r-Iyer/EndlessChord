@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import "./SongInfo.css";
 
-export default function SongInfo({ song, nextSong, laterSong, visible }) {
+export default function SongInfo({ song, nextSong, laterSong, visible, onNext, onLater }) {
   const [showNext, setShowNext] = useState(false);
   
   useEffect(() => {
@@ -54,20 +54,26 @@ export default function SongInfo({ song, nextSong, laterSong, visible }) {
     {showNext && (nextSong || laterSong) && (
       <div className="upcoming-songs">
       {nextSong && (
-        <div className="next-song">
+        <button 
+        className="next-song song-button"
+        onClick={onNext} // Add your handler
+        >
         <div className="queue-label next-label">Next</div>
         <div className="queue-title">{nextSong.title}</div>
         <div className="queue-artist">{nextSong.artist}</div>
         {nextSong.album && <div className="queue-album">Album: {nextSong.album}</div>}
-        </div>
+        </button>
       )}
       {laterSong && (
-        <div className="later-song">
+        <button 
+        className="later-song song-button"
+        onClick={onLater} // Add your handler
+        >
         <div className="queue-label later-label">Later</div>
         <div className="queue-title">{laterSong.title}</div>
         <div className="queue-artist">{laterSong.artist}</div>
         {laterSong.album && <div className="queue-album">Album: {laterSong.album}</div>}
-        </div>
+        </button>
       )}
       </div>
     )}

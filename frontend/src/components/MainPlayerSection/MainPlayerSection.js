@@ -27,6 +27,7 @@ export default function MainPlayerSection({
   user,
   onPlayPause,
   onNext,
+  onLater,
   onFullscreenToggle,
   onPrevious,
   onCCToggle,
@@ -60,6 +61,7 @@ export default function MainPlayerSection({
         currentChannel={isSearchMode ? { name: `Search: ${searchQuery}` } : currentChannel}
         onPlayPause={onPlayPause}
         onNext={onNext}
+        onLater={onLater}
         onFullscreenToggle={onFullscreenToggle}
         onPrevious={onPrevious}
         onCCToggle={onCCToggle}

@@ -21,6 +21,7 @@ export default function PlayerContainer({
   currentChannel,
   onPlayPause,
   onNext,
+  onLater,
   onFullscreenToggle,
   onPrevious,
   onCCToggle,
@@ -42,6 +43,8 @@ export default function PlayerContainer({
     nextSong={nextSong}
     laterSong={queue?.[0] ?? null}
     visible={showInfo}
+    onNext={onNext}
+    onLater={onLater}
     />
     <PlayerFooter
     currentTime={currentTime}

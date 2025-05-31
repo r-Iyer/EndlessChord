@@ -24,7 +24,7 @@ export default function usePlayerHandlers(
   const handlePlayerReady = (event) => {
     playerRef.current = event.target;
     setPlayerReady(true);
-
+    
     if (isInitialLoad) {
       console.log("Autoplay was prevented. User interaction required.");
       setIsPlaying(false);
@@ -34,12 +34,12 @@ export default function usePlayerHandlers(
       setIsPlaying(true);
     }
   };
-
+  
   const handleSeek = useCallback((time) => {
     if (!playerRef.current) return;
     playerRef.current.seekTo(Math.floor(time), true);
   }, [playerRef]);
-
+  
   const updatePlayCount = useCallback(async (songId) => {
     try {
       await api.post('/api/songs/played', {
@@ -49,7 +49,7 @@ export default function usePlayerHandlers(
       console.error('Failed to update play count:', error);
     }
   }, []);
-
+  
   const handlePreviousSong = useCallback(() => {
     updatePlayCount(currentSong._id);
     if (history.length > 0) {
@@ -63,7 +63,7 @@ export default function usePlayerHandlers(
       setCurrentTime(0);
     }
   }, [updatePlayCount, currentSong, history, playerRef, setHistory, setQueue, setNextSong, setCurrentSong, nextSong, setCurrentTime]);
-
+  
   const handleNextSong = useCallback(() => {
     updatePlayCount(currentSong._id);
     if (nextSong) {
@@ -78,7 +78,29 @@ export default function usePlayerHandlers(
       fetchMoreSongs(true);
     }
   }, [updatePlayCount, currentSong, nextSong, setHistory, setCurrentSong, setNextSong, queue, setQueue, fetchMoreSongs]);
-
+  
+  const handleLaterSong = useCallback(() => {
+    updatePlayCount(currentSong._id);
+    
+    if (queue.length >= 1) {
+      setHistory(prev => [...prev, currentSong, nextSong].filter(Boolean));
+      
+      // Promote the later song
+      const [laterSong, ...remainingQueue] = queue;
+      
+      setCurrentSong(laterSong);
+      setNextSong(remainingQueue[0] || null);
+      setQueue(remainingQueue.slice(1));
+      
+      if (remainingQueue.length < MINIMUM_QUEUE_SIZE) {
+        fetchMoreSongs();
+      }
+    } else {
+      // If no later song available, just fetch more
+      fetchMoreSongs(true);
+    }
+  }, [currentSong, fetchMoreSongs, nextSong, queue, setCurrentSong, setHistory, setNextSong, setQueue, updatePlayCount]);
+  
   const togglePlayPause = useCallback(() => {
     if (!playerRef.current) return;
     if (isPlaying) {
@@ -88,34 +110,35 @@ export default function usePlayerHandlers(
     }
     setIsPlaying(!isPlaying);
   }, [playerRef, isPlaying, setIsPlaying]);
-
+  
   const handlePlayerStateChange = useCallback((event) => {
     switch (event.data) {
       case window.YT.PlayerState.PLAYING:
-        setShowInfo(false);
-        setIsPlaying(true);
-        break;
+      setShowInfo(false);
+      setIsPlaying(true);
+      break;
       case window.YT.PlayerState.PAUSED:
-        setShowInfo(true);
-        setIsPlaying(false);
-        break;
+      setShowInfo(true);
+      setIsPlaying(false);
+      break;
       case window.YT.PlayerState.ENDED:
-        handleNextSong();
-        break;
+      handleNextSong();
+      break;
       default:
-        break;
+      break;
     }
   }, [setShowInfo, setIsPlaying, handleNextSong]);
-
+  
   const handlePlayerError = useCallback((error) => {
     console.error('❌ Video Player Error:', error);
     handleNextSong();
   }, [handleNextSong]);
-
+  
   return {
     handleSeek,
     handlePreviousSong,
     handleNextSong,
+    handleLaterSong,
     togglePlayPause,
     handlePlayerReady,
     handlePlayerStateChange,
