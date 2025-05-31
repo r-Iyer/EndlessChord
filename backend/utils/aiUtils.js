@@ -109,7 +109,7 @@ async function getUniqueAISuggestions(channel, excludeIds, baseSongs, minimum_so
     return allSuggestions.slice(0, maximum_song_count);
   } catch (err) {
     logger.error('[getUniqueAISuggestions ERROR]', err);
-    return [];
+    return baseSongs;
   }
 }
 
