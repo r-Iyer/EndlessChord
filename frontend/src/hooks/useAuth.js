@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import authService from '../services/authService';
 
 function useAuth() {
@@ -8,39 +8,47 @@ function useAuth() {
   const [allowGuestAccess, setAllowGuestAccess] = useState(false);
 
   useEffect(() => {
-    const checkAuth = () => {
-      if (authService.isAuthenticated()) {
-        setUser(authService.getCurrentUser());
-        setAllowGuestAccess(true); // Authenticated users can access everything
-      } else {
+    async function checkAuth() {
+      try {
+        const isAuth = await authService.isAuthenticated();
+        if (isAuth) {
+          const currentUser = await authService.getCurrentUser();
+          setUser(currentUser);
+          setAllowGuestAccess(true);
+        } else {
+          setShowAuthModal(true);
+        }
+      } catch (err) {
+        console.error('Error during auth check:', err);
         setShowAuthModal(true);
+      } finally {
+        setIsAuthChecked(true);
       }
-      setIsAuthChecked(true);
-    };
+    }
 
     checkAuth();
   }, []);
 
-  const handleAuthSuccess = (userData) => {
+  const handleAuthSuccess = useCallback((userData) => {
     setUser(userData);
     setShowAuthModal(false);
     setAllowGuestAccess(true);
-  };
+  }, []);
 
-  const handleLogout = () => {
+  const handleLogout = useCallback(() => {
+    authService.clearToken?.();
     setUser(null);
     setAllowGuestAccess(false);
     setShowAuthModal(true);
-  };
+  }, []);
 
-  const handleGuestAccess = () => {
+  const handleGuestAccess = useCallback(() => {
     setShowAuthModal(false);
     setAllowGuestAccess(true);
-  };
+  }, []);
 
   return {
     user,
-    setUser,
     showAuthModal,
     setShowAuthModal,
     isAuthChecked,

@@ -11,6 +11,7 @@ function SeekButton({ direction, currentTime, duration, onSeek }) {
 
   return (
     <button
+      type="button"
       className="seek-button"
       aria-label={`Seek ${direction === 'backward' ? 'backward' : 'forward'} 5 seconds`}
       data-tooltip={direction === 'backward' ? '-5 seconds' : '+5 seconds'}

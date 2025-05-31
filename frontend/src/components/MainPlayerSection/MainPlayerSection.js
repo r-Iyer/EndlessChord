@@ -78,21 +78,24 @@ export default function MainPlayerSection({
     );
   }
 
-  if (!backendError && !currentSong && !userInteracted) {
-    return (
-      <div className="centered-fullscreen">
-        <p className="text-message">Please select a channel or search for songs.</p>
-      </div>
-    );
-  }
+  if (!backendError && !currentSong) {
+    if (!userInteracted) {
+      return (
+        <div className="centered-fullscreen">
+          <p className="text-message">Please select a channel or search for songs.</p>
+        </div>
+      );
+    }
 
-  if (!backendError && !currentSong && userInteracted) {
+    // userInteracted && no currentSong && no backendError
     return (
       <div className="centered-fullscreen">
         {isSearchMode ? (
           <>
             <p className="text-message">No songs found for “{searchQuery}”.</p>
-            <button onClick={clearSearch} className="clear-search-button">Clear Search</button>
+            <button onClick={clearSearch} className="clear-search-button">
+              Clear Search
+            </button>
           </>
         ) : (
           <p className="text-message">No songs found for this channel.</p>

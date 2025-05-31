@@ -1,18 +1,34 @@
-// components/AuthModal/AuthModal.js
 import { useState } from 'react';
 import authService from '../../services/authService';
 import './AuthModal.css';
 
+/**
+ * AuthModal component handles user authentication UI for login, registration,
+ * and guest mode. It supports switching between login and register forms,
+ * form validation, error display, and communicates success/failure via props.
+ *
+ * @param {boolean} isOpen - Controls modal visibility.
+ * @param {function} onClose - Callback to close the modal.
+ * @param {function} onAuthSuccess - Callback when authentication succeeds, receives user data.
+ */
 const AuthModal = ({ isOpen, onClose, onAuthSuccess }) => {
-  const [mode, setMode] = useState('login'); // 'login' or 'register'
+  // State to toggle between 'login' and 'register' modes
+  const [mode, setMode] = useState('login');
+  
+  // Form data state: name, email, password fields
   const [formData, setFormData] = useState({
     name: '',
     email: '',
     password: '',
   });
+  
+  // Holds any error messages to display in the form
   const [error, setError] = useState('');
+  
+  // Loading flag to disable inputs and show spinner/text during async calls
   const [loading, setLoading] = useState(false);
 
+  // Handle input changes and clear error messages on user typing
   const handleInputChange = (e) => {
     setFormData({
       ...formData,
@@ -21,6 +37,7 @@ const AuthModal = ({ isOpen, onClose, onAuthSuccess }) => {
     setError(''); // Clear error when user types
   };
 
+  // Handle form submission for login or register
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -28,62 +45,73 @@ const AuthModal = ({ isOpen, onClose, onAuthSuccess }) => {
 
     try {
       let result;
-      
+
       if (mode === 'register') {
+        // Basic validation: all fields required for registration
         if (!formData.name || !formData.email || !formData.password) {
           setError('All fields are required');
           setLoading(false);
           return;
         }
+
+        // Call register method from authService
         result = await authService.register({
           name: formData.name,
           email: formData.email,
           password: formData.password,
         });
       } else {
+        // Basic validation: email and password required for login
         if (!formData.email || !formData.password) {
           setError('Email and password are required');
           setLoading(false);
           return;
         }
+
+        // Call login method from authService
         result = await authService.login({
           email: formData.email,
           password: formData.password,
         });
       }
 
+      // On successful authentication
       if (result.success) {
-        onAuthSuccess(result.user);
-        onClose();
-        resetForm();
+        onAuthSuccess(result.user); // Pass user to parent
+        onClose();                  // Close modal
+        resetForm();                // Reset form state
       } else {
-        setError(result.error);
+        setError(result.error);     // Show error from authService
       }
     } catch (error) {
-      setError('An unexpected error occurred');
+      setError('An unexpected error occurred'); // Generic fallback error
     } finally {
-      setLoading(false);
+      setLoading(false); // Reset loading state
     }
   };
 
+  // Handle "Continue as Guest" button click
   const handleGuestMode = () => {
     const result = authService.continueAsGuest();
-    onAuthSuccess(result.user);
+    onAuthSuccess(result.user); // Inform parent of guest user
     onClose();
     resetForm();
   };
 
+  // Reset form fields and error messages to initial state
   const resetForm = () => {
     setFormData({ name: '', email: '', password: '' });
     setError('');
     setMode('login');
   };
 
+  // Toggle between login and register modes and clear errors
   const switchMode = () => {
     setMode(mode === 'login' ? 'register' : 'login');
     setError('');
   };
 
+  // If modal is not open, render nothing
   if (!isOpen) return null;
 
   return (
@@ -149,6 +177,7 @@ const AuthModal = ({ isOpen, onClose, onAuthSuccess }) => {
             />
           </div>
 
+          {/* Display error messages */}
           {error && (
             <div className="auth-modal-error">
               {error}
@@ -164,6 +193,7 @@ const AuthModal = ({ isOpen, onClose, onAuthSuccess }) => {
           </button>
         </form>
 
+        {/* Button to switch between login and register modes */}
         <div className="auth-modal-switch-container">
           <button
             onClick={switchMode}
@@ -177,6 +207,7 @@ const AuthModal = ({ isOpen, onClose, onAuthSuccess }) => {
           </button>
         </div>
 
+        {/* Guest mode button */}
         <div className="auth-modal-divider">
           <button
             onClick={handleGuestMode}
