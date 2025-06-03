@@ -2,6 +2,7 @@ import { useRef, useEffect, useState, useMemo } from 'react';
 import YouTube from 'react-youtube';
 import './VideoPlayer.css';
 
+const isFirestick = /Fire TV|AFT/.test(navigator.userAgent);
 /**
  * Request fullscreen on the given element and attempt to lock screen orientation to landscape.
  * Fallbacks included for vendor-prefixed fullscreen methods.
@@ -119,6 +120,18 @@ function VideoPlayer({
     };
   }, []);
 
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (playerRef.current) {
+        try {
+          playerRef.current.destroy();
+        } catch {}
+        playerRef.current = null;
+      }
+    };
+  }, [playerRef]);
+
   // Memoized YouTube player options
   const opts = useMemo(() => ({
     width: '100%',
@@ -131,7 +144,13 @@ function VideoPlayer({
       rel: 0,                // No related videos at end
       iv_load_policy: 3,     // Disable video annotations/interactive cards
       showinfo: 0,           // Deprecated but kept to hide info
-      cc_load_policy: 1      // Closed captions on by default (can override)
+      cc_load_policy: 1,     // Closed captions on by default (can override)
+      // Firestick-specific optimizations
+      ...(isFirestick && {
+        vq: 'hd720', // Force HD quality
+        html5: 1,    // Prioritize HTML5 player
+        playsinline: 0
+      })
     },
     host: 'https://www.youtube-nocookie.com' // Use no-cookie embed to suppress end-of-video suggestions
   }), []);
@@ -157,7 +176,7 @@ function VideoPlayer({
 
     // Instruct YouTube to use adaptive (“default”) quality
     try {
-      playerRef.current.setPlaybackQuality('default');
+      playerRef.current.setPlaybackQuality(isFirestick ? 'hd720' : 'default');
     } catch (error) {
       console.warn('Could not set adaptive quality:', error);
     }
