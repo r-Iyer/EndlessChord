@@ -27,7 +27,8 @@ export function requestFullscreenWithOrientation(element) {
 
 /**
  * VideoPlayer renders a YouTube player for the current song with control over playback,
- * captions, and fullscreen orientation lock.
+ * captions, and fullscreen orientation lock. It also tells YouTube to pick the adaptive ("auto")
+ * quality based on the user’s bandwidth.
  * 
  * Props:
  * - currentSong: object with videoId of the YouTube video to play
@@ -132,6 +133,15 @@ function VideoPlayer({
   const handleReady = (event) => {
     playerRef.current = event.target;
     setIsPlayerReady(true);
+
+    // Instruct YouTube to use its default/adaptive quality selection:
+    // “default” tells the player to pick the best stream based on current bandwidth.
+    try {
+      playerRef.current.setPlaybackQuality('default');
+    } catch (error) {
+      console.warn('Could not set adaptive quality:', error);
+    }
+
     if (typeof onReady === 'function') {
       onReady(event);
     }
