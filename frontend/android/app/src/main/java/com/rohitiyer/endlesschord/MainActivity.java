@@ -20,6 +20,9 @@ public class MainActivity extends BridgeActivity {
     private void setupWebView() {
         WebView webView = getBridge().getWebView();
         
+        // ✅ Enable autoplay for media like YouTube
+        webView.getSettings().setMediaPlaybackRequiresUserGesture(false);
+        
         webView.setWebChromeClient(new WebChromeClient() {
             @Override
             public void onShowCustomView(View view, WebChromeClient.CustomViewCallback callback) {
