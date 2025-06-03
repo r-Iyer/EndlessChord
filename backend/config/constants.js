@@ -1,5 +1,5 @@
 // Song-related limits and thresholds
-const DEFAULT_SONG_COUNT = 30;
+const DEFAULT_SONG_COUNT = 20;
 const INITIAL_SONG_COUNT = 10;
 const MINIMUM_SONG_COUNT = 5;
 const MAX_RETRIES = 3;

@@ -56,6 +56,7 @@ const addAISuggestionsIfNeeded = async (
         channel,
         excludeIds,
         songs,
+        source,
         minimum_song_count,  // Minimum number of songs required
         maximum_song_count   // Maximum number of songs required
       );
@@ -94,14 +95,18 @@ const addAISuggestionsIfNeeded = async (
 /**
 * Get AI suggestions with duplicate check and retry logic.
 */
-async function getUniqueAISuggestions(channel, excludeIds, baseSongs, minimum_song_count = MINIMUM_SONG_COUNT, maximum_song_count = DEFAULT_SONG_COUNT) {
+async function getUniqueAISuggestions(channel, excludeIds, baseSongs, source, minimum_song_count = MINIMUM_SONG_COUNT, maximum_song_count = DEFAULT_SONG_COUNT) {
   let allSuggestions = [];
   let attempts = 0;
 
   try {
     while (allSuggestions.length < minimum_song_count && attempts < MAX_RETRIES) {
       logger.info(`[getUniqueAISuggestions] Fething Unique AI suggestions, attempt: ${attempts+1}. Current Song count: ${allSuggestions.length}`);
-      const newSuggestions = await getAISuggestions(channel, maximum_song_count * 2); // Request double the required maximum_song_count
+      let newSuggestionsCount = maximum_song_count * 2;
+      // For initial search songs, maximum_song_count should not be double.
+      if(channel.name === "" && source == INITIAL_LOAD)
+          newSuggestionsCount = maximum_song_count;
+      const newSuggestions = await getAISuggestions(channel, newSuggestionsCount); // Request double the required maximum_song_count
       const filtered = filterAISuggestions(newSuggestions, excludeIds, baseSongs);
       allSuggestions = [...new Set([...allSuggestions, ...filtered])]; // Merge and dedupe
       attempts++;
