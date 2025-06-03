@@ -1,11 +1,8 @@
-import { useRef, useEffect, useState, useMemo } from 'react';
-import YouTube from 'react-youtube';
+import { useRef, useEffect, useState } from 'react';
 import './VideoPlayer.css';
 
 /**
  * Request fullscreen on the given element and attempt to lock screen orientation to landscape.
- * Fallbacks included for vendor-prefixed fullscreen methods.
- * @param {HTMLElement} element - The element to fullscreen
  */
 export function requestFullscreenWithOrientation(element) {
   if (!element) return;
@@ -20,24 +17,31 @@ export function requestFullscreenWithOrientation(element) {
 
   if (window.screen.orientation?.lock) {
     window.screen.orientation.lock('landscape').catch(() => {
-      // Ignore errors, e.g. user rejected lock
+      // User may reject lock, safe to ignore
     });
   }
 }
 
+function loadYouTubeAPI(onReady) {
+  if (window.YT && window.YT.Player) {
+    onReady();
+    return;
+  }
+
+  const script = document.createElement('script');
+  script.src = 'https://www.youtube.com/iframe_api';
+  document.body.appendChild(script);
+  window.onYouTubeIframeAPIReady = onReady;
+}
+
 /**
- * VideoPlayer renders a YouTube player for the current song with control over playback,
- * captions, and fullscreen orientation lock. It also tells YouTube to pick the adaptive ("auto")
- * quality based on the user’s bandwidth.
- * 
+ * VideoPlayer using native YouTube IFrame API.
  * Props:
- * - currentSong: object with videoId of the YouTube video to play
- * - isPlaying: boolean to play or pause video
- * - isCCEnabled: boolean to toggle closed captions
- * - onReady: callback for YouTube player ready event
- * - onStateChange: callback for player state changes
- * - onError: callback for player errors
- * - playerRef: React ref to expose YouTube player instance
+ * - currentSong: { videoId: string }
+ * - isPlaying: boolean
+ * - isCCEnabled: boolean
+ * - onReady, onStateChange, onError: callbacks
+ * - playerRef: external ref to access player instance
  */
 function VideoPlayer({
   currentSong,
@@ -49,53 +53,96 @@ function VideoPlayer({
   playerRef
 }) {
   const containerRef = useRef(null);
+  const playerElRef = useRef(null);
+  const ytPlayerRef = useRef(null);
   const [isPlayerReady, setIsPlayerReady] = useState(false);
-
-  // Track whether the video is paused
   const [isPaused, setIsPaused] = useState(false);
 
-  // Reset player ready and paused state when videoId changes
+  // Load YouTube API and create player
   useEffect(() => {
-    setIsPlayerReady(false);
-    setIsPaused(false);
+    if (!currentSong?.videoId) return;
+
+    loadYouTubeAPI(() => {
+      if (ytPlayerRef.current) {
+        ytPlayerRef.current.destroy();
+      }
+
+      ytPlayerRef.current = new window.YT.Player(playerElRef.current, {
+        videoId: currentSong.videoId,
+        width: '100%',
+        height: '100%',
+        playerVars: {
+          autoplay: 1,
+          controls: 0,
+          modestbranding: 1,
+          rel: 0,
+          fs: 0,
+          iv_load_policy: 3,
+          cc_load_policy: 1,
+          showinfo: 0,
+        },
+        events: {
+          onReady: (event) => {
+            setIsPlayerReady(true);
+            playerRef.current = event.target;
+            event.target.setPlaybackQuality('default');
+            onReady?.(event);
+          },
+          onStateChange: (event) => {
+            const ytState = event.data;
+            if (ytState === 2) {
+              setIsPaused(true);
+            } else if (ytState === 1 || ytState === 0) {
+              setIsPaused(false);
+            }
+            onStateChange?.(event);
+          },
+          onError: onError,
+        }
+      });
+    });
+
+    return () => {
+      ytPlayerRef.current?.destroy?.();
+      ytPlayerRef.current = null;
+      setIsPlayerReady(false);
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentSong?.videoId]);
 
-  // Sync play/pause with isPlaying prop once player is ready
+  // Sync isPlaying
   useEffect(() => {
-    if (!isPlayerReady || !playerRef.current?.getPlayerState) return;
-    try {
-      const state = playerRef.current.getPlayerState();
-      // State -1 = unstarted, 5 = video cued, ignore those states
-      if (state !== -1 && state !== 5) {
-        if (isPlaying) {
-          playerRef.current.playVideo();
-        } else {
-          playerRef.current.pauseVideo();
-        }
-      }
-    } catch (error) {
-      console.warn('YouTube player state sync error:', error);
-    }
-  }, [isPlaying, isPlayerReady, playerRef]);
+    const player = ytPlayerRef.current;
+    if (!isPlayerReady || !player) return;
 
-  // Toggle captions on/off by loading/unloading the captions module
+    const state = player.getPlayerState?.();
+    if (state !== window.YT?.PlayerState.UNSTARTED && state !== window.YT?.PlayerState.CUED) {
+      if (isPlaying) {
+        player.playVideo();
+      } else {
+        player.pauseVideo();
+      }
+    }
+  }, [isPlaying, isPlayerReady]);
+
+  // Sync captions
   useEffect(() => {
-    const player = playerRef.current;
+    const player = ytPlayerRef.current;
     if (!isPlayerReady || !player) return;
 
     try {
       if (isCCEnabled) {
-        if (player.loadModule) player.loadModule('captions');
-        player.setOption('captions', 'track', { languageCode: 'en' });
+        player.loadModule?.('captions');
+        player.setOption?.('captions', 'track', { languageCode: 'en' });
       } else {
-        if (player.unloadModule) player.unloadModule('captions');
+        player.unloadModule?.('captions');
       }
     } catch (error) {
-      console.warn('YouTube captions toggle error:', error);
+      console.warn('Captions error:', error);
     }
-  }, [isCCEnabled, isPlayerReady, playerRef]);
+  }, [isCCEnabled, isPlayerReady]);
 
-  // Lock orientation to landscape on fullscreen enter for containerRef
+  // Fullscreen orientation lock
   useEffect(() => {
     function handleFullscreenChange() {
       const fullscreenElement =
@@ -119,61 +166,11 @@ function VideoPlayer({
     };
   }, []);
 
-  // Memoized YouTube player options
-  const opts = useMemo(() => ({
-    width: '100%',
-    height: '100%',
-    playerVars: {
-      autoplay: 1,           // Autoplay video on ready
-      controls: 0,           // Hide controls UI (custom controls expected)
-      fs: 0,                 // Disable fullscreen button (custom fullscreen)
-      modestbranding: 1,     // Minimal YouTube branding
-      rel: 0,                // No related videos at end
-      iv_load_policy: 3,     // Disable video annotations/interactive cards
-      showinfo: 0,           // Deprecated but kept to hide info
-      cc_load_policy: 1      // Closed captions on by default (can override)
-    },
-    host: 'https://www.youtube-nocookie.com' // Use no-cookie embed to suppress end-of-video suggestions
-  }), []);
-
-  // Wrapped onStateChange to track pause state
-  const handleStateChange = (event) => {
-    const ytState = event.data;
-    // YouTube states: -1 (unstarted), 0 (ended), 1 (playing), 2 (paused), 3 (buffering), 5 (video cued)
-    if (ytState === 2) {
-      setIsPaused(true);
-    } else if (ytState === 1 || ytState === 0) {
-      setIsPaused(false);
-    }
-    if (typeof onStateChange === 'function') {
-      onStateChange(event);
-    }
-  };
-
-  // Handle YouTube player ready event
-  const handleReady = (event) => {
-    playerRef.current = event.target;
-    setIsPlayerReady(true);
-
-    // Instruct YouTube to use adaptive (“default”) quality
-    try {
-      playerRef.current.setPlaybackQuality('default');
-    } catch (error) {
-      console.warn('Could not set adaptive quality:', error);
-    }
-
-    if (typeof onReady === 'function') {
-      onReady(event);
-    }
-  };
-
-  // Show fallback UI if no song selected
-  if (!currentSong) {
+  // Fallback when no song selected
+  if (!currentSong?.videoId) {
     return (
       <div className="empty-player-container" role="region" aria-live="polite">
-        <div className="empty-player-message">
-          Select a channel to start watching
-        </div>
+        <div className="empty-player-message">Select a channel to start watching</div>
       </div>
     );
   }
@@ -181,16 +178,7 @@ function VideoPlayer({
   return (
     <div ref={containerRef} className="youtube-container" tabIndex={-1}>
       <div className="video-wrapper">
-        <YouTube
-          videoId={currentSong.videoId}
-          opts={opts}
-          onReady={handleReady}
-          onStateChange={handleStateChange}
-          onError={onError}
-          className="youtube-player"
-          iframeClassName="youtube-iframe"
-        />
-
+        <div ref={playerElRef} className="youtube-iframe" />
         {isPaused && <div className="pause-mask" />}
       </div>
     </div>
