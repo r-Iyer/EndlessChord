@@ -19,7 +19,7 @@
 | 🤖 **AI-Powered Discovery** | Let Google's Gemini AI be your personal DJ. Receive tailored recommendations based on your listening habits and discover your next favorite song. |
 | ❤️ **Personalized Favorites** | Found a gem? Save it to your personal collection with a single click. Registered users can build a library of their most-loved tracks for easy access. |
 | 🔐 **Seamless Authentication** | A secure and flexible login system. Choose to sign up, log in, or continue as a guest to explore the platform's core features. |
-| 🎵 **Song Card** | Enjoy a beautifully framed song card showcasing the current track’s title, album, artist, composer, release year, and genre, with gentle previews of the tunes you’ve just heard and the ones coming up. |
+| 🎵 **Song Card** | Enjoy a beautifully framed, clickable song card showcasing the current track’s title, album, artist, composer, release year, and genre, with gentle previews of the tunes coming up. |
 
 ---
 
