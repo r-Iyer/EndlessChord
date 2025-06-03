@@ -147,11 +147,15 @@ async function getAISuggestions(channel, song_count) {
 // AI Recommendation Part
 async function getAIRecommendations(channel, song_count) {  
   try {
-    const recommendationPrompt = RECOMMENDATION_PROMPT_TEMPLATE
+    let recommendationPrompt = RECOMMENDATION_PROMPT_TEMPLATE
       .replace('{{SONG_COUNT}}', song_count)
       .replace('{{LANGUAGE}}', channel.language.toUpperCase())
       .replace('{{DESCRIPTION}}', channel.description)
       .replace('{{GENRES}}', channel.genre.join(', '));
+
+    //If search query
+    if(channel.name === "")
+      recommendationPrompt += "Search query: " + channel.description + " only";
 
     const recommendedSongs = await getAIRecommendationsGemini(recommendationPrompt, channel.name);
     return recommendedSongs;
