@@ -51,9 +51,13 @@ function VideoPlayer({
   const containerRef = useRef(null);
   const [isPlayerReady, setIsPlayerReady] = useState(false);
 
-  // Reset player ready state when videoId changes
+  // Track whether the video is paused
+  const [isPaused, setIsPaused] = useState(false);
+
+  // Reset player ready and paused state when videoId changes
   useEffect(() => {
     setIsPlayerReady(false);
+    setIsPaused(false);
   }, [currentSong?.videoId]);
 
   // Sync play/pause with isPlaying prop once player is ready
@@ -63,11 +67,13 @@ function VideoPlayer({
       const state = playerRef.current.getPlayerState();
       // State -1 = unstarted, 5 = video cued, ignore those states
       if (state !== -1 && state !== 5) {
-        if (isPlaying) playerRef.current.playVideo();
-        else playerRef.current.pauseVideo();
+        if (isPlaying) {
+          playerRef.current.playVideo();
+        } else {
+          playerRef.current.pauseVideo();
+        }
       }
     } catch (error) {
-      // Fail silently, player API may not be ready yet
       console.warn('YouTube player state sync error:', error);
     }
   }, [isPlaying, isPlayerReady, playerRef]);
@@ -113,7 +119,7 @@ function VideoPlayer({
     };
   }, []);
 
-  // Memoized YouTube player options - stable reference to avoid unnecessary reloads
+  // Memoized YouTube player options
   const opts = useMemo(() => ({
     width: '100%',
     height: '100%',
@@ -126,16 +132,30 @@ function VideoPlayer({
       iv_load_policy: 3,     // Disable video annotations/interactive cards
       showinfo: 0,           // Deprecated but kept to hide info
       cc_load_policy: 1      // Closed captions on by default (can override)
-    }
+    },
+    host: 'https://www.youtube-nocookie.com' // Use no-cookie embed to suppress end-of-video suggestions
   }), []);
+
+  // Wrapped onStateChange to track pause state
+  const handleStateChange = (event) => {
+    const ytState = event.data;
+    // YouTube states: -1 (unstarted), 0 (ended), 1 (playing), 2 (paused), 3 (buffering), 5 (video cued)
+    if (ytState === 2) {
+      setIsPaused(true);
+    } else if (ytState === 1 || ytState === 0) {
+      setIsPaused(false);
+    }
+    if (typeof onStateChange === 'function') {
+      onStateChange(event);
+    }
+  };
 
   // Handle YouTube player ready event
   const handleReady = (event) => {
     playerRef.current = event.target;
     setIsPlayerReady(true);
 
-    // Instruct YouTube to use its default/adaptive quality selection:
-    // “default” tells the player to pick the best stream based on current bandwidth.
+    // Instruct YouTube to use adaptive (“default”) quality
     try {
       playerRef.current.setPlaybackQuality('default');
     } catch (error) {
@@ -165,11 +185,13 @@ function VideoPlayer({
           videoId={currentSong.videoId}
           opts={opts}
           onReady={handleReady}
-          onStateChange={onStateChange}
+          onStateChange={handleStateChange}
           onError={onError}
           className="youtube-player"
           iframeClassName="youtube-iframe"
         />
+
+        {isPaused && <div className="pause-mask" />}
       </div>
     </div>
   );
