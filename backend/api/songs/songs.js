@@ -27,14 +27,14 @@ router.get('/:channelId', optionalAuth, addFavoriteStatus, async (req, res) => {
       return sendResponse(res, { message: 'Channel not found' }, 404);
     }
 
-    const excludeIds = parseExcludeIds(req.query.excludeIds);
-    const userRecentIds = userId ? await getUserRecentSongsInDb(userId) : [];
+    const excludeVideoIds = parseExcludeIds(req.query.excludeIds);
+    const userRecentVideoIds = userId ? await getUserRecentSongsInDb(req) : [];
 
     // Combine exclude IDs uniquely
-    const allExcludeIds = [...new Set([...(userRecentIds || []), ...excludeIds])];
+    const allExcludeVideoIds = [...new Set([...(userRecentVideoIds || []), ...excludeVideoIds])];
 
     // Get songs with exclusions
-    let songs = await getSongsWithExclusions(channel, allExcludeIds, source, entity);
+    let songs = await getSongsWithExclusions(channel, allExcludeVideoIds, source, entity);
 
     logger.info(`[ROUTE] GET /api/songs/${req.params.channelId} — Found ${songs.length} matching songs in database`);
 
@@ -42,7 +42,7 @@ router.get('/:channelId', optionalAuth, addFavoriteStatus, async (req, res) => {
     let { songs: updatedSongs, aiSuggestionsAdded } = await addAISuggestionsIfNeeded(
       songs,
       channel,
-      allExcludeIds,
+      allExcludeVideoIds,
       source,
       userId,
       entity

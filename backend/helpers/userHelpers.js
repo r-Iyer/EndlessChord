@@ -4,27 +4,33 @@ const { RECENTLY_PLAYED_THRESHOLD } = require('../config/constants');
 const logger = require('../utils/loggerUtils');
 
 /**
- * Get IDs of songs a user has recently played
+ * Get video IDs of songs a user has recently played
  * @param {Object} req - Express request object with authenticated user
  * @returns {Promise<Array<string>>}
  */
 const getUserRecentSongsInDb = async (req) => {
   try {
-    let userRecentIds = [];
+    let recentVideoIds = [];
 
     if (req.user && req.user.id) {
-      const history = await getUserHistoryInDb(req.user.id);
+      // Populate history with song's videoId
+      const user = await User.findById(req.user.id)
+        .populate({
+          path: 'history.songId',
+          select: 'videoId'
+        })
+        .lean();
 
-      if (history && Array.isArray(history)) {
-        const userRecentSongs = history.filter(
-          entry => new Date(entry.playedAt) > RECENTLY_PLAYED_THRESHOLD
-        );
-        userRecentIds = userRecentSongs.map(entry => entry.songId.toString());
+      if (user?.history?.length) {
+        recentVideoIds = user.history
+          .filter(entry => new Date(entry.playedAt) > RECENTLY_PLAYED_THRESHOLD)
+          .map(entry => entry.songId?.videoId)
+          .filter(Boolean); // remove nulls if any
       }
     }
 
-    logger.info(`[getUserRecentSongsInDb] User recent song IDs: ${userRecentIds.length}`);
-    return userRecentIds;
+    logger.info(`[getUserRecentSongsInDb] Recent video IDs: ${recentVideoIds.length}`);
+    return recentVideoIds;
   } catch (error) {
     logger.error('[getUserRecentSongsInDb ERROR]', error);
     return [];
