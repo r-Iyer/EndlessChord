@@ -12,7 +12,43 @@ module.exports = [
       'Sufi',
       'Hip Hop (Hindi)',
       'Classical (Hindi)'
-    ]
+    ],
+    startYear: null,
+    endYear: null
+  },
+  {
+    name: 'Hindi Latest',
+    description: 'Popular Latest Hindi music from Bollywood and beyond made after year 2005',
+    language: 'hindi',
+    genre: [
+      'Bollywood',
+      'Pop',
+      'Romantic',
+      'Dance',
+      'Indie Hindi',
+      'Sufi',
+      'Hip Hop (Hindi)',
+      'Classical (Hindi)'
+    ],
+    startYear: 2006,
+    endYear: null
+  },
+  {
+    name: 'Hindi Retro',
+    description: 'Popular Retro Hindi music from Bollywood and beyond',
+    language: 'hindi',
+    genre: [
+      'Bollywood',
+      'Pop',
+      'Romantic',
+      'Dance',
+      'Indie Hindi',
+      'Sufi',
+      'Hip Hop (Hindi)',
+      'Classical (Hindi)'
+    ],
+    startYear: null,
+    endYear: 2005
   },
   {
     name: 'English Pop',
@@ -28,7 +64,9 @@ module.exports = [
       'Soul',
       'Electronic',
       'Acoustic'
-    ]
+    ],
+    startYear: null,
+    endYear: null
   },
   {
     name: 'EDM',
@@ -44,7 +82,9 @@ module.exports = [
       'Progressive House',
       'Electro',
       'Drum & Bass'
-    ]
+    ],
+    startYear: null,
+    endYear: null
   },
   {
     name: 'Lofi',
@@ -58,7 +98,9 @@ module.exports = [
       'Instrumental',
       'Study Beats',
       'Downtempo'
-    ]
+    ],
+    startYear: null,
+    endYear: null
   },
   {
     name: 'Tamizh Tunes',
@@ -72,10 +114,12 @@ module.exports = [
       'Devotional (Tamil)',
       'Dance (Tamil)',
       'Classical (Tamil)'
-    ]
+    ],
+    startYear: null,
+    endYear: null
   },
   {
-    name: 'Bangali Baaje',
+    name: 'Bangla Baaje',
     description: 'All time Bengali great hit film songs and music and albums',
     language: 'Bengali',
     genre: [
@@ -86,7 +130,8 @@ module.exports = [
       'Modern Bengali',
       'Bangla Rock',
       'Bengali Film Music'
-    ]
+    ],
+    startYear: null,
+    endYear: null
   }
-  // Add more channels here as needed
 ];

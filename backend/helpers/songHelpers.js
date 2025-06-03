@@ -1,17 +1,56 @@
 const { Song } = require('../models/Song');
 const logger = require('../utils/loggerUtils');
 
-const getSongsWithExclusionsFromDb = async (genreFilter, languageFilter, excludeIds) => {
+const getSongsWithExclusionsFromDb = async (genreFilter, languageFilter, excludeIds, startYear, endYear) => {
   try {
-    const song = await Song.find({
+    // Convert string year filters to numbers, or null if invalid/missing
+    const startYearNum = startYear ? Number(startYear) : null;
+    const endYearNum = endYear ? Number(endYear) : null;
+    
+    // Match stage filters by genre, language, and excludes given video IDs
+    const matchStage = {
       $and: [
         { genre:    { $in: genreFilter } },    // genre must match one of these
         { language: { $in: languageFilter } }, // language must match one of these
         { videoId:  { $nin: excludeIds } }     // exclude these IDs
       ]
-    });
-    logger.debug(`[getSongsWithExclusionsFromDb] Found ${song.length} songs with exclusions`);
-    return song;
+    };
+    
+    // Build aggregation pipeline
+    const pipeline = [
+      { $match: matchStage },
+      
+      // Convert 'year' string to integer as 'yearNum' for numeric filtering
+      {
+        $addFields: {
+          yearNum: { $toInt: "$year" }
+        }
+      }
+    ];
+    
+    // Build numeric year filter object
+    const yearFilter = {};
+    if (startYearNum !== null && !isNaN(startYearNum)) {
+      yearFilter.$gte = startYearNum;
+    }
+    if (endYearNum !== null && !isNaN(endYearNum)) {
+      yearFilter.$lte = endYearNum;
+    }
+    
+    // If a year filter is defined, apply it to 'yearNum' field
+    if (Object.keys(yearFilter).length > 0) {
+      pipeline.push({
+        $match: {
+          yearNum: yearFilter
+        }
+      });
+    }
+    
+    // Execute aggregation pipeline
+    const songs = await Song.aggregate(pipeline).exec();
+    
+    logger.debug(`[getSongsWithExclusionsFromDb] Found ${songs.length} songs with exclusions and year filter`);
+    return songs;
   } catch (error) {
     logger.error('[getSongsWithExclusionsFromDb] Error fetching songs:', error);
     return [];

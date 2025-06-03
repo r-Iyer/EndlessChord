@@ -34,7 +34,7 @@ router.get('/:channelId', optionalAuth, addFavoriteStatus, async (req, res) => {
     const allExcludeIds = [...new Set([...(userRecentIds || []), ...excludeIds])];
 
     // Get songs with exclusions
-    let songs = await getSongsWithExclusions(channel.genre, channel.language, allExcludeIds, source, entity);
+    let songs = await getSongsWithExclusions(channel, allExcludeIds, source, entity);
 
     logger.info(`[ROUTE] GET /api/songs/${req.params.channelId} — Found ${songs.length} matching songs in database`);
 

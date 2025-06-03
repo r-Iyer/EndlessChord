@@ -15,17 +15,22 @@ const parseExcludeIds = (excludeIdsParam) => {
 };
 
 // Get songs with exclusions and shuffled
-const getSongsWithExclusions = async (genres, languages, excludeIds, source, entity) => {
+const getSongsWithExclusions = async (channel, excludeIds, source, entity) => {
+  const genres = channel.genre;
+  const languages = channel.language;
+  const startYear = channel.startYear;
+  const endYear = channel.endYear;
+  
   const genreFilter = Array.isArray(genres) ? genres : [genres];
   const languageFilter = Array.isArray(languages) ? languages : [languages];
-
+  
   // Rule I
   // Rule II.1.a, Rule II.2.a, Rule III.1.a, Rule III.2.a
-  let songs = await getSongsWithExclusionsFromDb(genreFilter, languageFilter, excludeIds);
-
+  let songs = await getSongsWithExclusionsFromDb(genreFilter, languageFilter, excludeIds, startYear, endYear);
+  
   songs = songs.map(song => (song.toObject ? song.toObject() : { ...song }));
   songs = shuffle(songs);
-
+  
   // Rule II.1.b
   if (entity === SONG_PATH && source === INITIAL_LOAD) {
     songs = songs.slice(0, INITIAL_SONG_COUNT);
@@ -36,19 +41,19 @@ const getSongsWithExclusions = async (genres, languages, excludeIds, source, ent
 const selectSongsFromHistory = async (songs, userId, excludeIds) => {
   // 1. Get user history
   const rawHistory = await getUserHistoryInDb(userId);
-
+  
   // 2. Extract and filter song IDs from history
   const excludeSet = new Set(excludeIds.map(id => id.toString()));
   const historySongIds = new Set(
     rawHistory
-      .map(h => h.songId.toString())
-      .filter(id => !excludeSet.has(id))
+    .map(h => h.songId.toString())
+    .filter(id => !excludeSet.has(id))
   );
-
+  
   // 3. Split songs into new and old
   const newSongs = [];
   const oldSongs = [];
-
+  
   for (const song of songs) {
     const id = song._id.toString();
     if (historySongIds.has(id)) {
@@ -57,14 +62,14 @@ const selectSongsFromHistory = async (songs, userId, excludeIds) => {
       newSongs.push(song);
     }
   }
-
+  
   // 4. Calculate targets
   const newTarget = Math.floor(DEFAULT_SONG_COUNT * NEW_SONG_RATIO);
   const oldTarget = DEFAULT_SONG_COUNT - newTarget;
-
+  
   let selectedNewSongs = newSongs;
   let selectedOldSongs = [];
-
+  
   if (newSongs.length >= newTarget) {
     selectedNewSongs = shuffle(newSongs).slice(0, newTarget);
     selectedOldSongs = shuffle(oldSongs).slice(0, oldTarget);
@@ -74,9 +79,9 @@ const selectSongsFromHistory = async (songs, userId, excludeIds) => {
     const oldFillCount = Math.min(remaining, maxOldAllowed);
     selectedOldSongs = shuffle(oldSongs).slice(0, oldFillCount);
   }
-
+  
   const combined = [...selectedNewSongs, ...selectedOldSongs];
-
+  
   return {
     songs: combined,
     remainingToFill: DEFAULT_SONG_COUNT - combined.length,
@@ -95,14 +100,14 @@ const shuffle = (arr) => {
 };
 
 /**
- * Upsert (Update / Insert) a single suggestion into the Song collection,
- * merging in genres & languages.
- */
+* Upsert (Update / Insert) a single suggestion into the Song collection,
+* merging in genres & languages.
+*/
 const upsertSuggestionSong = async (suggestion, baseGenres, baseLangs) => {
   // Appending new Genre and Language
   const suggestionGenres = extractSuggestionGenres(suggestion.genre);
   const suggestionLangs = extractSuggestionLangs(suggestion.language);
-
+  
   let song = await getSongByVideoIdFromDb(suggestion.videoId);
   if (!song) {
     song = new Song({
@@ -115,32 +120,32 @@ const upsertSuggestionSong = async (suggestion, baseGenres, baseLangs) => {
     await updateSongInDb(suggestion.videoId, suggestionGenres, suggestionLangs);
     song = await getSongByVideoIdFromDb(suggestion.videoId);
   }
-
+  
   return song;
 };
 
 /**
- * From AI’s raw genre(s), return [composite, ...splits].
- */
+* From AI’s raw genre(s), return [composite, ...splits].
+*/
 const extractSuggestionGenres = (rawGenreField) => {
   if (!rawGenreField) return [];
   const rawGenres = Array.isArray(rawGenreField) ? rawGenreField : [rawGenreField];
-
+  
   const splitGenres = rawGenres
-    .flatMap((g) =>
-      g
-        .split(/[\s,&\/-]+/)
-        .map((s) => s.trim())
-    )
-    .filter(Boolean);
+  .flatMap((g) =>
+    g
+  .split(/[\s,&\/-]+/)
+  .map((s) => s.trim())
+)
+.filter(Boolean);
 
-  // composite + splits
-  return [...rawGenres, ...splitGenres];
+// composite + splits
+return [...rawGenres, ...splitGenres];
 };
 
 /**
- * Normalize AI’s language field into an array.
- */
+* Normalize AI’s language field into an array.
+*/
 const extractSuggestionLangs = (rawLangField) => {
   if (!rawLangField) return [];
   return Array.isArray(rawLangField) ? rawLangField : [rawLangField];

@@ -20,6 +20,9 @@ public class MainActivity extends BridgeActivity {
     private void setupWebView() {
         WebView webView = getBridge().getWebView();
         
+        // ── Force hardware‐accelerated layer on the WebView ──
+        webView.setLayerType(View.LAYER_TYPE_HARDWARE, null);
+        
         // ✅ Enable autoplay for media like YouTube
         webView.getSettings().setMediaPlaybackRequiresUserGesture(false);
         
