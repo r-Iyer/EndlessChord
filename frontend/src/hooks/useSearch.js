@@ -1,4 +1,5 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
+import { cancelFetchSongs } from '../services/songService';
 import { searchService } from '../services/searchService';
 
 /**
@@ -37,21 +38,23 @@ export default function useSearch(
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearchMode, setIsSearchMode] = useState(false);
 
+  // Ref to track the latest search call so we can ignore stale results
+  const callIdRef = useRef(0);
+
   /**
-   * Updates the URL to include `?search=<query>`. Removes `channel` param if present.
-   * If `query` is an empty string, removes `search` from the URL entirely.
+   * Updates (or removes) the `?search=` parameter in the URL.
+   * If `query` is falsy, removes “search” and leaves any other params intact.
    */
   const setSearchInURL = useCallback((query) => {
     const params = new URLSearchParams(window.location.search);
 
     if (query) {
       params.set('search', query);
-      params.delete('channel');
+      params.delete('channel'); // ensure we clear any channel param
     } else {
       params.delete('search');
     }
 
-    // Build the new path (without a leading “?” if there are no params)
     const queryString = params.toString();
     const newUrl = queryString
       ? `${window.location.pathname}?${queryString}`
@@ -61,7 +64,7 @@ export default function useSearch(
   }, []);
 
   /**
-   * Reads the current `search` parameter from the URL (or returns null if absent).
+   * Reads the current `?search=` value from the URL (if any).
    */
   const getSearchFromURL = useCallback(() => {
     return new URLSearchParams(window.location.search).get('search');
@@ -69,16 +72,14 @@ export default function useSearch(
 
   /**
    * Initiates a new search:
-   * 1. Ignores empty or whitespace-only queries.
-   * 2. Marks user interaction and clears any previous backend errors.
-   * 3. Stops playback, clears current channel, and sets loading state.
-   * 4. Updates local `searchQuery` and enters search mode.
-   * 5. Clears existing playback (currentSong, nextSong, queue).
-   * 6. Calls `searchService` with the query.
-   *    - If results are returned, updates `currentSong`, `nextSong`, and `queue`.
-   *    - If no results, leaves playback cleared (no song will play).
-   * 7. On error, flags backend error for UI to handle.
-   * 8. Finally, clears the loading state.
+   *  1. Trims the query. If empty, do nothing.
+   *  2. Cancel any in-flight song requests (aka cancelFetchSongs).
+   *  3. Bump callIdRef so that any old search results become “stale.”
+   *  4. Enter “search mode,” update URL, clear channel & playback state, set loading = true.
+   *  5. Await searchService(...). If this call is still the latest, populate currentSong/nextSong/queue.
+   *  6. In case of AbortError/CanceledError, bail quietly (no error flag, no loading toggle).
+   *  7. In case of a genuine error, set backendError = true.
+   *  8. Finally, if this call is still the latest _and_ we remain in search mode, set loading = false.
    */
   const handleSearch = useCallback(
     async (query) => {
@@ -87,26 +88,31 @@ export default function useSearch(
         return;
       }
 
+      // Cancel any in-flight song fetch first
+      cancelFetchSongs();
+
+      // Bump callId so that any previous/ongoing search becomes stale
+      callIdRef.current += 1;
+      const thisCallId = callIdRef.current;
+
+      // Enter “search mode” and update URL
+      setUserInteracted(true);
+      setBackendError(false);
+      setIsPlaying(false);
+      setIsLoading(true);
+
+      setCurrentChannel(null);
+      setSearchQuery(trimmed);
+      setIsSearchMode(true);
+      setSearchInURL(trimmed);
+
+      // Clear any existing playback state
+      setCurrentSong(null);
+      setNextSong(null);
+      setQueue([]);
+
       try {
-        setUserInteracted(true);
-        setBackendError(false);
-        setIsPlaying(false);
-        setIsLoading(true);
-
-        // Clear any channel context when doing a search
-        setCurrentChannel(null);
-
-        // Enter search mode and sync URL
-        setSearchQuery(trimmed);
-        setIsSearchMode(true);
-        setSearchInURL(trimmed);
-
-        // Clear existing playback
-        setCurrentSong(null);
-        setNextSong(null);
-        setQueue([]);
-
-        // Perform the actual search
+        // Fire off the actual search
         const songs = await searchService({
           query: trimmed,
           options: {
@@ -115,17 +121,31 @@ export default function useSearch(
           },
         });
 
-        // If searchService returns an array of songs, update playback state
+        // If, in the meantime, another search has started, bail
+        if (thisCallId !== callIdRef.current) {
+          return;
+        }
+
+        // Populate playback state from search results
         if (Array.isArray(songs) && songs.length > 0) {
           setCurrentSong(songs[0]);
           setNextSong(songs[1] || null);
           setQueue(songs.slice(2));
         }
       } catch (error) {
+        // If the search was canceled by cancelFetchSongs, just bail quietly
+        if (error.name === 'CanceledError' || error.name === 'AbortError') {
+          return;
+        }
+
+        // Otherwise, it’s a genuine failure
         console.error('Search failed:', error);
         setBackendError(true);
       } finally {
-        setIsLoading(false);
+        // Only clear loading if this call is still the latest AND we remain in search mode
+        if (thisCallId === callIdRef.current && isSearchMode) {
+          setIsLoading(false);
+        }
       }
     },
     [
@@ -138,16 +158,15 @@ export default function useSearch(
       setIsLoading,
       setCurrentChannel,
       setSearchInURL,
+      isSearchMode,
     ]
   );
 
   /**
-   * Clears search mode:
-   * 1. Resets the local query state.
-   * 2. Exits search mode.
-   * 3. Removes `search` from the URL.
-   * Note: This does not automatically restore a “default” channel; the
-   *       consumer should handle re-selecting a channel if needed.
+   * Clears the search state entirely:
+   *  • Empties the searchQuery
+   *  • Exits search mode
+   *  • Removes `?search=` from the URL
    */
   const clearSearch = useCallback(() => {
     setSearchQuery('');

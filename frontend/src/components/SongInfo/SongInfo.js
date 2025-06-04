@@ -7,7 +7,7 @@ export default function SongInfo({ song, nextSong, laterSong, visible, onNext, o
   useEffect(() => {
     setShowNext(false);
     if (visible && (nextSong || laterSong)) {
-      const timer = setTimeout(() => setShowNext(true), 2000);
+      const timer = setTimeout(() => setShowNext(true), 200);
       return () => clearTimeout(timer);
     }
   }, [visible, nextSong, laterSong]);

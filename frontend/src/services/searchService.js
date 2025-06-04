@@ -1,5 +1,7 @@
 import { api } from './apiService';
 
+let searchAbortController = null;
+
 /**
  * Search service to query songs or content with optional exclusions and source metadata.
  *
@@ -12,26 +14,35 @@ import { api } from './apiService';
  * @throws Throws error if the request fails.
  */
 export const searchService = async ({ query, options = {} }) => {
-  try {
-    const { excludeIds = [], source = null } = options;
-    const params = new URLSearchParams();
+  const { excludeIds = [], source = null } = options;
 
-    params.append('q', query);
+  // Abort previous search if still in flight
+  if (searchAbortController) {
+    searchAbortController.abort();
+  }
+  searchAbortController = new AbortController();
 
-    if (excludeIds.length > 0) {
-      // Send excludeIds as JSON string to backend for filtering
-      params.append('excludeIds', JSON.stringify(excludeIds));
-    }
+  const params = new URLSearchParams();
+  params.append('q', query);
+  if (excludeIds.length > 0) {
+    params.append('excludeIds', JSON.stringify(excludeIds));
+  }
+  if (source) {
+    params.append('source', source);
+  }
 
-    if (source) {
-      params.append('source', source);
-    }
+  // Let AbortError bubble up to caller
+  const response = await api.get(`/api/search?${params.toString()}`, {
+    signal: searchAbortController.signal,
+  });
+  return response.data;
+};
 
-    const response = await api.get(`/api/search?${params.toString()}`);
-
-    return response.data;
-  } catch (error) {
-    console.error('Search service error:', error);
-    throw error;
+/**
+ * Cancels any in-flight searchService call.
+ */
+export const cancelSearch = () => {
+  if (searchAbortController) {
+    searchAbortController.abort();
   }
 };

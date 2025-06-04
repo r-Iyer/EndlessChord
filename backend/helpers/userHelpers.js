@@ -4,31 +4,31 @@ const { RECENTLY_PLAYED_THRESHOLD } = require('../config/constants');
 const logger = require('../utils/loggerUtils');
 
 /**
- * Get video IDs of songs a user has recently played
- * @param {Object} req - Express request object with authenticated user
- * @returns {Promise<Array<string>>}
- */
+* Get video IDs of songs a user has recently played
+* @param {Object} req - Express request object with authenticated user
+* @returns {Promise<Array<string>>}
+*/
 const getUserRecentSongsInDb = async (req) => {
   try {
     let recentVideoIds = [];
-
+    
     if (req.user && req.user.id) {
       // Populate history with song's videoId
       const user = await User.findById(req.user.id)
-        .populate({
-          path: 'history.songId',
-          select: 'videoId'
-        })
-        .lean();
-
+      .populate({
+        path: 'history.songId',
+        select: 'videoId'
+      })
+      .lean();
+      
       if (user?.history?.length) {
         recentVideoIds = user.history
-          .filter(entry => new Date(entry.playedAt) > RECENTLY_PLAYED_THRESHOLD)
-          .map(entry => entry.songId?.videoId)
-          .filter(Boolean); // remove nulls if any
+        .filter(entry => new Date(entry.playedAt) > RECENTLY_PLAYED_THRESHOLD)
+        .map(entry => entry.songId?.videoId)
+        .filter(Boolean); // remove nulls if any
       }
     }
-
+    
     logger.info(`[getUserRecentSongsInDb] Recent video IDs: ${recentVideoIds.length}`);
     return recentVideoIds;
   } catch (error) {
@@ -38,10 +38,10 @@ const getUserRecentSongsInDb = async (req) => {
 };
 
 /**
- * Get the user's history array from the database
- * @param {string} userId
- * @returns {Promise<Array|undefined>}
- */
+* Get the user's history array from the database
+* @param {string} userId
+* @returns {Promise<Array|undefined>}
+*/
 const getUserHistoryInDb = async (userId) => {
   try {
     const user = await User.findById(userId).select('history').exec();
@@ -53,8 +53,8 @@ const getUserHistoryInDb = async (userId) => {
 };
 
 /**
- * Clear favorites and history for all users
- */
+* Clear favorites and history for all users
+*/
 const deleteFavoritesAndHistoryForAllUsersInDb = async () => {
   try {
     const userResult = await User.updateMany(
@@ -73,10 +73,10 @@ const deleteFavoritesAndHistoryForAllUsersInDb = async () => {
 };
 
 /**
- * Fetch full user document by ID
- * @param {string} userId
- * @returns {Promise<Object|null>}
- */
+* Fetch full user document by ID
+* @param {string} userId
+* @returns {Promise<Object|null>}
+*/
 const getUserByIdFromDb = async (userId) => {
   try {
     const user = await User.findById(userId);
@@ -89,9 +89,9 @@ const getUserByIdFromDb = async (userId) => {
 };
 
 /**
- * Save user document to the database
- * @param {Object} user - user document
- */
+* Save user document to the database
+* @param {Object} user - user document
+*/
 const saveUserToDb = async (user) => {
   try {
     await user.save();
@@ -102,32 +102,32 @@ const saveUserToDb = async (user) => {
 };
 
 /**
- * Get favorite song IDs for a user from the database.
- * @param {string} userId - The user's ID
- * @returns {Promise<Array<string>>} Array of song ID strings
- */
+* Get favorite song IDs for a user from the database.
+* @param {string} userId - The user's ID
+* @returns {Promise<Array<string>>} Array of song ID strings
+*/
 const getFavoriteSongIdsFromDb = async (userId) => {
   if (!userId) {
     logger.warn('[getFavoriteSongIdsFromDb] No userId provided');
     return [];
   }
-
+  
   try {
     const user = await User.findById(userId)
-      .select('favorites')
-      .lean(); // returns plain JS object
-
+    .select('favorites')
+    .lean(); // returns plain JS object
+    
     if (!user?.favorites?.length) {
       logger.debug(`[getFavoriteSongIdsFromDb] No favorites found for user ${userId}`);
       return [];
     }
-
+    
     const favoriteSongIds = user.favorites.map(f => f.songId.toString());
     logger.debug(
       `[getFavoriteSongIdsFromDb] User ${userId} favorite song IDs: ${favoriteSongIds.length}`
     );
     return favoriteSongIds;
-
+    
   } catch (err) {
     logger.error(`[getFavoriteSongIdsFromDb] Error fetching favorites for user ${userId}:`, err);
     return [];
@@ -135,40 +135,41 @@ const getFavoriteSongIdsFromDb = async (userId) => {
 };
 
 async function getUserFavorites(userId) {
-
+  
   const user = await User.findById(userId)
-    .populate({
-      path: 'favorites.songId',
-      select: 'videoId title artist composer album year genre language playCount lastPlayed'
-    });
-
+  .populate({
+    path: 'favorites.songId',
+    select: 'videoId title artist composer album year genre language playCount lastPlayed'
+  });
+  
   if (!user) {
     return null;
   }
-
+  
   // Sort favorites array by addedAt descending
   const sortedFavorites = user.favorites
-    .slice() // shallow copy to avoid mutating original
-    .sort((a, b) => b.addedAt - a.addedAt);
-
+  .slice()
+  .sort((a, b) => b.addedAt - a.addedAt)
+  .filter(fav => fav.songId && typeof fav.songId.toObject === 'function');
+  
   return sortedFavorites.map(fav => ({
     ...fav.songId.toObject(),
-    addedAt: fav.addedAt
+    addedAt: fav.addedAt,
   }));
 }
 
 /**
- * Add a song to the user's favorites.
- * @param {string} userId
- * @param {string} songId
- * @returns {Promise<Object|null>} Updated user document with populated favorites
- */
+* Add a song to the user's favorites.
+* @param {string} userId
+* @param {string} songId
+* @returns {Promise<Object|null>} Updated user document with populated favorites
+*/
 const addSongToFavorites = async (userId, songId) => {
   try {
     if (!mongoose.Types.ObjectId.isValid(songId)) {
       throw new Error('Invalid song ID');
     }
-
+    
     const user = await User.findByIdAndUpdate(
       userId,
       {
@@ -181,11 +182,11 @@ const addSongToFavorites = async (userId, songId) => {
       },
       { new: true, select: 'favorites' }
     ).populate('favorites.songId');
-
+    
     if (!user) {
       throw new Error('User not found');
     }
-
+    
     return user;
   } catch (error) {
     logger.error('[addSongToFavorites] Error:', error);
@@ -194,17 +195,17 @@ const addSongToFavorites = async (userId, songId) => {
 };
 
 /**
- * Remove a song from the user's favorites.
- * @param {string} userId
- * @param {string} songId
- * @returns {Promise<Object|null>} Updated user document with populated favorites
- */
+* Remove a song from the user's favorites.
+* @param {string} userId
+* @param {string} songId
+* @returns {Promise<Object|null>} Updated user document with populated favorites
+*/
 const removeSongFromFavorites = async (userId, songId) => {
   try {
     if (!mongoose.Types.ObjectId.isValid(songId)) {
       throw new Error('Invalid song ID');
     }
-
+    
     const user = await User.findByIdAndUpdate(
       userId,
       {
@@ -216,11 +217,11 @@ const removeSongFromFavorites = async (userId, songId) => {
       },
       { new: true, select: 'favorites' }
     ).populate('favorites.songId');
-
+    
     if (!user) {
       throw new Error('User not found');
     }
-
+    
     return user;
   } catch (error) {
     logger.error('[removeSongFromFavorites] Error:', error);

@@ -1,12 +1,12 @@
 import { api } from '../services/apiService';
 
 /**
- * Add a song to the user's favorites.
- *
- * @param {string} songId - The ID of the song to add to favorites.
- * @returns {Promise<Object>} The response data from the API.
- * @throws Throws error if the API request fails.
- */
+* Add a song to the user's favorites.
+*
+* @param {string} songId - The ID of the song to add to favorites.
+* @returns {Promise<Object>} The response data from the API.
+* @throws Throws error if the API request fails.
+*/
 export const addFavorite = async (songId) => {
   try {
     const response = await api.post('/api/favorites', { songId });
@@ -18,12 +18,12 @@ export const addFavorite = async (songId) => {
 };
 
 /**
- * Remove a song from the user's favorites.
- *
- * @param {string} songId - The ID of the song to remove from favorites.
- * @returns {Promise<Object>} The response data from the API.
- * @throws Throws error if the API request fails.
- */
+* Remove a song from the user's favorites.
+*
+* @param {string} songId - The ID of the song to remove from favorites.
+* @returns {Promise<Object>} The response data from the API.
+* @throws Throws error if the API request fails.
+*/
 export const removeFavorite = async (songId) => {
   try {
     const response = await api.delete(`/api/favorites/${songId}`);
@@ -35,16 +35,20 @@ export const removeFavorite = async (songId) => {
 };
 
 /**
- * Get the list of all favorite songs for the current user.
- *
- * @returns {Promise<Array>} An array of favorite song objects.
- * @throws Throws error if the API request fails.
- */
-export const getFavorites = async () => {
+* Get the list of all favorite songs for the current user.
+*
+* @returns {Promise<Array>} An array of favorite song objects.
+* @throws Throws error if the API request fails.
+*/
+export const getFavorites = async (signal) => {
   try {
-    const response = await api.get('/api/favorites');
+    const response = await api.get('/api/favorites', { signal });
     return response.data;
   } catch (error) {
+    if (error.name === 'CanceledError' || error.name === 'AbortError') {
+      console.log('getFavorites call canceled');
+      return;
+    }
     console.error('Error fetching favorites:', error);
     throw error;
   }

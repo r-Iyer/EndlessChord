@@ -21,6 +21,7 @@ export default function Header({
   selectChannel,
 }) {
   const handleChannelSelect = (channelIdOrName) => {
+    clearSearch();
     setUserInteracted(true);
     setBackendError(false);
     

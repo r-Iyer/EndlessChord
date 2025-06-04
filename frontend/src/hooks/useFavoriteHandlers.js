@@ -1,10 +1,12 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
+import { cancelFetchSongs } from '../services/songService';
+import { cancelSearch } from '../services/searchService';
 
 /**
- * Custom hook to handle "Play Favorites" logic.
+ * Custom hook for managing “Play Favorites” logic.
  *
  * @param {Function} getFavorites
- *   Async function that returns an array of favorite songs.
+ *   Async function that returns an array of favorite songs (accepts an optional AbortSignal).
  *
  * @param {Object} setters
  * @param {Function} setters.setCurrentChannel
@@ -23,55 +25,80 @@ import { useState, useCallback } from 'react';
  *   - isLoading: Boolean indicating whether favorites are loading.
  *   - error: Any error thrown during `getFavorites`.
  */
-export const useFavoritesHandlers = (getFavorites, {
-  setCurrentChannel,
-  setCurrentSong,
-  setNextSong,
-  setQueue,
-  setUserInteracted
-}) => {
-  const [isLoading, setIsLoading] = useState(false);
+export const useFavoritesHandlers = (
+  getFavorites,
+  {
+    setCurrentChannel,
+    setCurrentSong,
+    setNextSong,
+    setQueue,
+    setUserInteracted,
+    setIsLoading,
+  }
+) => {
   const [error, setError] = useState(null);
 
-  /**
+  // If getFavorites itself supports cancellation, store its controller here
+  const favoritesAbortRef = useRef(null);
+
+    /**
    * Fetches favorite songs, then updates channel and queue state.
    * If there are no favorite songs, does nothing (but clears loading).
    * On error, sets the local error state and logs to console.
    */
   const playFavorites = useCallback(async () => {
+    // Cancel any in‐flight search call:
+    cancelSearch();
+
+    // Cancel any in‐flight song fetch:
+    cancelFetchSongs();
+
+    // If there's an in‐flight getFavorites, abort it
+    if (favoritesAbortRef.current) {
+      favoritesAbortRef.current.abort();
+    }
+    const controller = new AbortController();
+    favoritesAbortRef.current = controller;
+
     setIsLoading(true);
     setError(null);
 
     try {
-      const favSongs = await getFavorites();
+      //  Fetch favorite songs (pass signal if supported)
+      const favSongs = await getFavorites(controller.signal);
 
+      // If this fetch was aborted, bail silently
+      if (controller.signal.aborted) return;
+
+      // If we have favorites, set up the “Favorites” channel & queue
       if (Array.isArray(favSongs) && favSongs.length > 0) {
-        // Use a virtual "Favorites" channel to distinguish from real channels
         setCurrentChannel({ name: 'Favorites', isVirtual: true });
         setCurrentSong(favSongs[0]);
         setNextSong(favSongs[1] || null);
         setQueue(favSongs.slice(2));
         setUserInteracted(true);
+        setIsLoading(false);
       }
-      // If favSongs is empty or not an array, do nothing further
+      // If no favorites, we simply leave playback cleared
     } catch (err) {
-      setError(err);
+      // If getFavorites threw because of abort, do nothing
+      if (err.name === 'AbortError') {
+        return;
+      }
+      // Otherwise it’s a real error
       console.error('Error playing favorites:', err);
+      setError(err);
     } finally {
-      setIsLoading(false);
+      // Only clear loading if this call wasn’t aborted
+      if (!controller.signal.aborted) {
+        setIsLoading(false);
+      }
+      favoritesAbortRef.current = null;
     }
-  }, [
-    getFavorites,
-    setCurrentChannel,
-    setCurrentSong,
-    setNextSong,
-    setQueue,
-    setUserInteracted
-  ]);
+  }, [getFavorites, setCurrentChannel, setCurrentSong, setIsLoading, setNextSong, setQueue, setUserInteracted]);
 
   return {
     playFavorites,
-    isLoading,
     error
   };
 };

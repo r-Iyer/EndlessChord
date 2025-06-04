@@ -31,6 +31,7 @@ export default function MainPlayerSection({
   onFullscreenToggle,
   onPrevious,
   onCCToggle,
+  isFetchingSongs,
 }) {
   if (showLoader) {
     return (
@@ -58,7 +59,11 @@ export default function MainPlayerSection({
         onSeek={onSeek}
         isFullscreen={isFullscreen}
         showUI={showUI}
-        currentChannel={isSearchMode ? { name: `Search: ${searchQuery}` } : currentChannel}
+        currentChannel={
+          isSearchMode
+            ? { name: `Search: ${searchQuery}` }
+            : currentChannel
+        }
         onPlayPause={onPlayPause}
         onNext={onNext}
         onLater={onLater}
@@ -73,7 +78,9 @@ export default function MainPlayerSection({
   if (backendError && userInteracted) {
     return (
       <div className="centered-fullscreen">
-        <p className="error-message">An unexpected error occurred. Kindly reload the application</p>
+        <p className="error-message">
+          An unexpected error occurred. Kindly reload the application
+        </p>
       </div>
     );
   }
@@ -82,17 +89,23 @@ export default function MainPlayerSection({
     if (!userInteracted) {
       return (
         <div className="centered-fullscreen">
-          <p className="text-message">Please select a channel or search for songs.</p>
+          <p className="text-message">
+            Please select a channel or search for songs.
+          </p>
         </div>
       );
     }
 
-    // userInteracted && no currentSong && no backendError
+    if (isFetchingSongs) {
+      return null;
+    }
     return (
       <div className="centered-fullscreen">
         {isSearchMode ? (
           <>
-            <p className="text-message">No songs found for “{searchQuery}”.</p>
+            <p className="text-message">
+              No songs found for “{searchQuery}”.
+            </p>
             <button onClick={clearSearch} className="clear-search-button">
               Clear Search
             </button>

@@ -159,6 +159,7 @@ function App() {
     setNextSong,
     setQueue,
     setIsLoading,
+    setIsFetchingSongs,
     setCurrentChannel,
     fetchChannelById,
     fetchSongsForChannel,
@@ -182,19 +183,17 @@ function App() {
   const { toggleFullscreen } = useFullscreen(isFullscreen, setIsFullscreen, fullscreenRef);
 
   // Favorites handler
-  const { playFavorites, isLoading: favLoading } = useFavoritesHandlers(
+  const { playFavorites} = useFavoritesHandlers(
     getFavorites,
     {
       setCurrentChannel,
       setCurrentSong,
       setNextSong,
       setQueue,
-      setUserInteracted
+      setUserInteracted,
+      setIsLoading
     }
   );
-
-  // Combine loading flags
-  const combinedLoading = isLoading || favLoading;
 
   // Early return: spinner until auth check completes
   if (!isAuthChecked) {
@@ -236,7 +235,7 @@ function App() {
 
       <main className="main-container">
         {/* Global loader overlay */}
-        {combinedLoading && (
+        {isLoading && (
           <div className="loader-overlay">
             <Spinner />
           </div>
@@ -244,7 +243,7 @@ function App() {
 
         {/* MainPlayerSection */}
         <MainPlayerSection
-          showLoader={combinedLoading}
+          showLoader={isLoading}
           currentSong={currentSong}
           nextSong={nextSong}
           queue={queue}
@@ -273,6 +272,7 @@ function App() {
           onFullscreenToggle={toggleFullscreen}
           onPrevious={handlePreviousSong}
           onCCToggle={() => setIsCCEnabled(prev => !prev)}
+          isFetchingSongs = {isFetchingSongs}
         />
       </main>
     </div>

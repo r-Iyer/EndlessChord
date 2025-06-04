@@ -1,6 +1,9 @@
 import { useEffect, useCallback, useRef } from 'react';
-import { fetchSongsService } from '../services/songService';
-import { searchService } from '../services/searchService';
+import {
+  fetchSongsService,
+  cancelFetchSongs,
+} from '../services/songService';
+import { searchService, cancelSearch } from '../services/searchService';
 
 /**
  * Hook to manage the song queue, including fetching new songs from either
@@ -59,19 +62,18 @@ export default function useSongQueue(
   history,
   searchQuery
 ) {
-  // We use refs to always access up-to-date values inside async callbacks
+  // Refs to always grab latest values inside async callbacks
   const nextSongRef = useRef(nextSong);
   const queueRef = useRef(queue);
   const searchQueryRef = useRef(searchQuery);
 
-  // Keep refs in sync whenever these state values change
   useEffect(() => {
     nextSongRef.current = nextSong;
     queueRef.current = queue;
     searchQueryRef.current = searchQuery;
   }, [nextSong, queue, searchQuery]);
 
-  /**
+    /**
    * Core function to fetch songs. Depending on whether searchQueryRef.current
    * is nonempty, it calls the searchService or fetchSongsService. It excludes
    * any video IDs already in currentSong, nextSongRef, queueRef, or history.
@@ -93,12 +95,7 @@ export default function useSongQueue(
         initial = false,
       } = options;
 
-      // Prevent multiple concurrent fetches
-      if (isFetchingSongs) {
-        return [];
-      }
-
-      // If neither channelId nor searchQuery is available, nothing to fetch
+      // If no channel and no search, nothing to fetch
       if (!channelId && !searchQueryRef.current) {
         return [];
       }
@@ -106,47 +103,62 @@ export default function useSongQueue(
       setIsFetchingSongs(true);
 
       try {
-        // Build exclusion list of videoIds from currentSong, nextSong, queue, and history
+        // Build excludeIds from currentSong, nextSong, queue, history
         const excludeIds = [
           currentSong?.videoId,
           nextSongRef.current?.videoId,
           ...(queueRef.current || []).map((song) => song?.videoId),
           ...(history || []).map((song) => song?.videoId),
-        ]
-          .filter(Boolean);
+        ].filter(Boolean);
 
-        // Fetch data via searchService if a search query exists; otherwise via channel
         let data = [];
+
         if (searchQueryRef.current) {
-          data = await searchService({
-            query: searchQueryRef.current,
-            options: { excludeIds, source: 'refresh' },
-          });
+          // Cancel any in-flight channel fetch before performing a new search
+          cancelFetchSongs();
+
+          try {
+            data = await searchService({
+              query: searchQueryRef.current,
+              options: { excludeIds, source: initial ? 'initial' : 'refresh' },
+            });
+          } catch (error) {
+            // If search was canceled, return early (no change)
+            if (error.name === 'CanceledError' || error.name === 'AbortError') {
+              return [];
+            }
+            throw error;
+          }
         } else {
-          data = await fetchSongsService({
-            channelId,
-            excludeIds,
-            initial,
-          });
+          // Cancel any in-flight search fetch before fetching channel songs
+          cancelSearch();
+
+          try {
+            data = await fetchSongsService({
+              channelId,
+              excludeIds,
+              initial,
+            });
+          } catch (error) {
+            // If channel fetch was canceled, return early
+            if (error.name === 'CanceledError' || error.name === 'AbortError') {
+              return [];
+            }
+            throw error;
+          }
         }
 
         // Filter out any invalid or already-excluded entries
         const validData = Array.isArray(data)
-          ? data.filter(
-              (song) =>
-                song?.videoId &&
-                !excludeIds.includes(song.videoId)
-            )
+          ? data.filter((song) => song?.videoId && !excludeIds.includes(song.videoId))
           : [];
 
         if (validData.length > 0) {
           if (setAsCurrent) {
-            // Replace currentSong / nextSong / queue
             setCurrentSong(validData[0]);
             setNextSong(validData[1] || null);
             setQueue(validData.slice(2));
           } else if (appendToQueue) {
-            // Append new songs to existing queue
             setQueue((prevQueue) => {
               const existingQueue = Array.isArray(prevQueue)
                 ? prevQueue.filter(Boolean)
@@ -172,25 +184,9 @@ export default function useSongQueue(
         setIsFetchingSongs(false);
       }
     },
-    [
-      currentChannel?._id,
-      currentSong?.videoId,
-      history,
-      isFetchingSongs,
-      setCurrentSong,
-      setNextSong,
-      setQueue,
-      setIsFetchingSongs,
-    ]
+    [currentChannel?._id, currentSong?.videoId, history, setCurrentSong, setNextSong, setQueue, setIsFetchingSongs]
   );
 
-  /**
-   * Shorthand to fetch songs for a given channel ID, treating it as an initial load.
-   * This will replace currentSong/nextSong/queue with what the service returns.
-   *
-   * @param {string} channelId
-   * @returns {Promise<Array<Object>>} The array of songs fetched.
-   */
   const fetchSongsForChannel = useCallback(
     (channelId) => {
       return fetchSongs({
@@ -203,7 +199,7 @@ export default function useSongQueue(
     [fetchSongs]
   );
 
-  /**
+    /**
    * Shorthand to fetch more songs:
    * - If `setAsCurrent` is true, replace the currentSong/nextSong/queue with fresh results.
    * - Otherwise, append results to the existing queue.
