@@ -73,7 +73,7 @@ export default function MainPlayerSection({
   if (backendError && userInteracted) {
     return (
       <div className="centered-fullscreen">
-        <p className="error-message">Backend is down or not responding.</p>
+        <p className="error-message">An unexpected error occurred. Kindly reload the application</p>
       </div>
     );
   }

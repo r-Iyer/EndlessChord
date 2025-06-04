@@ -242,13 +242,6 @@ function App() {
           </div>
         )}
 
-        {/* Error banner */}
-        {backendError && (
-          <div className="error-banner">
-            <p>An unexpected error occurred. Please try again.</p>
-          </div>
-        )}
-
         {/* MainPlayerSection */}
         <MainPlayerSection
           showLoader={combinedLoading}
