@@ -104,7 +104,7 @@ module.exports = [
   },
   {
     name: 'Tamizh Tunes',
-    description: 'All time Tamil hit film songs and music and albums',
+    description: 'Popular Tamil hit film songs and music and albums',
     language: 'tamil',
     genre: [
       'Kollywood',
@@ -120,14 +120,14 @@ module.exports = [
   },
   {
     name: 'Bangla Baaje',
-    description: 'All time Bengali great hit film songs and music and albums',
+    description: 'Popular Bengali hit film songs and music and albums',
     language: 'Bengali',
     genre: [
-      'Bengali',
+      'Modern Bengali',
+      'Bengali Music',
       'Rabindra Sangeet',
       'Nazrul Geeti',
       'Folk (Bengali)',
-      'Modern Bengali',
       'Bangla Rock',
       'Bengali Film Music'
     ],

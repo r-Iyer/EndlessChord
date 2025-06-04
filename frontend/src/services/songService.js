@@ -17,10 +17,8 @@ export const fetchSongsService = async ({
 }) => {
   const params = new URLSearchParams();
 
-  if (initial) {
-    // Mark this request as an initial load for backend analytics or handling
-    params.append('source', 'initial');
-  }
+  params.append('source', initial ? 'initial' : 'refresh');
+
 
   if (excludeIds.length > 0) {
     // Exclude specified songs by sending their IDs as a JSON string

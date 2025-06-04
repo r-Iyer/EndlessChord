@@ -1,34 +1,59 @@
 const { Song } = require('../models/Song');
 const logger = require('../utils/loggerUtils');
 
-const getSongsWithExclusionsFromDb = async (genreFilter, languageFilter, excludeIds, startYear, endYear) => {
+const getSongsWithExclusionsFromDb = async (
+  genreFilter,
+  languageFilter,
+  excludeIds,
+  startYear,
+  endYear
+) => {
   try {
-    // Convert string year filters to numbers, or null if invalid/missing
+    // Convert string year filters to numbers (or null if invalid/missing)
     const startYearNum = startYear ? Number(startYear) : null;
-    const endYearNum = endYear ? Number(endYear) : null;
-    
-    // Match stage filters by genre, language, and excludes given video IDs
+    const endYearNum   = endYear   ? Number(endYear)   : null;
+
+    // Base match: genre, language, and exclusions
     const matchStage = {
       $and: [
-        { genre:    { $in: genreFilter } },    // genre must match one of these
-        { language: { $in: languageFilter } }, // language must match one of these
-        { videoId:  { $nin: excludeIds } }     // exclude these IDs
+        { genre:    { $in: genreFilter } },
+        { language: { $in: languageFilter } },
+        { videoId:  { $nin: excludeIds } }
       ]
     };
-    
-    // Build aggregation pipeline
+
+    // Build your aggregation pipeline
     const pipeline = [
       { $match: matchStage },
-      
-      // Convert 'year' string to integer as 'yearNum' for numeric filtering
+
+      // 1) Use $regexFind to grab the first 4-digit chunk from "year" (if any).
       {
         $addFields: {
-          yearNum: { $toInt: "$year" }
+          yearMatch: {
+            $regexFind: {
+              input: "$year",
+              regex: /(\d{4})/
+            }
+          }
+        }
+      },
+
+      // 2) Convert yearMatch.match → integer.  If no match was found, we set yearNum to null.
+      {
+        $addFields: {
+          yearNum: {
+            $cond: [
+              { $gt: ["$yearMatch", null] },   // if yearMatch is not null
+              { $toInt: "$yearMatch.match" },  // extract the digits and convert to int
+              null                              // otherwise, leave yearNum as null
+            ]
+          }
         }
       }
+      // … (we’ll append the next $match for year range below) …
     ];
-    
-    // Build numeric year filter object
+
+    // Build numeric year filter
     const yearFilter = {};
     if (startYearNum !== null && !isNaN(startYearNum)) {
       yearFilter.$gte = startYearNum;
@@ -36,26 +61,29 @@ const getSongsWithExclusionsFromDb = async (genreFilter, languageFilter, exclude
     if (endYearNum !== null && !isNaN(endYearNum)) {
       yearFilter.$lte = endYearNum;
     }
-    
-    // If a year filter is defined, apply it to 'yearNum' field
+
+    // If the user specified any year-range, we now filter on "yearNum"
     if (Object.keys(yearFilter).length > 0) {
       pipeline.push({
         $match: {
+          // Only documents with a non-null yearNum can pass this filter
           yearNum: yearFilter
         }
       });
     }
-    
-    // Execute aggregation pipeline
+
+    // Finally run the aggregate
     const songs = await Song.aggregate(pipeline).exec();
-    
-    logger.debug(`[getSongsWithExclusionsFromDb] Found ${songs.length} songs with exclusions and year filter`);
+    logger.debug(
+      `[getSongsWithExclusionsFromDb] Found ${songs.length} songs with exclusions and year filter`
+    );
     return songs;
   } catch (error) {
-    logger.error('[getSongsWithExclusionsFromDb] Error fetching songs:', error);
+    logger.error("[getSongsWithExclusionsFromDb] Error fetching songs:", error);
     return [];
   }
 };
+
 
 const getSongByVideoIdFromDb = async (videoId) => {
   try {

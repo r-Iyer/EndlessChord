@@ -26,10 +26,10 @@ async function reinitializeDatabase() {
     await insertChannelsInDb(channelSeeds);
     
     // Delete all songs
-    await deleteAllSongsInDb();
+    //await deleteAllSongsInDb();
 
     // Clear favorites and history for all users
-    await deleteFavoritesAndHistoryForAllUsersInDb();
+    //await deleteFavoritesAndHistoryForAllUsersInDb();
 
     logger.info('Database reinitialization complete!');
   } catch (error) {

@@ -20,7 +20,7 @@ router.get('/', optionalAuth, async (req, res) => {
   }
   
   // Reinitialize database tables if needed
-  // await reinitializeDatabase();
+   await reinitializeDatabase();
   // Add indices to song
   // await Song.initSearchIndex();
   
