@@ -21,7 +21,7 @@ async function getYouTubeVideoDetails(songs, channel) {
               album: song.album || "Unknown",
               year: song.year,
               genre: song.genre,
-              language: channel.language
+              language: song.language
             };
           }
           return null;

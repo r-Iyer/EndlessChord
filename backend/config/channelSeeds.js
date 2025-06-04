@@ -3,16 +3,6 @@ module.exports = [
     name: 'Hindi Hits',
     description: 'Popular Hindi music from Bollywood and beyond',
     language: 'hindi',
-    genre: [
-      'Bollywood',
-      'Pop',
-      'Romantic',
-      'Dance',
-      'Indie Hindi',
-      'Sufi',
-      'Hip Hop (Hindi)',
-      'Classical (Hindi)'
-    ],
     startYear: null,
     endYear: null
   },
@@ -20,16 +10,6 @@ module.exports = [
     name: 'Hindi Latest',
     description: 'Popular Latest Hindi music from Bollywood and beyond made after year 2005',
     language: 'hindi',
-    genre: [
-      'Bollywood',
-      'Pop',
-      'Romantic',
-      'Dance',
-      'Indie Hindi',
-      'Sufi',
-      'Hip Hop (Hindi)',
-      'Classical (Hindi)'
-    ],
     startYear: 2006,
     endYear: null
   },
@@ -37,16 +17,6 @@ module.exports = [
     name: 'Hindi Retro',
     description: 'Popular Retro Hindi music from Bollywood and beyond',
     language: 'hindi',
-    genre: [
-      'Bollywood',
-      'Pop',
-      'Romantic',
-      'Dance',
-      'Indie Hindi',
-      'Sufi',
-      'Hip Hop (Hindi)',
-      'Classical (Hindi)'
-    ],
     startYear: null,
     endYear: 2005
   },

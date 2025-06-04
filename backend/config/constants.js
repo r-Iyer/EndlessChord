@@ -39,7 +39,8 @@ For each recommendation, provide **only** the following fields in a JSON array:
     "composer": "Composer Name",
     "album": "Album Name",
     "year": "Year",
-    "genre": "One of the above genres"
+    "genre": "One of the above genres",
+    "language": "Language of the song"
   }
 ]
 `;
