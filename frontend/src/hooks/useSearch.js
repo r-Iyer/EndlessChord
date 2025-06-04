@@ -132,6 +132,7 @@ export default function useSearch(
           setNextSong(songs[1] || null);
           setQueue(songs.slice(2));
         }
+        setIsLoading(false);
       } catch (error) {
         // If the search was canceled by cancelFetchSongs, just bail quietly
         if (error.name === 'CanceledError' || error.name === 'AbortError') {
