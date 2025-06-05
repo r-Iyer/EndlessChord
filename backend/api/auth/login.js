@@ -1,7 +1,6 @@
 require('dotenv').config();
 const express = require('express');
 const User = require('../../models/User');
-const { initializeDbConnection } = require('../../utils/initialiseUtils');
 const { handleError, sendResponse } = require('../../utils/handlerUtils');
 const bcrypt = require('bcrypt');
 const { generateToken } = require('../../utils/authUtils');
@@ -15,7 +14,6 @@ const router = express.Router();
   // Login route - POST /api/auth/login
   router.post('/login', async (req, res) => {
     logger.info('[ROUTE] POST /api/auth/login');
-    await initializeDbConnection();
     
     try {
       const { email, password } = req.body;
