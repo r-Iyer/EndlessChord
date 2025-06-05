@@ -12,53 +12,51 @@ const connectDB = require('../../config/db');
 
 const router = express.Router();
 
-(async () => {
+router.get('/:channelId', optionalAuth, addFavoriteStatus, async (req, res) => {
   await connectDB();
-  router.get('/:channelId', optionalAuth, addFavoriteStatus, async (req, res) => {
-    const { source } = req.query;
-    const entity = req.baseUrl.split('/')[2];
-    
-    
-    const userId = req.user?.id;
-    const userName = req.user?.name;
-    
-    logger.info(`[ROUTE] GET /api/songs/${req.params.channelId} — Source: ${source} — User: ${userName}`);
-    
-    try {
-      const channel = await getChannelsInDbById(req.params.channelId);
-      if (!channel) {
-        return sendResponse(res, { message: 'Channel not found' }, 404);
-      }
-      
-      const excludeVideoIds = parseExcludeIds(req.query.excludeIds);
-      const userRecentVideoIds = userId ? await getUserRecentSongsInDb(req) : [];
-      
-      // Combine exclude IDs uniquely
-      const allExcludeVideoIds = [...new Set([...(userRecentVideoIds || []), ...excludeVideoIds])];
-      
-      // Get songs with exclusions
-      let songs = await getSongsWithExclusions(channel, allExcludeVideoIds, source, entity);
-      
-      logger.info(`[ROUTE] GET /api/songs/${req.params.channelId} — Found ${songs.length} matching songs in database`);
-      
-      // Append AI suggestions if needed
-      let { songs: updatedSongs, aiSuggestionsAdded } = await addAISuggestionsIfNeeded(
-        songs,
-        channel,
-        allExcludeVideoIds,
-        source,
-        userId,
-        entity
-      );
-      
-      logger.info(`[ROUTE] GET /api/songs/${req.params.channelId} — Returning ${updatedSongs.length} songs for channel ${channel.name}`);
-      logger.info(`[ROUTE] GET /api/songs/${req.params.channelId} — AI Suggestions added: ${aiSuggestionsAdded}`);
-      
-      sendResponse(res, updatedSongs);
-    } catch (error) {
-      handleError(res, error, `/api/songs/${req.params.channelId}`);
+  const { source } = req.query;
+  const entity = req.baseUrl.split('/')[2];
+
+
+  const userId = req.user?.id;
+  const userName = req.user?.name;
+
+  logger.info(`[ROUTE] GET /api/songs/${req.params.channelId} — Source: ${source} — User: ${userName}`);
+
+  try {
+    const channel = await getChannelsInDbById(req.params.channelId);
+    if (!channel) {
+      return sendResponse(res, { message: 'Channel not found' }, 404);
     }
-  });
-})();
+
+    const excludeVideoIds = parseExcludeIds(req.query.excludeIds);
+    const userRecentVideoIds = userId ? await getUserRecentSongsInDb(req) : [];
+
+    // Combine exclude IDs uniquely
+    const allExcludeVideoIds = [...new Set([...(userRecentVideoIds || []), ...excludeVideoIds])];
+
+    // Get songs with exclusions
+    let songs = await getSongsWithExclusions(channel, allExcludeVideoIds, source, entity);
+
+    logger.info(`[ROUTE] GET /api/songs/${req.params.channelId} — Found ${songs.length} matching songs in database`);
+
+    // Append AI suggestions if needed
+    let { songs: updatedSongs, aiSuggestionsAdded } = await addAISuggestionsIfNeeded(
+      songs,
+      channel,
+      allExcludeVideoIds,
+      source,
+      userId,
+      entity
+    );
+
+    logger.info(`[ROUTE] GET /api/songs/${req.params.channelId} — Returning ${updatedSongs.length} songs for channel ${channel.name}`);
+    logger.info(`[ROUTE] GET /api/songs/${req.params.channelId} — AI Suggestions added: ${aiSuggestionsAdded}`);
+
+    sendResponse(res, updatedSongs);
+  } catch (error) {
+    handleError(res, error, `/api/songs/${req.params.channelId}`);
+  }
+});
 
 module.exports = router;
