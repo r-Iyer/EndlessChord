@@ -4,16 +4,6 @@ const { deleteAllSongsInDb } = require('../helpers/songHelpers');
 const { deleteFavoritesAndHistoryForAllUsersInDb } = require('../helpers/userHelpers');
 const logger = require('./loggerUtils');
 
-let dbInitialized = false;
-
-async function initializeDbConnection() {
-  if (!dbInitialized) {
-    logger.info('[INIT] Connecting to MongoDB...');
-    await connectDB();
-    dbInitialized = true;
-  }
-}
-
 const channelSeeds = require('../config/channelSeeds');
 
 async function reinitializeDatabase() {
@@ -37,4 +27,4 @@ async function reinitializeDatabase() {
   }
 }
 
-module.exports = { initializeDbConnection, reinitializeDatabase };
+module.exports = {reinitializeDatabase };

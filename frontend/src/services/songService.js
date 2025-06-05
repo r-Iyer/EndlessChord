@@ -15,7 +15,7 @@ let currentAbortController = null;
 export const fetchSongsService = async ({
   channelId,
   excludeIds = [],
-  initial = false,
+  source,
 }) => {
   // Abort previous request if still in flight
   if (currentAbortController) {
@@ -24,7 +24,7 @@ export const fetchSongsService = async ({
   currentAbortController = new AbortController();
 
   const params = new URLSearchParams();
-  params.append('source', initial ? 'initial' : 'refresh');
+  params.append('source', source);
   if (excludeIds.length > 0) {
     params.append('excludeIds', JSON.stringify(excludeIds));
   }

@@ -112,6 +112,7 @@ export default function useSongQueue(
         ].filter(Boolean);
 
         let data = [];
+        let source =  initial ? 'initial' : 'refresh' 
 
         if (searchQueryRef.current) {
           // Cancel any in-flight channel fetch before performing a new search
@@ -120,7 +121,7 @@ export default function useSongQueue(
           try {
             data = await searchService({
               query: searchQueryRef.current,
-              options: { excludeIds, source: initial ? 'initial' : 'refresh' },
+              options: { excludeIds, source: source},
             });
           } catch (error) {
             // If search was canceled, return early (no change)
@@ -137,7 +138,7 @@ export default function useSongQueue(
             data = await fetchSongsService({
               channelId,
               excludeIds,
-              initial,
+              source,
             });
           } catch (error) {
             // If channel fetch was canceled, return early
