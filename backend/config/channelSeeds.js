@@ -103,5 +103,12 @@ module.exports = [
     ],
     startYear: null,
     endYear: null
+  },
+  {
+    name: 'Bangla Modern',
+    description: 'Popular Bengali hit film songs and music and albums',
+    language: 'Bengali',
+    startYear: 2006,
+    endYear: null
   }
 ];
