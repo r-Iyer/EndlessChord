@@ -4,6 +4,7 @@ import {
   cancelFetchSongs,
 } from '../services/songService';
 import { searchService, cancelSearch } from '../services/searchService';
+import { INITIAL, REFRESH } from '../constants/constants';
 
 /**
  * Hook to manage the song queue, including fetching new songs from either
@@ -112,7 +113,7 @@ export default function useSongQueue(
         ].filter(Boolean);
 
         let data = [];
-        let source =  initial ? 'initial' : 'refresh' 
+        let source =  initial ? INITIAL : REFRESH
 
         if (searchQueryRef.current) {
           // Cancel any in-flight channel fetch before performing a new search

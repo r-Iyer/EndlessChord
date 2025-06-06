@@ -5,7 +5,12 @@ const API_URL = process.env.REACT_APP_API_URL || '';
 // Minimum number of songs to keep in the queue before fetching more.
 const MINIMUM_QUEUE_SIZE = 3;
 
+const INITIAL = "initial";
+const REFRESH = "refresh"
+
 module.exports = {
   MINIMUM_QUEUE_SIZE,
   API_URL,
+  INITIAL,
+  REFRESH
 };

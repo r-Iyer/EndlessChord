@@ -1,6 +1,7 @@
 import { useState, useCallback, useRef } from 'react';
 import { cancelFetchSongs } from '../services/songService';
 import { searchService } from '../services/searchService';
+import { INITIAL } from '../constants/constants';
 
 /**
  * Custom hook for managing search functionality:
@@ -117,7 +118,7 @@ export default function useSearch(
           query: trimmed,
           options: {
             excludeIds: [],
-            source: 'initial',
+            source: INITIAL,
           },
         });
 
