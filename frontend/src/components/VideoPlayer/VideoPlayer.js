@@ -201,6 +201,7 @@ function VideoPlayer({
     <div ref={containerRef} className="youtube-container" tabIndex={-1}>
       <div className="video-wrapper">
         <YouTube
+          key={currentSong.videoId}
           videoId={currentSong.videoId}
           opts={opts}
           onReady={handleReady}

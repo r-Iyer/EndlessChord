@@ -129,7 +129,7 @@ export default function usePlayerHandlers(
   const updatePlayCount = useCallback(async (songId) => {
     if (!songId) return;
     try {
-      await api.post('/api/songs/played', {
+      api.post('/api/songs/played', {
         songIds: [songId],
       });
     } catch (error) {
