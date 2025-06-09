@@ -15,7 +15,7 @@ router.get('/', optionalAuth, async (req, res) => {
   await connectDB();
   
   // Reinitialize database tables if needed
-   await reinitializeDatabase();
+  // await reinitializeDatabase();
   // Add indices to song
   // await Song.initSearchIndex();
   
