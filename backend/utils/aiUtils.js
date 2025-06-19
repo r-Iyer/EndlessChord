@@ -7,7 +7,7 @@ const {
   INITIAL_SONG_COUNT,
   RECOMMENDATION_PROMPT_TEMPLATE
 } = require('../config/constants');
-const { upsertSuggestionSong, selectSongsFromHistory } = require('./songUtils');
+const { upsertSuggestionSong, selectSongsFromHistory, shuffle } = require('./songUtils');
 const { normalizeBaseFields } = require('./channelUtils.js');
 const { getYouTubeVideoDetails } = require('./youtubeUtils');
 const { getAIRecommendationsGemini } = require('../helpers/aiHelpers');
@@ -77,17 +77,20 @@ const addAISuggestionsIfNeeded = async (
     );
 
     return {
-      songs: updatedSongs,
+      songs: shuffle(updatedSongs),
       aiSuggestionsAdded: newSongs.length > 0,
     };
   }
   return {
-    songs,
+    songs: shuffle(songs),
     aiSuggestionsAdded: false,
   };
 } catch (err) {
   logger.error('Error in addAISuggestionsIfNeeded:', err);
-  return { songs, aiSuggestionsAdded: false };
+  return {
+    songs: shuffle(songs),
+    aiSuggestionsAdded: false,
+  };
 }
 };
 
