@@ -49,7 +49,7 @@ module.exports = [
   {
     name: 'Psychedelics',
     description: 'A curated collection of psychedelic, trance music',
-    language: 'english',
+    language: 'various',
     genre: ['Psychedelic', 'Trance'],
     startYear: null,
     endYear: null,
@@ -105,6 +105,22 @@ module.exports = [
     endYear: null
   },
   {
+    name: 'Tamizh Latest',
+    description: 'Popular Tamil hit film songs and music and albums',
+    language: 'tamil',
+    genre: [
+      'Kollywood',
+      'Tamil Pop',
+      'Melody',
+      'Folk (Tamil)',
+      'Devotional (Tamil)',
+      'Dance (Tamil)',
+      'Classical (Tamil)'
+    ],
+    startYear: 2006,
+    endYear: null
+  },
+  {
     name: 'Bangla Beats',
     description: 'Popular Bengali hit film songs and music and albums',
     language: 'Bengali',
@@ -121,7 +137,7 @@ module.exports = [
     endYear: null
   },
   {
-    name: 'Bangla Modern',
+    name: 'Bangla Latest',
     description: 'Popular Bengali hit film songs and music and albums',
     language: 'Bengali',
     startYear: 2006,
@@ -177,7 +193,7 @@ module.exports = [
   {
     name: 'Yaadein 50s - 80s',
     description: 'Classic anthems from the 80s—Bollywood and international',
-    language: 'hinidi',
+    language: 'hindi',
     startYear: 1950,
     endYear: 1989
   },

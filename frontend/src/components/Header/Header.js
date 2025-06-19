@@ -1,6 +1,8 @@
+import { useState } from 'react';
 import SearchBar from '../SearchBar/SearchBar';
 import UserProfile from '../UserProfile/UserProfile';
 import ChannelSelector, { slugify } from '../ChannelSelector/ChannelSelector';
+import LanguageDropdown from '../LanguageDropdown/LanguageDropdown';
 import './Header.css';
 
 export default function Header({
@@ -20,6 +22,21 @@ export default function Header({
   setChannelNameInURL,
   selectChannel,
 }) {
+  const [languageFilter, setLanguageFilter] = useState('');
+  
+  // Get unique languages from channels and capitalize first letter
+  const languages = [...new Set(channels.map(channel => channel.language))]
+    .sort()
+    .map(lang => ({
+      value: lang,
+      label: lang.charAt(0).toUpperCase() + lang.slice(1)
+    }));
+  
+  // Filter channels based on selected language
+  const filteredChannels = languageFilter
+    ? channels.filter(channel => channel.language === languageFilter)
+    : channels;
+
   const handleChannelSelect = (channelIdOrName) => {
     clearSearch();
     setUserInteracted(true);
@@ -30,8 +47,8 @@ export default function Header({
     
     // Find by id or slugified name
     const channel =
-    channels.find((c) => c._id === channelIdOrName) ||
-    channels.find((c) => slugify(c.name) === normalizedInput);
+      channels.find((c) => c._id === channelIdOrName) ||
+      channels.find((c) => slugify(c.name) === normalizedInput);
     
     if (channel) {
       setChannelNameInURL(slugify(channel.name));
@@ -41,42 +58,51 @@ export default function Header({
   
   return (
     <header className={`app-header ${isFullscreen ? 'app-header--hidden' : ''}`}>
-    <div className="header-container">
-    <div className="layout-column-gap">
-    {/* Top row: Search Bar and User Profile */}
-    <div className="layout-row-gap align-center">
-    <div className="full-width">
-    <SearchBar
-    onSearch={handleSearch}
-    searchQuery={searchQuery}
-    className="full-width"
-    />
-    </div>
-    <div className="no-shrink">
-    <UserProfile
-    user={user}
-    onLogout={handleLogout}
-    onShowAuth={() => setShowAuthModal(true)}
-    onPlayFavorites={() => {
-      clearSearch();       // First, clear search
-      playFavorites();     // Then, play favorites
-    }}
-    />
-    </div>
-    </div>
-    
-    {/* Bottom row: Channel Selector */}
-    <div className="full-width">
-    <ChannelSelector
-    channels={channels}
-    currentChannel={currentChannel}
-    onSelectChannel={handleChannelSelect}
-    clearSearch={clearSearch}
-    disabled={isSearchMode}
-    />
-    </div>
-    </div>
-    </div>
+      <div className="header-container">
+        <div className="layout-column-gap">
+          {/* Top row: Search Bar, Language Filter, and User Profile */}
+          <div className="flex gap-4 items-center">
+            <div className="flex-1">
+              <SearchBar
+                onSearch={handleSearch}
+                searchQuery={searchQuery}
+                className="full-width"
+              />
+            </div>
+            
+            {/* Language Filter Dropdown */}
+            <LanguageDropdown 
+              languages={languages}
+              selectedValue={languageFilter}
+              onSelect={setLanguageFilter}
+              placeholder="All Languages"
+            />
+            
+            <div className="no-shrink">
+              <UserProfile
+                user={user}
+                onLogout={handleLogout}
+                onShowAuth={() => setShowAuthModal(true)}
+                onPlayFavorites={() => {
+                  clearSearch();       // First, clear search
+                  playFavorites();     // Then, play favorites
+                }}
+              />
+            </div>
+          </div>
+          
+          {/* Bottom row: Channel Selector */}
+          <div className="full-width">
+            <ChannelSelector
+              channels={filteredChannels}
+              currentChannel={currentChannel}
+              onSelectChannel={handleChannelSelect}
+              clearSearch={clearSearch}
+              disabled={isSearchMode}
+            />
+          </div>
+        </div>
+      </div>
     </header>
   );
 }
