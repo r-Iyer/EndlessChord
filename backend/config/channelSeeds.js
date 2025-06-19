@@ -175,7 +175,7 @@ module.exports = [
     endYear: 1999
   },
   {
-    name: 'Yaadon Ka Safar 50s-80s',
+    name: 'Yaadein 50s - 80s',
     description: 'Classic anthems from the 80s—Bollywood and international',
     language: 'hinidi',
     startYear: 1950,
