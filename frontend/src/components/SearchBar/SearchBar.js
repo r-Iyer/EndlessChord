@@ -1,9 +1,26 @@
 import { useState, useEffect, useRef } from 'react';
 import './SearchBar.css';
 
+// Hook to get current window width
+const useWindowWidth = () => {
+  const [width, setWidth] = useState(window.innerWidth);
+
+  useEffect(() => {
+    const handleResize = () => setWidth(window.innerWidth);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  return width;
+};
+
 export default function SearchBar({ onSearch, searchQuery = '', onQueryChange, className = '' }) {
   const [query, setQuery] = useState(searchQuery);
   const inputRef = useRef(null);
+  const windowWidth = useWindowWidth();
+
+  // Decide placeholder based on screen width
+  const placeholderText = windowWidth < 640 ? 'Search...' : 'Search Anything...';
 
   // Sync internal query with external searchQuery prop
   useEffect(() => {
@@ -25,7 +42,7 @@ export default function SearchBar({ onSearch, searchQuery = '', onQueryChange, c
   };
 
   return (
-    <div className={`search-container ${className}`}>
+    <div className={`search-container ${className}`}>        
       <form onSubmit={handleSubmit} className="search-form">
         <div className="search-input-container">
           <input
@@ -33,7 +50,7 @@ export default function SearchBar({ onSearch, searchQuery = '', onQueryChange, c
             type="text"
             value={query}
             onChange={(e) => handleQueryChange(e.target.value)}
-            placeholder="Search Anything..."
+            placeholder={placeholderText}
             className="search-input"
           />
         </div>
