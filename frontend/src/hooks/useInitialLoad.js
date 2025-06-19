@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import authService from '../services/authService';
 import { fetchChannels } from '../services/channelService';
+import { DEFAULT_CHANNEL } from '../constants/constants';
 
 /**
  * Hook to perform initial data load once the user is authenticated (or allowed as guest).
@@ -12,7 +13,7 @@ import { fetchChannels } from '../services/channelService';
  * 4. If there is a search query in the URL, trigger `handleSearch`.
  * 5. Otherwise, look for a `?channel=<slug>` param in the URL:
  *    - If present and matches an existing channel, call `selectChannel` for that channel.
- *    - If not present (or invalid), default to selecting the first channel in the list.
+ *    - If not present, default to the channel named "Hindi Latest" if available (otherwise first in list).
  * 6. Prevent race conditions by ignoring results if the component using this hook unmounts.
  *
  * @param {Object} params
@@ -64,7 +65,7 @@ const useInitialLoad = ({
           return;
         }
 
-        // 3. No search: look for channel slug in URL
+        // 3. Read channel slug from URL, if any
         const urlChannelName = getChannelNameFromURL();
         let channelToSelect = null;
 
@@ -75,7 +76,7 @@ const useInitialLoad = ({
           );
         }
 
-        // 4. If we found a valid channel slug and it's not already selected, select it
+        // 4. If valid URL channel and not already selected, select it
         if (
           channelToSelect &&
           (!currentChannel || currentChannel._id !== channelToSelect._id)
@@ -83,10 +84,23 @@ const useInitialLoad = ({
           if (!isLoading) {
             selectChannel(channelToSelect._id);
           }
-        } else if (data.length > 0 && !currentChannel) {
-          // 5. If no channel slug or it didn't match, default to first channel in list
-          if (!isLoading) {
-            selectChannel(data[0]._id);
+          return;
+        }
+
+        // 5. No valid URL param: default to DEFAULT_CHANNEL if available
+        if (!urlChannelName && !currentChannel) {
+          const defaultChannel = data.find(
+            (c) => c.name === DEFAULT_CHANNEL
+          );
+          if (defaultChannel) {
+            if (!isLoading) {
+              selectChannel(defaultChannel._id);
+            }
+          } else if (data.length > 0) {
+            // Fallback to first channel if default not found
+            if (!isLoading) {
+              selectChannel(data[0]._id);
+            }
           }
         }
       } catch (error) {

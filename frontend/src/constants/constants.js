@@ -7,10 +7,12 @@ const MINIMUM_QUEUE_SIZE = 5;
 
 const INITIAL = "initial";
 const REFRESH = "refresh"
+const DEFAULT_CHANNEL = "Hindi Latest";
 
 module.exports = {
   MINIMUM_QUEUE_SIZE,
   API_URL,
   INITIAL,
-  REFRESH
+  REFRESH,
+  DEFAULT_CHANNEL
 };
