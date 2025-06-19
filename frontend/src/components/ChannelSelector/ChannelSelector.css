@@ -7,7 +7,7 @@
 }
 
 .channel-button {
-  flex: 0 0 8rem;        /* fix each button to 8rem wide */
+  flex: 0 0 7rem;        /* fix each button to 8rem wide */
   padding: 0.5rem;       /* remove horizontal padding since width is fixed */
   text-align: center;    /* center the label */
   font-size: 0.875rem;   /* reduce font slightly (14px) */
