@@ -160,6 +160,14 @@ module.exports = [
     endYear: null
   },
   {
+  name: 'Hindi Unplugged',
+  description: 'Stripped-down acoustic and unplugged Hindi songs for soulful listening',
+  language: 'hindi',
+  genre: ['Acoustic', 'Unplugged'],
+  startYear: null,
+  endYear: null
+  },
+  {
     name: 'Classical Sagas',
     description: 'Pure Indian classical—Hindustani and Carnatic performances',
     language: 'various',
