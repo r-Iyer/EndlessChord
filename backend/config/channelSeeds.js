@@ -27,7 +27,7 @@ module.exports = [
     genre: [
       'Pop',
       'R&B',
-      'Hip Hop',
+      'Hip-Hop',
       'Dance',
       'Indie Pop',
       'Rock',
@@ -47,7 +47,7 @@ module.exports = [
     endYear: 2000
   },
   {
-    name: 'Psychedelics',
+    name: 'Lucid',
     description: 'A curated collection of psychedelic, trance music',
     language: 'various',
     genre: ['Psychedelic', 'Trance'],
@@ -80,8 +80,6 @@ module.exports = [
       'Lofi',
       'Chillhop',
       'Jazzhop',
-      'Ambient',
-      'Instrumental',
       'Study Beats',
       'Downtempo'
     ],
@@ -147,7 +145,7 @@ module.exports = [
     name: 'Workout Warriors',
     description: 'High tempo tracks to power your gym sessions',
     language: 'various',
-    genre: ['EDM', 'Hip Hop', 'Rock', 'Dance'],
+    genre: ['EDM', 'Hip-Hop', 'Gym', 'Workout'],
     startYear: null,
     endYear: null
   },
@@ -187,7 +185,7 @@ module.exports = [
     name: 'Punjabi Beats',
     description: 'High energy Punjabi tracks from Bhangra to Punjabi Pop. Prioritize recent songs.',
     language: 'hindi',
-    genre: ['Bhangra', 'Punjabi Pop', 'Folk (Punjabi)', 'Hip Hop'],
+    genre: ['Bhangra', 'Punjabi Pop', 'Folk (Punjabi)', 'Hip-Hop'],
     startYear: null,
     endYear: null
   },

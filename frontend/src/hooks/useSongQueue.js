@@ -68,6 +68,9 @@ export default function useSongQueue(
   const queueRef = useRef(queue);
   const searchQueryRef = useRef(searchQuery);
 
+  // Ref to prevent overlapping fetchSongs calls
+  const ongoingFetchRef = useRef(false);
+
   useEffect(() => {
     nextSongRef.current = nextSong;
     queueRef.current = queue;
@@ -89,6 +92,11 @@ export default function useSongQueue(
    */
   const fetchSongs = useCallback(
     async (options = {}) => {
+      // If a fetch is already in progress, don’t start another
+      if (ongoingFetchRef.current) {
+        return [];
+      }
+
       const {
         channelId = currentChannel?._id,
         setAsCurrent = false,
@@ -101,6 +109,7 @@ export default function useSongQueue(
         return [];
       }
 
+      ongoingFetchRef.current = true;
       setIsFetchingSongs(true);
 
       try {
@@ -113,7 +122,7 @@ export default function useSongQueue(
         ].filter(Boolean);
 
         let data = [];
-        let source =  initial ? INITIAL : REFRESH
+        let source = initial ? INITIAL : REFRESH;
 
         if (searchQueryRef.current) {
           // Cancel any in-flight channel fetch before performing a new search
@@ -122,7 +131,7 @@ export default function useSongQueue(
           try {
             data = await searchService({
               query: searchQueryRef.current,
-              options: { excludeIds, source: source},
+              options: { excludeIds, source },
             });
           } catch (error) {
             // If search was canceled, return early (no change)
@@ -183,6 +192,7 @@ export default function useSongQueue(
         console.error('Error in fetchSongs:', error);
         return [];
       } finally {
+        ongoingFetchRef.current = false;
         setIsFetchingSongs(false);
       }
     },
