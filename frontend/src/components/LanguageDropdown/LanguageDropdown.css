@@ -133,12 +133,19 @@
   background-color: rgba(75, 85, 99, 0.9);
 }
 
-/* Mobile: make the language dropdown narrower */
 @media (max-width: 640px) {
   .language-dropdown {
     width: 80px;
   }
+
   .dropdown-trigger {
-    padding: 8px 12px;
+    width: 100%; /* stays narrow */
+  }
+
+  .dropdown-content {
+    min-width: 220px;   /* or use max content width */
+    width: max-content;
+    left: auto;         /* prevents cutoff */
+    right: 0;           /* aligns to the right edge of trigger */
   }
 }
