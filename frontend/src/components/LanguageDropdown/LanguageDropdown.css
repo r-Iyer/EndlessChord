@@ -136,7 +136,7 @@
 /* Mobile: make the language dropdown narrower */
 @media (max-width: 640px) {
   .language-dropdown {
-    width: 100px;
+    width: 80px;
   }
   .dropdown-trigger {
     padding: 8px 12px;
