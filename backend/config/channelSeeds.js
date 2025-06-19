@@ -38,6 +38,22 @@ module.exports = [
     startYear: null,
     endYear: null
   },
+    {
+    name: 'English Retro',
+    description: 'A curated collection of defining pop and rock anthems from the 1950s through the 1980s',
+    language: 'english',
+    genre: ['Pop', 'Rock', 'Do-Wop', 'Oldies'],
+    startYear: 1950,
+    endYear: 2000
+  },
+  {
+    name: 'Psychedelics',
+    description: 'A curated collection of psychedelic, trance music',
+    language: 'english',
+    genre: ['Psychedelic', 'Trance'],
+    startYear: null,
+    endYear: null,
+  },
   {
     name: 'EDM',
     description: 'Electronic Dance Music playlist',
@@ -89,7 +105,7 @@ module.exports = [
     endYear: null
   },
   {
-    name: 'Bangla Baaje',
+    name: 'Bangla Beats',
     description: 'Popular Bengali hit film songs and music and albums',
     language: 'Bengali',
     genre: [
@@ -110,5 +126,76 @@ module.exports = [
     language: 'Bengali',
     startYear: 2006,
     endYear: null
-  }
+  },
+  {
+    name: 'Workout Warriors',
+    description: 'High tempo tracks to power your gym sessions',
+    language: 'various',
+    genre: ['EDM', 'Hip Hop', 'Rock', 'Dance'],
+    startYear: null,
+    endYear: null
+  },
+  {
+    name: 'Jazz',
+    description: 'Smooth, soulful instrumental jazz tunes spanning classic standards to modern improvisations',
+    language: 'english',
+    genre: ['Jazz', 'Instrumental', 'Smooth Jazz'],
+    startYear: null,
+    endYear: null
+  },
+  {
+    name: 'Classical Sagas',
+    description: 'Pure Indian classical—Hindustani and Carnatic performances',
+    language: 'various',
+    genre: ['Hindustani Classical', 'Carnatic Classical'],
+    startYear: null,
+    endYear: null
+  },
+  {
+    name: 'Indie Discoveries',
+    description: 'Underground and indie artists from around the world',
+    language: 'various',
+    genre: ['Indie Rock', 'Indie Pop'],
+    startYear: null,
+    endYear: null
+  },
+  {
+    name: 'Punjabi Beats',
+    description: 'High energy Punjabi tracks from Bhangra to Punjabi Pop. Prioritize recent songs.',
+    language: 'hindi',
+    genre: ['Bhangra', 'Punjabi Pop', 'Folk (Punjabi)', 'Hip Hop'],
+    startYear: null,
+    endYear: null
+  },
+  {
+    name: '90s Nostalgia',
+    description: 'All your favorite Hindi & English hits from the 1990s',
+    language: 'hindi',
+    startYear: 1990,
+    endYear: 1999
+  },
+  {
+    name: 'Yaadon Ka Safar 50s-80s',
+    description: 'Classic anthems from the 80s—Bollywood and international',
+    language: 'hinidi',
+    startYear: 1950,
+    endYear: 1989
+  },
+  {
+    name: 'Sleep Serenity',
+    description: 'Soft ambient pads and slow melodies to drift off peacefully',
+    language: 'various',
+    genre: ['Ambient', 'Drone', 'Sleep Music'],
+    startYear: null,
+    endYear: null
+  },
+  {
+    name: 'Nature\'s Lullaby',
+    description: 'Ambient nature sounds—rain, forest, ocean—for deep relaxation',
+    language: 'various',
+    genre: ['Ambient', 'Nature Sounds', 'Meditation'],
+    startYear: null,
+    endYear: null
+  },
+  
 ];

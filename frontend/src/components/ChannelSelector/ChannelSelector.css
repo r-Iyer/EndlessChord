@@ -2,17 +2,20 @@
   padding: 0.5rem;
   display: flex;
   gap: 0.5rem;
-    overflow-x: auto;
-    scrollbar-width: none;
+  overflow-x: auto;
+  scrollbar-width: none;
 }
 
 .channel-button {
-  padding: 0.5rem 1rem;
+  flex: 0 0 8rem;        /* fix each button to 8rem wide */
+  padding: 0.5rem;       /* remove horizontal padding since width is fixed */
+  text-align: center;    /* center the label */
+  font-size: 0.875rem;   /* reduce font slightly (14px) */
+  line-height: 1.25rem;
   border-radius: 9999px;
-  transition-property: background-color;
-  transition-duration: 200ms;
+  transition: background-color 200ms;
   background-color: #374151; /* gray-700 */
-  color: #e5e7eb; /* gray-200 */
+  color: #e5e7eb;            /* gray-200 */
 }
 
 .channel-button:hover {

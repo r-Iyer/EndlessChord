@@ -10,7 +10,7 @@ async function reinitializeDatabase() {
   try {
     // Delete all channels
     const channelResult = await deleteAllChannelsInDb();
-    logger.info(`Deleted ${channelResult?.deletedCount || 'unknown number of'} channels`);
+    logger.info(`Deleted channels`);
 
     // Create Channels
     await insertChannelsInDb(channelSeeds);
