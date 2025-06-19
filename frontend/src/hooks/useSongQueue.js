@@ -77,7 +77,7 @@ export default function useSongQueue(
     searchQueryRef.current = searchQuery;
   }, [nextSong, queue, searchQuery]);
 
-    /**
+  /**
    * Core function to fetch songs. Depending on whether searchQueryRef.current
    * is nonempty, it calls the searchService or fetchSongsService. It excludes
    * any video IDs already in currentSong, nextSongRef, queueRef, or history.
@@ -92,17 +92,23 @@ export default function useSongQueue(
    */
   const fetchSongs = useCallback(
     async (options = {}) => {
-      // If a fetch is already in progress, don’t start another
-      if (ongoingFetchRef.current) {
-        return [];
-      }
-
       const {
         channelId = currentChannel?._id,
         setAsCurrent = false,
         appendToQueue = false,
         initial = false,
       } = options;
+
+      // For non-initial loads: skip if already fetching
+      if (!initial && ongoingFetchRef.current) {
+        return [];
+      }
+
+      // For initial load: cancel ongoing fetches before proceeding
+      if (initial && ongoingFetchRef.current) {
+        cancelFetchSongs();
+        cancelSearch();
+      }
 
       // If no channel and no search, nothing to fetch
       if (!channelId && !searchQueryRef.current) {
@@ -211,7 +217,7 @@ export default function useSongQueue(
     [fetchSongs]
   );
 
-    /**
+  /**
    * Shorthand to fetch more songs:
    * - If `setAsCurrent` is true, replace the currentSong/nextSong/queue with fresh results.
    * - Otherwise, append results to the existing queue.
