@@ -37,6 +37,13 @@ const AuthModal = ({ isOpen, onClose, onAuthSuccess }) => {
     setError(''); // Clear error when user types
   };
 
+  // Reset form fields and error messages to initial state
+  const resetForm = () => {
+    setFormData({ name: '', email: '', password: '' });
+    setError('');
+    setMode('login');
+  };
+
   // Handle form submission for login or register
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -98,13 +105,6 @@ const AuthModal = ({ isOpen, onClose, onAuthSuccess }) => {
     resetForm();
   };
 
-  // Reset form fields and error messages to initial state
-  const resetForm = () => {
-    setFormData({ name: '', email: '', password: '' });
-    setError('');
-    setMode('login');
-  };
-
   // Toggle between login and register modes and clear errors
   const switchMode = () => {
     setMode(mode === 'login' ? 'register' : 'login');
@@ -121,9 +121,11 @@ const AuthModal = ({ isOpen, onClose, onAuthSuccess }) => {
           <h2 className="auth-modal-title">
             {mode === 'login' ? 'Login' : 'Sign Up'}
           </h2>
+          {/* Now continues as guest when clicked */}
           <button
-            onClick={onClose}
+            onClick={handleGuestMode}
             className="auth-modal-close"
+            aria-label="Continue as guest"
           >
             ×
           </button>
