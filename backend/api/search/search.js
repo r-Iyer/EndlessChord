@@ -9,12 +9,10 @@ const { MINIMUM_SONG_COUNT } = require('../../config/constants');
 const { addFavoriteStatus } = require('../../utils/userUtils');
 const { createChannelWithSearchQuery } = require('../../utils/channelUtils.js');
 const logger = require('../../utils/loggerUtils');
-const connectDB = require('../../config/db.js');
 
 const router = express.Router();
 
 router.get('/', optionalAuth, addFavoriteStatus, async (req, res) => {
-  await connectDB();
   const { q: searchQuery, excludeIds: excludeIdsParam, source: source } = req.query;
   logger.info(`[ROUTE] GET /api/search — Query: ${searchQuery}`);
   logger.info(`[ROUTE] GET /api/search — source: ${source}`);

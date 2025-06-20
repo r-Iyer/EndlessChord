@@ -5,14 +5,11 @@ const { handleError, sendResponse } = require('../../utils/handlerUtils');
 const { reinitializeDatabase } = require('../../utils/initialiseUtils');
 const { getChannelsInDb, getChannelsInDbById } = require('../../helpers/channelHelpers');
 const logger = require('../../utils/loggerUtils');
-const connectDB = require('../../config/db');
 
 const router = express.Router();
 // Routes
 router.get('/', optionalAuth, async (req, res) => {
   logger.info('[ROUTE] GET /api/channels');
-  
-  await connectDB();
   
   // Reinitialize database tables if needed
   // await reinitializeDatabase();
@@ -29,7 +26,6 @@ router.get('/', optionalAuth, async (req, res) => {
 
 router.get('/:id', optionalAuth, async (req, res) => {
   logger.info(`[ROUTE] GET /api/channels/${req.params.id}`);
-  await connectDB();
   
   try {
     const channel = await getChannelsInDbById(req.params.id);

@@ -6,14 +6,12 @@ const { optionalAuth } = require('../../utils/authUtils');
 const { getUserFavorites, addSongToFavorites, removeSongFromFavorites } = require('../../helpers/userHelpers')
 const { addFavoriteStatus } = require('../../utils/userUtils');
 const logger = require('../../utils/loggerUtils');
-const connectDB = require('../../config/db');
 
 const router = express.Router();
 
 // Add to favorites
 router.post('/', optionalAuth, async (req, res) => {
   logger.info('[ROUTE] POST /api/favorites');
-  await connectDB();
   
   try {
     const { songId } = req.body;
@@ -35,7 +33,6 @@ router.post('/', optionalAuth, async (req, res) => {
 // Remove from favorites
 router.delete('/:songId', optionalAuth, async (req, res) => {
   logger.info(`[ROUTE] DELETE /api/favorites/${req.params.songId}`);
-  await connectDB();
   
   try {
     const { songId } = req.params;
@@ -56,7 +53,6 @@ router.delete('/:songId', optionalAuth, async (req, res) => {
 // Get favorites
 router.get('/', optionalAuth, addFavoriteStatus, async (req, res) => {
   logger.info('[ROUTE] GET /api/favorites');
-  await connectDB();
   try {
     const userId = req.user?.id;
     if (!userId) {

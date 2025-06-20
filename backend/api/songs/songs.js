@@ -8,12 +8,10 @@ const { addFavoriteStatus } = require('../../utils/userUtils');
 const { getChannelsInDbById } = require('../../helpers/channelHelpers');
 const { getUserRecentSongsInDb } = require('../../helpers/userHelpers');
 const logger = require('../../utils/loggerUtils');
-const connectDB = require('../../config/db');
 
 const router = express.Router();
 
 router.get('/:channelId', optionalAuth, addFavoriteStatus, async (req, res) => {
-  await connectDB();
   const { source } = req.query;
   const entity = req.baseUrl.split('/')[2];
 

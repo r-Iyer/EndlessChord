@@ -4,13 +4,10 @@ const { optionalAuth } = require('../../utils/authUtils');
 const { handleError, sendResponse } = require('../../utils/handlerUtils');
 const logger = require('../../utils/loggerUtils');
 const { updateGlobalSongPlayCount, updateUserHistory } = require('../../helpers/historyHelpers');
-const connectDB = require('../../config/db');
-
 const router = express.Router();
 
 router.post('/', optionalAuth, async (req, res) => {
   logger.debug('[ROUTE] POST /api/songs/played');
-  await connectDB();
   
   try {
     const { songIds } = req.body;

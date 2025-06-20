@@ -1,4 +1,3 @@
-const connectDB = require('../config/db');
 const { deleteAllChannelsInDb, insertChannelsInDb } = require('../helpers/channelHelpers');
 const { deleteAllSongsInDb } = require('../helpers/songHelpers');
 const { deleteFavoritesAndHistoryForAllUsersInDb } = require('../helpers/userHelpers');
