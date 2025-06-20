@@ -158,6 +158,7 @@ function App() {
     setCurrentSong,
     setNextSong,
     setQueue,
+    setHistory,
     setIsLoading,
     setIsFetchingSongs,
     setCurrentChannel,

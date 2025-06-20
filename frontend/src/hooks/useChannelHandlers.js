@@ -1,7 +1,6 @@
 import { useCallback, useRef, useEffect } from 'react';
 import { cancelSearch } from '../services/searchService';
 
-
 /**
  * Custom hook to handle channel selection and URL synchronization.
  *
@@ -11,8 +10,9 @@ import { cancelSearch } from '../services/searchService';
  * @param {Function} setCurrentSong - Sets the currently playing song.
  * @param {Function} setNextSong - Sets the next song in the queue.
  * @param {Function} setQueue - Sets the remaining song queue.
+ * @param {Function} setHistory - Clears or updates play history when channel changes.
  * @param {Function} setIsLoading - Toggles loading state for channel changes.
- * @param {Function} setIsFetchingSongs – Setter to toggle isFetchingSongs. 
+ * @param {Function} setIsFetchingSongs – Setter to toggle isFetchingSongs.
  * @param {Function} setCurrentChannel - Updates the current channel object.
  * @param {Function} fetchChannelById - Async function to fetch channel by its ID or name.
  * @param {Function} fetchSongsForChannel - Async function to fetch songs given a channel ID.
@@ -33,6 +33,7 @@ export default function useChannelHandlers(
   setCurrentSong,
   setNextSong,
   setQueue,
+  setHistory,
   setIsLoading,
   setIsFetchingSongs,
   setCurrentChannel,
@@ -53,7 +54,7 @@ export default function useChannelHandlers(
     };
   }, []);
 
-    /**
+  /**
    * Updates the browser's URL query string to include or remove the `channel` parameter.
    * If `channelName` is falsy, removes the parameter entirely.
    */
@@ -66,7 +67,6 @@ export default function useChannelHandlers(
       params.delete('channel');
     }
 
-    // If there are no other query params, remove the trailing "?"
     const queryString = params.toString();
     const newUrl = queryString
       ? `${window.location.pathname}?${queryString}`
@@ -74,11 +74,11 @@ export default function useChannelHandlers(
     window.history.replaceState({}, '', newUrl);
   }, []);
 
-    /**
+  /**
    * Handles user-initiated channel selection.
    *
    * 1. Marks that the user interacted and resets any previous error flags.
-   * 2. Stops playback and clears current song/queue.
+   * 2. Stops playback and clears current song/queue/history.
    * 3. Sets a loading state while fetching channel data and songs.
    * 4. Attempts to resolve `channelIdOrName` to a channel object:
    *    - If `channels` list is non-empty and `channelIdOrName` isn't a 24-hex ID, tries matching by slugified name.
@@ -102,32 +102,28 @@ export default function useChannelHandlers(
       const abortController = new AbortController();
       abortControllerRef.current = abortController;
       const signal = abortController.signal;
-      
+
       callIdRef.current += 1;
       const callId = callIdRef.current;
-      
-      // Check if request is outdated or aborted
       const isStale = () => callId !== callIdRef.current || signal.aborted;
 
-      // Reset player state
+      // Reset playback and state
       setUserInteracted(true);
       setBackendError(false);
-      // Stop any current playback and clear song references
       setIsPlaying(false);
       setCurrentSong(null);
       setNextSong(null);
       setQueue([]);
+      setHistory([]); // ✅ Clear play history when switching channels
       setIsLoading(true);
       setIsFetchingSongs(true);
 
       try {
         let channelData = null;
-        // If we have a channel list and the identifier is not a 24-hex string,
-        // try to match against slugified names in `channels`.
         const isObjectId = /^[0-9a-fA-F]{24}$/.test(channelIdOrName);
         const slug = (name) => name.replace(/\s+/g, '-').toLowerCase();
 
-        // Try to find channel in local cache
+        // Use cached channels if available
         if (
           channels.length > 0 &&
           typeof channelIdOrName === 'string' &&
@@ -143,7 +139,6 @@ export default function useChannelHandlers(
           try {
             channelData = await fetchChannelById(channelIdOrName, { signal });
           } catch (error) {
-            // Only handle non-abort errors
             if (error.name !== 'AbortError' && error.name !== 'CanceledError') {
               throw error;
             }
@@ -153,7 +148,7 @@ export default function useChannelHandlers(
 
         if (isStale()) return;
 
-        // Validate channel data
+        // Validate channel
         if (!channelData?._id) {
           throw new Error(`Channel "${channelIdOrName}" not found`);
         }
@@ -174,16 +169,15 @@ export default function useChannelHandlers(
         try {
           songs = await fetchSongsForChannel(channelData._id, { signal });
         } catch (error) {
-          // Only handle non-abort errors
           if (error.name !== 'AbortError' && error.name !== 'CanceledError') {
             throw error;
           }
           return; // Exit silently on abort
         }
-        
+
         if (isStale()) return;
-        
-        // Update player state with new songs
+
+        // Update state with new songs
         if (Array.isArray(songs) && songs.length > 0) {
           setCurrentSong(songs[0]);
           setNextSong(songs[1] || null);
@@ -192,7 +186,6 @@ export default function useChannelHandlers(
           setIsPlaying(false);
         }
       } catch (error) {
-        // Only handle non-cancellation errors
         if (!isStale()) {
           console.error('Channel selection error:', error);
           setBackendError(true);
@@ -212,19 +205,20 @@ export default function useChannelHandlers(
       setCurrentSong,
       setNextSong,
       setQueue,
+      setHistory,
       setIsLoading,
-      channels,
-      currentChannel,
-      setCurrentChannel,
-      setChannelNameInURL,
       setIsFetchingSongs,
-      fetchSongsForChannel,
+      setCurrentChannel,
       fetchChannelById,
+      fetchSongsForChannel,
+      currentChannel,
+      channels,
+      setChannelNameInURL,
     ]
   );
 
   return {
     setChannelNameInURL,
-    selectChannel
+    selectChannel,
   };
 }

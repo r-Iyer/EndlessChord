@@ -148,20 +148,12 @@ export default function usePlayerHandlers(
     }
 
     if (history.length > 0) {
-      // Pop the last song from history
       const prevSong = history[history.length - 1];
       setHistory((prev) => prev.slice(0, -1));
-
-      // Push `nextSong` back into the front of the queue if it exists
-      if (nextSong) {
-        setQueue((q) => [nextSong, ...q]);
-      }
-
-      // Set up current and next accordingly
+      if (nextSong) setQueue((q) => [nextSong, ...q]);
       setNextSong(currentSong);
       setCurrentSong(prevSong);
-    } else if (playerRef.current && typeof playerRef.current.seekTo === 'function') {
-      // No history: restart the current video
+    } else if (playerRef.current?.seekTo) {
       playerRef.current.seekTo(0, true);
       setCurrentTime(0);
     }
@@ -184,9 +176,7 @@ export default function usePlayerHandlers(
    * - If no nextSong, force-fetch more songs from the API (true = immediate fetch).
    */
   const handleNextSong = useCallback(() => {
-    if (currentSong && currentSong._id) {
-      updatePlayCount(currentSong._id);
-    }
+    if (currentSong?._id) updatePlayCount(currentSong._id);
 
     if (nextSong) {
       setHistory((prev) => [...prev, currentSong]);
@@ -194,13 +184,8 @@ export default function usePlayerHandlers(
       const newNext = queue[0] || null;
       setNextSong(newNext);
       setQueue((q) => q.slice(1));
-
-      // If queue is getting small, fetch more songs in the background
-      if (queue.length < MINIMUM_QUEUE_SIZE) {
-        fetchMoreSongs();
-      }
+      if (queue.length < MINIMUM_QUEUE_SIZE) fetchMoreSongs();
     } else {
-      // No nextSong: force an immediate fetch for more songs
       fetchMoreSongs(true);
     }
   }, [
@@ -217,40 +202,36 @@ export default function usePlayerHandlers(
 
   /**
    * Skip to a “later” song: move currentSong & nextSong to history,
-   * then promote the first item in `queue` to be the new currentSong.
-   * If queue has fewer than MINIMUM_QUEUE_SIZE, fetch more songs.
-   * If queue is empty, force-fetch more songs immediately.
+   * then promote the next from `queue`. Ensures both are recorded.
    */
   const handleLaterSong = useCallback(() => {
-    if (currentSong && currentSong._id) {
-      updatePlayCount(currentSong._id);
-    }
+    if (currentSong?._id) updatePlayCount(currentSong._id);
 
     if (queue.length >= 1) {
-      // Add currentSong to history
-      setHistory((prev) => [...prev, currentSong].filter(Boolean));
+      setHistory((prev) => {
+        const updated = [...prev];
+        if (currentSong) updated.push(currentSong);
+        if (nextSong) updated.push(nextSong);
+        return updated;
+      });
 
-      // Promote the first song in queue
-      const [laterSong, ...remainingQueue] = queue;
+      const [laterSong, ...remaining] = queue;
       setCurrentSong(laterSong);
-      const newNext = remainingQueue[0] || null;
+      const newNext = remaining[0] || null;
       setNextSong(newNext);
-      setQueue(remainingQueue.slice(1));
-
-      if (remainingQueue.length < MINIMUM_QUEUE_SIZE) {
-        fetchMoreSongs();
-      }
+      setQueue(remaining.slice(1));
+      if (remaining.length < MINIMUM_QUEUE_SIZE) fetchMoreSongs();
     } else {
-      // Queue empty: force-fetch more songs immediately
       fetchMoreSongs(true);
     }
   }, [
     currentSong,
+    nextSong,
     queue,
+    setHistory,
     setCurrentSong,
     setNextSong,
     setQueue,
-    setHistory,
     fetchMoreSongs,
     updatePlayCount,
   ]);
@@ -261,12 +242,7 @@ export default function usePlayerHandlers(
    */
   const togglePlayPause = useCallback(() => {
     if (!playerRef.current) return;
-
-    if (isPlaying) {
-      playerRef.current.pauseVideo();
-    } else {
-      playerRef.current.playVideo();
-    }
+    isPlaying ? playerRef.current.pauseVideo() : playerRef.current.playVideo();
     setIsPlaying(!isPlaying);
   }, [playerRef, isPlaying, setIsPlaying]);
 

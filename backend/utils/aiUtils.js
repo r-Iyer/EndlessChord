@@ -27,6 +27,8 @@ const addAISuggestionsIfNeeded = async (
   let minimum_song_count = MINIMUM_SONG_COUNT;
   /* Rule II.2.f, Rule III.2.e */
   let maximum_song_count = (source === INITIAL_LOAD) ? INITIAL_SONG_COUNT : DEFAULT_SONG_COUNT;
+  
+  songs = songs?.slice(0, maximum_song_count);
 
   // If the request is not for songs (/songs) for a particular channel (e.g. /search) OR it's an initial load,
   // and we already have enough songs, skip AI suggestions and return early.
@@ -43,7 +45,6 @@ const addAISuggestionsIfNeeded = async (
     if (entity === SONG_PATH && userId) {
       const { songs: selectedSongs, remainingToFill } = await selectSongsFromHistory( songs, userId, excludeIds );
       // Rule II.2.b, Rule II.2.c
-      songs = selectedSongs;
       aiSuggestionsNeeded = remainingToFill;
       /* Rule II.2.e */ 
       minimum_song_count = aiSuggestionsNeeded;
