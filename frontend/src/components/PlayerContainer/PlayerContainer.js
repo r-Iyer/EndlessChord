@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import VideoPlayer from '../VideoPlayer/VideoPlayer';
 import SongInfo from '../SongInfo/SongInfo';
 import PlayerFooter from '../PlayerFooter/PlayerFooter';
@@ -27,13 +28,30 @@ export default function PlayerContainer({
   onCCToggle,
   user,
 }) {
+  const [isVideoLoaded, setIsVideoLoaded] = useState(false);
+
+  useEffect(() => {
+    // reset when song changes
+    setIsVideoLoaded(false);
+  }, [currentSong?.videoId]);
+
+  const handleStateChange = (event) => {
+    if (event.data === 1) {
+      setIsVideoLoaded(true);
+    }
+
+    if (typeof onStateChange === 'function') {
+      onStateChange(event);
+    }
+  };
+
   return (
     <div className="player-container">
       <VideoPlayer
         currentSong={currentSong}
         isPlaying={isPlaying}
         onReady={onReady}
-        onStateChange={onStateChange}
+        onStateChange={handleStateChange}
         onError={onError}
         playerRef={playerRef}
         isCCEnabled={isCCEnabled}
@@ -43,7 +61,7 @@ export default function PlayerContainer({
         song={currentSong}
         nextSong={nextSong}
         laterSong={queue?.[0] ?? null}
-        visible={showInfo}
+        visible={showInfo && isVideoLoaded}
         onNext={onNext}
         onLater={onLater}
       />
