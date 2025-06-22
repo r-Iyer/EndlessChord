@@ -6,7 +6,8 @@
 }
 
 .time-display {
-  font-size: 0.875rem; /* text-sm */
+  font-size: 1rem; /* text-sm */
+  font-weight: 700; /* font-bold */
   width: 3rem; /* w-12 */
   text-align: center;
 }

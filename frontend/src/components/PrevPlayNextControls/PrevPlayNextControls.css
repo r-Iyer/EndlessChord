@@ -1,0 +1,20 @@
+.prev-play-next-controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+}
+
+.prev-play-next-controls .control-button {
+  background: rgba(38, 28, 63, 0.8);
+  border: none;
+  color: white;
+  border-radius: 50%;
+  padding: 10px;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+
+.prev-play-next-controls .control-button:hover {
+  background: rgba(38, 28, 63, 1);
+}

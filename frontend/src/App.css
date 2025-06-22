@@ -11,12 +11,6 @@ body {
   overflow: hidden;
 }
 
-:fullscreen {
-  background: black;
-  width: 100vw !important;
-  height: 100vh !important;
-}
-
 ::-webkit-scrollbar {
   width: 6px;
 }

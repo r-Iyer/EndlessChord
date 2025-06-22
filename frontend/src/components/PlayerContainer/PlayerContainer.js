@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
-import VideoPlayer from '../VideoPlayer/VideoPlayer';
+import VideoWithControls from '../VideoWithControls/VideoWithControls';
 import SongInfo from '../SongInfo/SongInfo';
-import PlayerFooter from '../PlayerFooter/PlayerFooter';
 
 export default function PlayerContainer({
   currentSong,
@@ -19,7 +18,6 @@ export default function PlayerContainer({
   onSeek,
   isFullscreen,
   showUI,
-  currentChannel,
   onPlayPause,
   onNext,
   onLater,
@@ -31,13 +29,12 @@ export default function PlayerContainer({
   const [isVideoLoaded, setIsVideoLoaded] = useState(false);
 
   useEffect(() => {
-    // reset when song changes
-    setIsVideoLoaded(false);
+    setIsVideoLoaded(false); // reset on song change
   }, [currentSong?.videoId]);
 
   const handleStateChange = (event) => {
     if (event.data === 1) {
-      setIsVideoLoaded(true);
+      setIsVideoLoaded(true); // video started playing
     }
 
     if (typeof onStateChange === 'function') {
@@ -47,14 +44,25 @@ export default function PlayerContainer({
 
   return (
     <div className="player-container">
-      <VideoPlayer
+      <VideoWithControls
         currentSong={currentSong}
         isPlaying={isPlaying}
+        isCCEnabled={isCCEnabled}
         onReady={onReady}
         onStateChange={handleStateChange}
         onError={onError}
         playerRef={playerRef}
-        isCCEnabled={isCCEnabled}
+        onPlayPause={onPlayPause}
+        onNext={onNext}
+        onPrevious={onPrevious}
+        onCCToggle={onCCToggle}
+        isFullscreen={isFullscreen}
+        onFullscreenToggle={onFullscreenToggle}
+        currentTime={currentTime}
+        duration={duration}
+        onSeek={onSeek}
+        user={user}
+        showUI={showUI}
       />
 
       <SongInfo
@@ -64,24 +72,6 @@ export default function PlayerContainer({
         visible={showInfo && isVideoLoaded}
         onNext={onNext}
         onLater={onLater}
-      />
-
-      <PlayerFooter
-        currentTime={currentTime}
-        duration={duration}
-        onSeek={onSeek}
-        isFullscreen={isFullscreen}
-        showUI={showUI}
-        isPlaying={isPlaying}
-        currentChannel={currentChannel}
-        onPlayPause={onPlayPause}
-        onNext={onNext}
-        onFullscreenToggle={onFullscreenToggle}
-        onPrevious={onPrevious}
-        isCCEnabled={isCCEnabled}
-        onCCToggle={onCCToggle}
-        user={user}
-        currentSong={currentSong}
       />
     </div>
   );

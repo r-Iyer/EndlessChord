@@ -47,7 +47,8 @@ function VideoPlayer({
   onReady,
   onStateChange,
   onError,
-  playerRef
+  playerRef,
+  isFullscreen
 }) {
   const containerRef = useRef(null);
   const [isPlayerReady, setIsPlayerReady] = useState(false);
@@ -95,30 +96,6 @@ function VideoPlayer({
       console.warn('YouTube captions toggle error:', error);
     }
   }, [isCCEnabled, isPlayerReady, playerRef]);
-
-  // Lock orientation to landscape on fullscreen enter for containerRef
-  useEffect(() => {
-    function handleFullscreenChange() {
-      const fullscreenElement =
-        document.fullscreenElement ||
-        document.webkitFullscreenElement ||
-        document.msFullscreenElement;
-
-      if (fullscreenElement === containerRef.current && window.screen.orientation?.lock) {
-        window.screen.orientation.lock('landscape').catch(() => {});
-      }
-    }
-
-    document.addEventListener('fullscreenchange', handleFullscreenChange);
-    document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
-    document.addEventListener('msfullscreenchange', handleFullscreenChange);
-
-    return () => {
-      document.removeEventListener('fullscreenchange', handleFullscreenChange);
-      document.removeEventListener('webkitfullscreenchange', handleFullscreenChange);
-      document.removeEventListener('msfullscreenchange', handleFullscreenChange);
-    };
-  }, []);
 
   // Cleanup on unmount
   useEffect(() => {
@@ -198,8 +175,8 @@ function VideoPlayer({
   }
 
   return (
-    <div ref={containerRef} className="youtube-container" tabIndex={-1}>
-      <div className="video-wrapper">
+    <div ref={containerRef} className={`youtube-container ${isFullscreen ? 'fullscreen' : ''}`} tabIndex={-1}>
+      <div className={`video-wrapper ${isFullscreen ? 'fullscreen' : ''}`}>
         <YouTube
           key={currentSong.videoId}
           videoId={currentSong.videoId}

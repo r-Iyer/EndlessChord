@@ -1,19 +1,15 @@
 /* FavoriteButton.css */
 .favorite-button {
-  position: relative;
-  color: white;
-  background: rgba(38, 28, 63, 0.8) !important;
+  background: rgba(38, 28, 63, 0.8);
   border: none;
+  color: white;
   border-radius: 50%;
-  width: 35px  !important;
-  height: 35px  !important;
-  padding: 6px;
+  padding: 10px;
+  margin: 6px;
   cursor: pointer;
-  transition: all 0.2s ease;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000; /* Ensure it appears above other elements */
+  pointer-events: auto;
+  z-index: 9999;
+  transition: background 0.3s ease;
 }
 
 .favorite-button:hover {

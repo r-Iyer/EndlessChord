@@ -6,8 +6,8 @@
   border-radius: 50%;
   width: 32px;
   height: 32px;
-  font-size: 14px;
-  font-weight: 600;
+  font-size: 1 rem;
+  font-weight: 1000;
   cursor: pointer;
   display: flex;
   align-items: center;

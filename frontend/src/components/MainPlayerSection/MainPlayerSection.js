@@ -59,11 +59,6 @@ export default function MainPlayerSection({
         onSeek={onSeek}
         isFullscreen={isFullscreen}
         showUI={showUI}
-        currentChannel={
-          isSearchMode
-            ? { name: `Search: ${searchQuery}` }
-            : currentChannel
-        }
         onPlayPause={onPlayPause}
         onNext={onNext}
         onLater={onLater}
