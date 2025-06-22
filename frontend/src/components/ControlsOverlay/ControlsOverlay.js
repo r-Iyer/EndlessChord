@@ -1,9 +1,7 @@
-import React from 'react';
 import PrevPlayNextControls from '../PrevPlayNextControls/PrevPlayNextControls';
-import { Maximize, Minimize, Captions, CaptionsOff } from 'lucide-react';
+import TimerSlider from '../TimerSlider/TimerSlider';
+import ControlsFooter from '../ControlsFooter/ControlsFooter';
 import './ControlsOverlay.css';
-import FavoriteButton from '../FavoriteButton/FavoriteButton';
-import AuthService from '../../services/authService';
 
 export default function ControlsOverlay({
   isPlaying,
@@ -15,41 +13,50 @@ export default function ControlsOverlay({
   isFullscreen,
   onFullscreenToggle,
   user,
-  currentSong
+  currentSong,
+  onSeek,
+  currentTime,
+  duration,
 }) {
   return (
     <div className="controls-overlay">
-    {/* top-right CC toggle */}
-    <button
-    className="control-button cc-btn top-right"
-    onClick={onCCToggle}
-    aria-label={isCCEnabled ? 'Disable Captions' : 'Enable Captions'}
-    >
-    {isCCEnabled ? <Captions size={24} /> : <CaptionsOff size={24} />}
-    </button>
-    
-    {/* center prev/play/next */}
-    <div className={`controls-overlay__center ${isFullscreen ? 'fullscreen' : ''}`}>
-    <PrevPlayNextControls
-    isPlaying={isPlaying}
-    onPlayPause={onPlayPause}
-    onNext={onNext}
-    onPrevious={onPrevious}
-    />
-    </div>
-    
-    <button
-    className={`control-button fs-btn bottom-right ${isFullscreen ? 'fullscreen' : ''}`}
-    onClick={onFullscreenToggle}
-    aria-label={isFullscreen ? 'Exit Fullscreen' : 'Enter Fullscreen'}
-    >
-    {isFullscreen ? <Minimize size={24} /> : <Maximize size={24} />}
-    </button>
-      {user && !AuthService.isGuest && (
-        <div className="favorite-button-overlay">
-        <FavoriteButton song={currentSong} user={user} />
-        </div>
-      )}
+      {/* Center Play/Prev/Next */}
+      <div className={`controls-overlay__center ${isFullscreen ? 'fullscreen' : ''}`}>
+        <PrevPlayNextControls
+          isPlaying={isPlaying}
+          onPlayPause={onPlayPause}
+          onNext={onNext}
+          onPrevious={onPrevious}
+        />
+      </div>
+
+      {/* Bottom Controls Footer */}
+      <ControlsFooter
+        isCCEnabled={isCCEnabled}
+        onCCToggle={onCCToggle}
+        isFullscreen={isFullscreen}
+        onFullscreenToggle={onFullscreenToggle}
+        user={user}
+        currentSong={currentSong}
+        onSeek={onSeek}
+      />
+
+      {/* Slider Row */}
+      <div className={`video-slider-row ${isFullscreen ? 'fullscreen' : 'windowed'}`}>
+        <TimerSlider
+          currentTime={currentTime}
+          duration={duration}
+          onSeek={onSeek}
+          style={{
+            height: 40,
+            pointerEvents: 'auto',
+            flex: 1,
+            minWidth: 0,
+            fontSize: 12,
+            zIndex: 999,
+          }}
+        />
+      </div>
     </div>
   );
 }

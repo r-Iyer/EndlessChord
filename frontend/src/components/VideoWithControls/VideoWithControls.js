@@ -1,9 +1,6 @@
 import React, { useRef } from 'react';
 import VideoPlayer from '../VideoPlayer/VideoPlayer';
 import ControlsOverlay from '../ControlsOverlay/ControlsOverlay';
-import TimerSlider from '../TimerSlider/TimerSlider';
-import SeekButton from '../SeekButton/SeekButton';
-import usePlayerShortcuts from '../../hooks/usePlayerShortcuts';
 import './VideoWithControls.css';
 
 export default function VideoWithControls({
@@ -27,15 +24,6 @@ export default function VideoWithControls({
   showUI,
 }) {
   const videoContainerRef = useRef(null);
-
-  usePlayerShortcuts({
-    currentTime,
-    duration,
-    onSeek,
-    onPlayPause,
-    onNext,
-    onPrevious,
-  });
 
   if (!currentSong) return null;
 
@@ -67,36 +55,10 @@ export default function VideoWithControls({
           onFullscreenToggle={onFullscreenToggle}
           user={user}
           currentSong={currentSong}
+          onSeek={onSeek}
+          currentTime={currentTime}
+          duration={duration}
         />
-
-        <div className={`video-slider-row ${isFullscreen ? 'fullscreen' : 'windowed'}`}>
-          <SeekButton
-            direction="backward"
-            currentTime={currentTime}
-            duration={duration}
-            onSeek={onSeek}
-          />
-
-          <TimerSlider
-            currentTime={currentTime}
-            duration={duration}
-            onSeek={onSeek}
-            style={{
-              height: 40,
-              pointerEvents: 'auto',
-              flex: 1,
-              fontSize: 12,
-              zIndex: 999,
-            }}
-          />
-
-          <SeekButton
-            direction="forward"
-            currentTime={currentTime}
-            duration={duration}
-            onSeek={onSeek}
-          />
-        </div>
       </div>
     </div>
   );

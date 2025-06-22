@@ -1,0 +1,16 @@
+.controls-footer {
+  position: absolute;
+  bottom: 5%;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+  pointer-events: auto;
+  z-index: 9999;
+}
+
+@media (max-height: 500px) and (orientation: landscape) {
+  .controls-footer {
+    bottom: 20%;
+  }
+}

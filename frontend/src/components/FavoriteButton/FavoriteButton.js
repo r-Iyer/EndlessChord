@@ -4,10 +4,8 @@ import { addFavorite, removeFavorite } from '../../services/favoritesService';
 import './FavoriteButton.css';
 
 const FavoriteButton = ({ song, user, onUpdate }) => {
-  // Local state to track whether the song is favorited
   const [isFavorite, setIsFavorite] = useState(song?.isFavorite || false);
 
-  // Sync local favorite state if the song prop changes
   useEffect(() => {
     setIsFavorite(song?.isFavorite || false);
   }, [song]);
@@ -16,7 +14,7 @@ const FavoriteButton = ({ song, user, onUpdate }) => {
     if (!user || !song) return;
 
     const newFavoriteState = !isFavorite;
-    setIsFavorite(newFavoriteState); // Optimistic UI update
+    setIsFavorite(newFavoriteState); // Optimistic
 
     try {
       if (newFavoriteState) {
@@ -24,30 +22,28 @@ const FavoriteButton = ({ song, user, onUpdate }) => {
       } else {
         await removeFavorite(song._id);
       }
-      // Notify parent component to refresh data or state if needed
       onUpdate?.();
     } catch (error) {
-      // Rollback UI state on error
-      setIsFavorite(!newFavoriteState);
+      setIsFavorite(!newFavoriteState); // rollback
       console.error('Error updating favorite:', error);
     }
   };
 
   return (
-    <button
-      type="button"
-      className={`favorite-button ${isFavorite ? 'active' : ''}`}
-      onClick={handleToggleFavorite}
-      aria-label={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
+    <div
+      className="tooltip-wrapper"
       data-tooltip={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
-      disabled={!user}
     >
-      <Heart
-        size={24}
-        strokeWidth={2}
-        fill={isFavorite ? 'currentColor' : 'none'}
-      />
-    </button>
+      <button
+        type="button"
+        className={`favorite-button ${isFavorite ? 'active' : ''}`}
+        onClick={handleToggleFavorite}
+        aria-label={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
+        disabled={!user}
+      >
+        <Heart strokeWidth={2} fill={isFavorite ? 'currentColor' : 'none'} />
+      </button>
+    </div>
   );
 };
 

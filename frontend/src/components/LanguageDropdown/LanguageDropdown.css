@@ -133,7 +133,7 @@
   background-color: rgba(75, 85, 99, 0.9);
 }
 
-@media (max-width: 640px) {
+@media (max-width: 768px) {
   .language-dropdown {
     width: 80px;
   }

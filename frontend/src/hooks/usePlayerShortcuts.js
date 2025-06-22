@@ -1,28 +1,29 @@
-import { useEffect, useCallback } from 'react';
+import { useEffect, useCallback, useRef } from 'react';
 
 /**
- * Hook to add keyboard shortcuts for player controls:
- *  - Q: Previous song
- *  - E: Next song
- *  - Space: Toggle play/pause
- *  - ArrowLeft: Seek backward by 5 seconds
- *  - ArrowRight: Seek forward by 5 seconds
- *
- * Ignores key events when focus is in an input, textarea, or contenteditable element.
+ * Hook to add keyboard and touch shortcuts for a media player:
+ *  - Q: Previous
+ *  - E: Next
+ *  - Space: Play/Pause
+ *  - ←: Seek -5s
+ *  - →: Seek +5s
+ *  - F: Fullscreen
+ *  - C: Captions
+ *  - R: Restart
+ *  - Double-tap left/right on mobile: Seek -/+ 5s
  *
  * @param {Object} params
  * @param {Function} params.onSeek
- *   Callback to seek to a specific time (in seconds). Receives the target time.
  * @param {Function} params.onPlayPause
- *   Callback to toggle play/pause.
  * @param {Function} params.onNext
- *   Callback to skip to the next song.
  * @param {Function} params.onPrevious
- *   Callback to skip to the previous song.
  * @param {number} params.currentTime
- *   Current playback time (in seconds).
  * @param {number} params.duration
- *   Total duration of the current song (in seconds).
+ * @param {Function} [params.onFullscreenToggle]
+ * @param {Function} [params.onCCToggle]
+ * @param {Function} [params.setShowUI]
+ * @param {Object} [params.uiTimeoutRef]
+ * @param {Object} [params.containerRef] - Optional container to focus for arrow key support
  */
 function usePlayerShortcuts({
   onSeek,
@@ -31,67 +32,145 @@ function usePlayerShortcuts({
   onPrevious,
   currentTime,
   duration,
+  onFullscreenToggle,
+  onCCToggle,
+  setShowUI,
+  uiTimeoutRef,
+  containerRef,
 }) {
-  /**
-   * Handler for keydown events. Checks if the focused element is editable;
-   * if not, intercepts specific keys to control playback.
-   */
+  const lastTapRef = useRef({ time: 0, side: null });
+
+  const showAndResetUI = useCallback(() => {
+    if (!setShowUI || !uiTimeoutRef) return;
+    setShowUI(true);
+    if (uiTimeoutRef.current) clearTimeout(uiTimeoutRef.current);
+    uiTimeoutRef.current = setTimeout(() => {
+      setShowUI(false);
+    }, 2500);
+  }, [setShowUI, uiTimeoutRef]);
+
   const handleKeyDown = useCallback(
     (e) => {
       const target = e.target;
       const tag = target.tagName;
+      const type = target.type;
 
-      // Ignore shortcuts if typing in an input, textarea, or contenteditable area
-      if (
-        tag === 'INPUT' ||
+      const isTextEditable =
+        (tag === 'INPUT' && type !== 'range') ||
         tag === 'TEXTAREA' ||
-        target.isContentEditable
-      ) {
-        return;
-      }
+        target.isContentEditable;
+
+      if (isTextEditable) return;
 
       switch (e.code) {
         case 'KeyQ':
           e.preventDefault();
+          showAndResetUI();
           onPrevious();
           break;
 
         case 'KeyE':
           e.preventDefault();
+          showAndResetUI();
           onNext();
           break;
 
         case 'Space':
           e.preventDefault();
+          showAndResetUI();
           onPlayPause();
           break;
 
         case 'ArrowLeft':
-          e.preventDefault();
-          // Seek backward by 5 seconds, ensuring we don't go below 0
+          // e.preventDefault(); // preventDefault not necessary unless focus is inside input
+          showAndResetUI();
           onSeek(Math.max(currentTime - 5, 0));
           break;
 
         case 'ArrowRight':
-          e.preventDefault();
-          // Seek forward by 5 seconds, ensuring we don't exceed duration
+          // e.preventDefault();
+          showAndResetUI();
           onSeek(Math.min(currentTime + 5, duration));
+          break;
+
+        case 'KeyF':
+          e.preventDefault();
+          showAndResetUI();
+          onFullscreenToggle?.();
+          break;
+
+        case 'KeyC':
+          e.preventDefault();
+          showAndResetUI();
+          onCCToggle?.();
+          break;
+
+        case 'KeyR':
+          e.preventDefault();
+          showAndResetUI();
+          onSeek(0);
           break;
 
         default:
           break;
       }
     },
-    [onPrevious, onNext, onPlayPause, onSeek, currentTime, duration]
+    [
+      onPrevious,
+      onNext,
+      onPlayPause,
+      onSeek,
+      currentTime,
+      duration,
+      onFullscreenToggle,
+      onCCToggle,
+      showAndResetUI,
+    ]
   );
 
-  // Register the handler on mount and clean up on unmount or dependency change
+  const handleTouchStart = useCallback(
+    (e) => {
+      const now = Date.now();
+      const touch = e.touches?.[0];
+      if (!touch) return;
+
+      const x = touch.clientX;
+      const width = window.innerWidth;
+      const side = x < width / 2 ? 'left' : 'right';
+      const delta = now - lastTapRef.current.time;
+
+      if (delta < 300 && lastTapRef.current.side === side) {
+        showAndResetUI();
+        if (side === 'left') {
+          onSeek(Math.max(currentTime - 5, 0));
+        } else {
+          onSeek(Math.min(currentTime + 5, duration));
+        }
+      }
+
+      lastTapRef.current = { time: now, side };
+    },
+    [onSeek, currentTime, duration, showAndResetUI]
+  );
+
+  // Attach handlers
   useEffect(() => {
     window.addEventListener('keydown', handleKeyDown);
+    window.addEventListener('touchstart', handleTouchStart);
+
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('touchstart', handleTouchStart);
     };
-  }, [handleKeyDown]);
+  }, [handleKeyDown, handleTouchStart]);
+
+  // Ensure container is focusable for arrow keys (if needed)
+  useEffect(() => {
+    if (containerRef?.current) {
+      containerRef.current.tabIndex = -1;
+      containerRef.current.focus();
+    }
+  }, [containerRef]);
 }
 
 export default usePlayerShortcuts;

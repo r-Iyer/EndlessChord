@@ -56,3 +56,14 @@ body {
 .full-center-screen {
   @apply min-h-screen bg-gray-900 text-white flex items-center justify-center;
 }
+
+@media (max-width: 768px) {
+  .control-button {
+    padding: 3px;
+  }
+
+  .control-button svg {
+    width: 16px;
+    height: 16px;
+  }
+}
