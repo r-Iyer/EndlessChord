@@ -88,28 +88,44 @@ export default function usePlayerEffects({
   // ----------------------------------------------------------------------
   // 2. Auto-hide the player UI after 2.5s of mouse/touch inactivity
   // ----------------------------------------------------------------------
-  useEffect(() => {
-    const showAndResetTimer = () => {
-      setShowUI(true);
-      if (uiTimeoutRef.current) {
-        clearTimeout(uiTimeoutRef.current);
-      }
-      uiTimeoutRef.current = setTimeout(() => {
-        setShowUI(false);
-      }, 2500);
-    };
+useEffect(() => {
+  const toggleUIVisibility = (e) => {
+    const el = e.target;
 
-    window.addEventListener('mousemove', showAndResetTimer);
-    window.addEventListener('touchstart', showAndResetTimer, { passive: true });
+    // If user clicked on a button, icon, or any control — don't toggle UI
+    if (
+      el.closest('button') ||
+      el.closest('.control-button') ||
+      el.closest('.song-button') || // for SongInfo next/later
+      el.closest('.slider') ||      // if you have a timer slider
+      el.tagName === 'SVG' ||
+      el.tagName === 'path'         // lucide-react icons
+    ) {
+      return;
+    }
 
-    return () => {
-      window.removeEventListener('mousemove', showAndResetTimer);
-      window.removeEventListener('touchstart', showAndResetTimer);
-      if (uiTimeoutRef.current) {
-        clearTimeout(uiTimeoutRef.current);
+    setShowUI(prev => {
+      const shouldShow = !prev;
+
+      if (shouldShow) {
+        if (uiTimeoutRef.current) clearTimeout(uiTimeoutRef.current);
+        uiTimeoutRef.current = setTimeout(() => {
+          setShowUI(false);
+        }, 2500);
       }
-    };
-  }, [setShowUI, uiTimeoutRef]);
+
+      return shouldShow;
+    });
+  };
+
+  window.addEventListener('click', toggleUIVisibility);
+
+  return () => {
+    window.removeEventListener('click', toggleUIVisibility);
+    if (uiTimeoutRef.current) clearTimeout(uiTimeoutRef.current);
+  };
+}, [setShowUI, uiTimeoutRef]);
+
 
   // ----------------------------------------------------------------------
   // 3. Whenever the song changes, mark the player as not-ready (so it can reinitialize)
