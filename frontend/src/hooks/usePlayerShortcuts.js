@@ -40,6 +40,25 @@ function usePlayerShortcuts({
 }) {
   const lastTapRef = useRef({ time: 0, side: null });
 
+  const showBlinkMessage = (message) => {
+    const container = document.getElementById('seek-overlay-container');
+    if (!container) return;
+
+    const id = message.includes('+') ? 'seek-message-right' : 'seek-message-left';
+    document.getElementById(id)?.remove();
+
+    const el = document.createElement('div');
+    el.id = id;
+    el.className = `seek-message ${id}`;
+    el.textContent = message;
+
+    container.appendChild(el);
+
+    setTimeout(() => {
+      el.remove();
+    }, 800);
+  };
+
   const showAndResetUI = useCallback(() => {
     if (!setShowUI || !uiTimeoutRef) return;
     setShowUI(true);
@@ -82,15 +101,15 @@ function usePlayerShortcuts({
           break;
 
         case 'ArrowLeft':
-          // e.preventDefault(); // preventDefault not necessary unless focus is inside input
           showAndResetUI();
           onSeek(Math.max(currentTime - 5, 0));
+          showBlinkMessage('-5 seconds');
           break;
 
         case 'ArrowRight':
-          // e.preventDefault();
           showAndResetUI();
           onSeek(Math.min(currentTime + 5, duration));
+          showBlinkMessage('+5 seconds');
           break;
 
         case 'KeyF':
@@ -143,8 +162,10 @@ function usePlayerShortcuts({
         showAndResetUI();
         if (side === 'left') {
           onSeek(Math.max(currentTime - 5, 0));
+          showBlinkMessage('-5 seconds');
         } else {
           onSeek(Math.min(currentTime + 5, duration));
+          showBlinkMessage('+5 seconds');
         }
       }
 
@@ -153,7 +174,6 @@ function usePlayerShortcuts({
     [onSeek, currentTime, duration, showAndResetUI]
   );
 
-  // Attach handlers
   useEffect(() => {
     window.addEventListener('keydown', handleKeyDown);
     window.addEventListener('touchstart', handleTouchStart);
@@ -164,7 +184,6 @@ function usePlayerShortcuts({
     };
   }, [handleKeyDown, handleTouchStart]);
 
-  // Ensure container is focusable for arrow keys (if needed)
   useEffect(() => {
     if (containerRef?.current) {
       containerRef.current.tabIndex = -1;

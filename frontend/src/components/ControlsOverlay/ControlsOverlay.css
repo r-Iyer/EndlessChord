@@ -1,3 +1,9 @@
+@keyframes fadeBlink {
+  0% { opacity: 0; }
+  10% { opacity: 1; }
+  90% { opacity: 1; }
+  100% { opacity: 0; }
+}
 /* Main container that covers the entire video */
 .controls-overlay {
   position: absolute;
@@ -93,4 +99,45 @@
 
 .video-slider-row .seek-button:hover {
   background: rgba(255, 255, 255, 0.1);
+}
+
+.controls-overlay-relative {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.seek-overlay-container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 100%;
+  z-index: 10;
+  pointer-events: none;
+}
+
+.seek-message {
+  animation: fadeBlink 1s ease-in-out;
+  background: rgba(0, 0, 0, 0.7);
+  color: white;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-size: 0.857rem;
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
+  z-index: 10;
+  white-space: nowrap;
+}
+
+/* Push further outward from center */
+.seek-message-left {
+  left: -50%;
+}
+
+.seek-message-right {
+  right: -50%;
 }

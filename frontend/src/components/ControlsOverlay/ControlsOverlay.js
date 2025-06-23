@@ -21,14 +21,18 @@ export default function ControlsOverlay({
   return (
     <div className="controls-overlay">
       {/* Center Play/Prev/Next */}
-      <div className={`controls-overlay__center ${isFullscreen ? 'fullscreen' : ''}`}>
-        <PrevPlayNextControls
-          isPlaying={isPlaying}
-          onPlayPause={onPlayPause}
-          onNext={onNext}
-          onPrevious={onPrevious}
-        />
-      </div>
+<div className={`controls-overlay__center ${isFullscreen ? 'fullscreen' : ''}`}>
+  <div className="controls-overlay-relative">
+    <div id="seek-overlay-container" className="seek-overlay-container" />
+    <PrevPlayNextControls
+      isPlaying={isPlaying}
+      onPlayPause={onPlayPause}
+      onNext={onNext}
+      onPrevious={onPrevious}
+    />
+  </div>
+</div>
+
 
       {/* Bottom Controls Footer */}
       <ControlsFooter
