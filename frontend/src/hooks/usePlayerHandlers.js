@@ -146,6 +146,7 @@ export default function usePlayerHandlers(
     if (currentSong && currentSong._id) {
       updatePlayCount(currentSong._id);
     }
+    setShowInfo(false);
 
     if (history.length > 0) {
       const prevSong = history[history.length - 1];
@@ -157,18 +158,7 @@ export default function usePlayerHandlers(
       playerRef.current.seekTo(0, true);
       setCurrentTime(0);
     }
-  }, [
-    currentSong,
-    history,
-    nextSong,
-    playerRef,
-    setCurrentSong,
-    setNextSong,
-    setQueue,
-    setHistory,
-    setCurrentTime,
-    updatePlayCount,
-  ]);
+  }, [currentSong, setShowInfo, history, playerRef, updatePlayCount, setHistory, nextSong, setQueue, setNextSong, setCurrentSong, setCurrentTime]);
 
   /**
    * Skip to the next song in the queue.
@@ -178,6 +168,7 @@ export default function usePlayerHandlers(
   const handleNextSong = useCallback(() => {
     if (currentSong?._id) updatePlayCount(currentSong._id);
 
+    setShowInfo(false);
     if (nextSong) {
       setHistory((prev) => [...prev, currentSong]);
       setCurrentSong(nextSong);
@@ -188,17 +179,7 @@ export default function usePlayerHandlers(
     } else {
       fetchMoreSongs(true);
     }
-  }, [
-    currentSong,
-    nextSong,
-    queue,
-    setHistory,
-    setCurrentSong,
-    setNextSong,
-    setQueue,
-    fetchMoreSongs,
-    updatePlayCount,
-  ]);
+  }, [currentSong, updatePlayCount, setShowInfo, nextSong, setHistory, setCurrentSong, queue, setNextSong, setQueue, fetchMoreSongs]);
 
   /**
    * Skip to a “later” song: move currentSong & nextSong to history,

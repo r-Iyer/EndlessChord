@@ -4,6 +4,10 @@ import "./SongInfo.css";
 export default function SongInfo({ song, nextSong, laterSong, visible, onNext, onLater }) {
   const [showNext, setShowNext] = useState(false);
 
+  const isMobilePortrait = window.innerWidth <= 768 && window.innerHeight > window.innerWidth;
+  if(isMobilePortrait)
+      visible = true;
+
   useEffect(() => {
     setShowNext(false);
     if (visible && (nextSong || laterSong)) {
