@@ -90,19 +90,23 @@ export default function usePlayerEffects({
   // ----------------------------------------------------------------------
 useEffect(() => {
   const toggleUIVisibility = (e) => {
-    const el = e.target;
+const path = e.composedPath();
 
-    // If user clicked on a button, icon, or any control — don't toggle UI
-    if (
-      el.closest('button') ||
-      el.closest('.control-button') ||
-      el.closest('.song-button') || // for SongInfo next/later
-      el.closest('.slider') ||      // if you have a timer slider
-      el.tagName === 'SVG' ||
-      el.tagName === 'path'         // lucide-react icons
-    ) {
-      return;
-    }
+const clickedInsideControls = path.some((el) => {
+  if (!(el instanceof HTMLElement)) return false;
+  return (
+    el.tagName === 'BUTTON' ||
+    el.classList.contains('control-button') ||
+    el.classList.contains('song-button') ||
+    el.classList.contains('slider') ||
+    el.closest('.control-button') ||
+    el.closest('.song-button') ||
+    el.closest('.slider')
+  );
+});
+
+if (clickedInsideControls) return;
+
 
     setShowUI(prev => {
       const shouldShow = !prev;
