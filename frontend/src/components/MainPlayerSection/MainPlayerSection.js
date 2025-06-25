@@ -33,6 +33,7 @@ export default function MainPlayerSection({
   onCCToggle,
   isFetchingSongs,
   channelSelectorRef,
+  playPauseRef,
 }) {
   if (showLoader) {
     return (
@@ -68,6 +69,7 @@ export default function MainPlayerSection({
         onCCToggle={onCCToggle}
         user={user}
         channelSelectorRef={channelSelectorRef}
+        playPauseRef={playPauseRef}
       />
     );
   }

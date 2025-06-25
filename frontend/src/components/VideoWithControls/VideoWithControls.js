@@ -22,7 +22,8 @@ export default function VideoWithControls({
   onSeek,
   user,
   showUI,
-  channelSelectorRef
+  channelSelectorRef,
+  playPauseRef,
 }) {
   const videoContainerRef = useRef(null);
 
@@ -60,6 +61,7 @@ export default function VideoWithControls({
           currentTime={currentTime}
           duration={duration}
           channelSelectorRef={channelSelectorRef}
+          playPauseRef={playPauseRef}
         />
       </div>
     </div>

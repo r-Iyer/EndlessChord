@@ -29,6 +29,7 @@ export default function Header({
   setChannelNameInURL,
   selectChannel,
   channelSelectorRef,
+  playPauseRef
 }) {
   const [languageFilter, setLanguageFilter] = useState('');
 
@@ -115,6 +116,7 @@ export default function Header({
               onSelectChannel={handleChannelSelect}
               clearSearch={clearSearch}
               disabled={isSearchMode}
+              playPauseRef={playPauseRef} 
             />
           </div>
         </div>

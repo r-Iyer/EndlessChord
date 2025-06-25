@@ -26,6 +26,7 @@ export default function PlayerContainer({
   onCCToggle,
   user,
   channelSelectorRef,
+  playPauseRef,
 }) {
   const [isVideoLoaded, setIsVideoLoaded] = useState(false);
 
@@ -65,6 +66,7 @@ export default function PlayerContainer({
         user={user}
         showUI={showUI}
         channelSelectorRef={channelSelectorRef}
+        playPauseRef={playPauseRef}
       />
 
       <SongInfo

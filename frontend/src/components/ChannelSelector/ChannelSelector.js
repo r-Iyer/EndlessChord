@@ -3,30 +3,29 @@ import './ChannelSelector.css';
 
 /**
  * Converts a channel name to a URL-friendly slug.
- * Replaces spaces with hyphens and converts to lowercase.
- * @param {string} name - The channel name
- * @returns {string} slugified string
  */
 export function slugify(name) {
   return name.replace(/\s+/g, '-').toLowerCase();
 }
 
 /**
- * ChannelSelector component renders a list of channels as buttons.
- * Highlights the current selected channel and triggers callbacks on selection.
- * 
- * @param {Object[]} channels - Array of channel objects
- * @param {Object} currentChannel - Currently selected channel object
- * @param {Function} onSelectChannel - Callback fired with slugified channel name on selection
- * @param {Function} clearSearch - Callback to clear any existing search/filter before selection
+ * ChannelSelector lets users pick channels.
+ * ArrowDown from any button moves focus to Play/Pause (via ref).
  */
 const ChannelSelector = forwardRef(function ChannelSelector(
-  { channels, currentChannel, onSelectChannel, clearSearch },
+  { channels, currentChannel, onSelectChannel, clearSearch, playPauseRef },
   ref
 ) {
   const firstButtonRef = useRef(null);
 
-  // Auto-focus the first channel button on mount for Firestick navigation
+  useImperativeHandle(ref, () => ({
+    focusFirstButton: () => {
+      if (firstButtonRef.current) {
+        firstButtonRef.current.focus();
+      }
+    },
+  }));
+
   useEffect(() => {
     if (firstButtonRef.current) {
       firstButtonRef.current.focus();
@@ -38,14 +37,12 @@ const ChannelSelector = forwardRef(function ChannelSelector(
     onSelectChannel(slugify(channelName));
   };
 
-  // Expose focus method to parent
-  useImperativeHandle(ref, () => ({
-    focusFirstButton: () => {
-      if (firstButtonRef.current) {
-        firstButtonRef.current.focus();
-      }
-    },
-  }));
+  const handleKeyDown = (e) => {
+    if (e.code === 'ArrowDown' && playPauseRef?.current) {
+      e.preventDefault();
+      playPauseRef.current.focus();
+    }
+  };
 
   return (
     <div className="channel-selector">
@@ -59,13 +56,7 @@ const ChannelSelector = forwardRef(function ChannelSelector(
               handleChannelClick(channel.name);
             }
           }}
-          onKeyDown={(e) => {
-            if (e.code === 'Enter' || e.code === 'NumpadEnter') {
-              if (!currentChannel || currentChannel._id !== channel._id) {
-                handleChannelClick(channel.name);
-              }
-            }
-          }}
+          onKeyDown={handleKeyDown}
           type="button"
           tabIndex={0}
           autoFocus={index === 0}

@@ -34,6 +34,8 @@ import { useEffect, useCallback } from 'react';
  *   True when the player has finished loading and is ready to report time updates.
  * @param {boolean} params.isPlaying
  *   True if audio playback is currently in progress.
+ * @param {Object} params.playPauseRef
+ *   Ref to the play/pause button, used to autofocus when UI shows via remote key
  *
  * @returns {Object}
  *   - showSongInfo: A callback to force-show the song info overlay (and restart its auto-hide timer).
@@ -52,6 +54,7 @@ export default function usePlayerEffects({
   setPlayerReady,
   playerReady,
   isPlaying,
+  playPauseRef,
 }) {
   // ----------------------------------------------------------------------
   // 1. Callback to show song info overlay, and auto-hide after 8 seconds (if playing)
@@ -113,7 +116,7 @@ export default function usePlayerEffects({
           el.closest('.control-button') ||
           el.closest('.song-button') ||
           el.closest('.slider') ||
-          el.closest('.slider-input')    
+          el.closest('.slider-input')
         );
       });
 
@@ -141,7 +144,7 @@ export default function usePlayerEffects({
       showUIWithTimeout();
     };
 
-    // ✅ NEW: Remote or keyboard-based interaction brings back UI
+    // ✅ NEW: Remote or keyboard-based interaction brings back UI and focuses play/pause if UI was hidden
     const handleKeyDown = (e) => {
       const remoteKeys = [
         'ArrowUp',
@@ -155,7 +158,12 @@ export default function usePlayerEffects({
       ];
 
       if (remoteKeys.includes(e.code)) {
-        setShowUI(true);
+        setShowUI((wasShown) => {
+          if (!wasShown && playPauseRef?.current) {
+            playPauseRef.current.focus();
+          }
+          return true;
+        });
         resetUIHideTimer();
       }
     };
@@ -179,7 +187,7 @@ export default function usePlayerEffects({
       window.removeEventListener('keydown', handleKeyDown);
       if (uiTimeoutRef.current) clearTimeout(uiTimeoutRef.current);
     };
-  }, [setShowUI, uiTimeoutRef]);
+  }, [setShowUI, uiTimeoutRef, playPauseRef]);
 
   // ----------------------------------------------------------------------
   // 3. Reset player ready flag whenever the song changes

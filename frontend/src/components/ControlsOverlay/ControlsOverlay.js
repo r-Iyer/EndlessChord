@@ -19,9 +19,9 @@ export default function ControlsOverlay({
   currentTime,
   duration,
   channelSelectorRef,
+  playPauseRef,
 }) {
   // Refs for focus redirection
-  const playPauseRef = useRef(null);     // used for ArrowUp
   const fullscreenRef = useRef(null);    // used for ArrowDown
 
   return (

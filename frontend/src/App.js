@@ -28,6 +28,7 @@ function App() {
   const [showUI, setShowUI] = useState(true);
   const [backendError, setBackendError] = useState(false);
   const channelSelectorRef = useRef(null);
+  const playPauseRef = useRef(null);
   
   // Playback state
   const [currentChannel, setCurrentChannel] = useState(null);
@@ -149,7 +150,8 @@ function App() {
     uiTimeoutRef,
     setPlayerReady,
     playerReady,
-    isPlaying
+    isPlaying,
+    playPauseRef
   });
   
   // Channel selection & URL handling
@@ -249,6 +251,7 @@ function App() {
     setChannelNameInURL={setChannelNameInURL}
     selectChannel={selectChannel}
     channelSelectorRef={channelSelectorRef}
+    playPauseRef={playPauseRef}
     />
     
     <main className="main-container">
@@ -292,6 +295,7 @@ function App() {
     onCCToggle={() => setIsCCEnabled(prev => !prev)}
     isFetchingSongs = {isFetchingSongs}
     channelSelectorRef={channelSelectorRef}
+    playPauseRef={playPauseRef}
     />
     </main>
     </div>
