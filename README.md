@@ -4,7 +4,7 @@
 ![React](https://img.shields.io/badge/React-18.2-blue)
 ![Node.js](https://img.shields.io/badge/Node.js-20-green)
 
-**Endless Chord** provides an immersive, TV-style audio-visual streaming experience. This modern web application offers a continuous, endless stream of curated music channels, powered by YouTube and enhanced with intelligent, AI-driven recommendations. Dive into a seamless world of music and video discovery, presented through a sleek and intuitive interface designed for non-stop enjoyment.
+**Endless Chord** provides an immersive, TV-style audio-visual streaming experience. This modern web application offers a continuous, endless stream of curated music channels, powered by YouTube and enhanced with intelligent, AI-driven recommendations. Dive into a seamless world of music and video discovery, presented through a sleek and intuitive interface designed for non-stop, ad-free enjoyment across all your devices.
 
 ---
 
@@ -12,7 +12,9 @@
 
 | Feature | Description |
 | :--- | :--- |
-| 🎬 **Seamless Channel Streaming** | Effortlessly switch between curated, genre-based channels like "Hindi Hits" and "English Pop." Experience a continuous audio-visual stream, with a visually rich, full-screen interface. |
+| 🎬 **Seamless Channel Streaming** | Effortlessly switch between curated, genre-based channels like "Hindi Hits" and "English Pop". Experience a continuous audio-visual stream, with a visually rich, full-screen interface. |
+| 🚫 **Completely Ad-Free** | Your immersion is paramount. Enjoy an uninterrupted, zero-advertisement experience from start to finish. |
+| 💻 **Multi-Platform Experience** | Designed for every screen. Enjoy a fully responsive interface, whether on a desktop browser, mobile device, or a big screen like a Smart TV or Amazon Fire TV. |
 | 🔁 **Uninterrupted Playback** | Your personal soundtrack never stops. Tracks flow seamlessly one after another, with intuitive controls to skip or revisit songs. |
 | 🎚 **Elegant & Adaptive Controls** | A minimalist UI that stays out of your way. Controls for playback, volume, and progress intelligently appear when needed and fade away to keep the focus on the content. |
 | 🔍 **Universal Smart Search** | Instantly find any track, artist, album, or composer. Our powerful search delves deep into our extensive music library to bring you exactly what you're looking for. |
@@ -73,6 +75,43 @@ Before you begin, ensure you have the following installed and configured:
 
 ---
 
+## 📱 Build for Android (Optional)
+
+Endless Chord can be compiled into a native Android APK for a dedicated mobile experience.
+
+### Prerequisites for Android Build
+
+-   **Android Studio**: Ensure you have Android Studio and the Android SDK properly installed and configured.
+-   **Capacitor**: The project is already set up with Capacitor.
+
+### Build Steps
+
+1.  **Build the React App**
+    From the `frontend` directory, create a production build of the React application.
+    ```bash
+    # Make sure you are in the 'frontend' directory
+    npm run build
+    ```
+
+2.  **Copy Assets to Native Project**
+    Use the Capacitor CLI to copy the web assets into your native Android project.
+    ```bash
+    npx cap copy android
+    ```
+
+3.  **Build the APK**
+    Navigate to the `android` directory and use Gradle to assemble the debug APK.
+    ```bash
+    cd android
+    ./gradlew assembleDebug
+    ```
+
+4.  **Locate the APK**
+    Once the build is complete, you can find your APK file in the following location:
+    `android/app/build/outputs/apk/debug/app-debug.apk`
+
+---
+
 ## 🛠 Technology Stack
 
 | Category | Technology |
@@ -81,6 +120,7 @@ Before you begin, ensure you have the following installed and configured:
 | **Backend** | Node.js, Express.js |
 | **Database** | MongoDB Atlas |
 | **Services** | Firebase Authentication, Google Gemini API, YouTube API |
+| **Mobile** | Capacitor |
 
 ---
 
@@ -91,7 +131,7 @@ Before you begin, ensure you have the following installed and configured:
 -   **Search Music**: Just type any artist, composer, album, or song title into the search bar and click the magnifying-glass icon in the top-right to instantly find and play your music.
 -   **Fullscreen Mode**: Use the dedicated fullscreen button for an immersive view.
 -   **Skip Tracks**: Use the on-screen previous/next buttons or your keyboard's 'q' and 'e' buttons to navigate the playlist.
--   **Forward / Backward**: Use the on-screen "+5" and "-5" buttons or your keyboard's arrows to move forward or backward a song.
+-   **Forward / Backward**: Use the on-screen "+5" and "-5" buttons or your keyboard's arrow keys to move forward or backward within a song.
 -   **Captions**: Use the on-screen captions button to toggle on/off captions.
 
 ### User Features
@@ -100,13 +140,12 @@ Before you begin, ensure you have the following installed and configured:
 -   **AI Recommendations**: Discover new tracks suggested by our AI under each channel, tailored specifically to your listening history.
 -   **Song Card**: View an elegantly framed card displaying the current track’s title, album, artist, composer, release year, and genre, with subtle previews of what's coming next and later.
 
-
 ---
 
 ## 🌐 Deployment
 
--   **Frontend**: Ready for deployment on services like Vercel, Netlify, or AWS Amplify.
--   **Backend**: Can be deployed on platforms such as Heroku, Render, or any VPS.
+-   **Frontend**: Ready for deployment on services like Vercel.
+-   **Backend**: Can be deployed on platforms like Vercel.
 -   **Database**: Utilizes a MongoDB Atlas Cluster for a scalable and reliable database solution.
 
 ---
