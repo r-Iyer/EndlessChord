@@ -13,7 +13,7 @@ export function slugify(name) {
  * ArrowDown from any button moves focus to Play/Pause (via ref).
  */
 const ChannelSelector = forwardRef(function ChannelSelector(
-  { channels, currentChannel, onSelectChannel, clearSearch, playPauseRef },
+  { channels, currentChannel, onSelectChannel, clearSearch, playPauseRef, disabled = false },
   ref
 ) {
   const firstButtonRef = useRef(null);
@@ -27,10 +27,10 @@ const ChannelSelector = forwardRef(function ChannelSelector(
   }));
 
   useEffect(() => {
-    if (firstButtonRef.current) {
+    if (!disabled && firstButtonRef.current) {
       firstButtonRef.current.focus();
     }
-  }, []);
+  }, [disabled]);
 
   const handleChannelClick = (channelName) => {
     clearSearch();
@@ -58,8 +58,8 @@ const ChannelSelector = forwardRef(function ChannelSelector(
           }}
           onKeyDown={handleKeyDown}
           type="button"
-          tabIndex={0}
-          autoFocus={index === 0}
+          tabIndex={disabled ? -1 : 0}
+          disabled={disabled}
         >
           <div className="channel-content">
             <span className="channel-indicator" />
