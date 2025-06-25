@@ -5,12 +5,12 @@ import { useEffect, useCallback, useRef } from 'react';
  *  - Q: Previous
  *  - E: Next
  *  - Space: Play/Pause
- *  - ←: Seek -5s
- *  - →: Seek +5s
+ *  - ←: Seek -5s (disabled)
+ *  - →: Seek +5s (disabled)
  *  - F: Fullscreen
  *  - C: Captions
  *  - R: Restart
- *  - Double-tap left/right on mobile: Seek -/+ 5s
+ *  - Double-tap left/right on mobile: Seek -/+ 5s (disabled)
  *
  * @param {Object} params
  * @param {Function} params.onSeek
@@ -100,17 +100,17 @@ function usePlayerShortcuts({
           onPlayPause();
           break;
 
-        case 'ArrowLeft':
-          showAndResetUI();
-          onSeek(Math.max(currentTime - 5, 0));
-          showBlinkMessage('-5 seconds');
-          break;
+        // case 'ArrowLeft':
+        //   showAndResetUI();
+        //   onSeek(Math.max(currentTime - 5, 0));
+        //   showBlinkMessage('-5 seconds');
+        //   break;
 
-        case 'ArrowRight':
-          showAndResetUI();
-          onSeek(Math.min(currentTime + 5, duration));
-          showBlinkMessage('+5 seconds');
-          break;
+        // case 'ArrowRight':
+        //   showAndResetUI();
+        //   onSeek(Math.min(currentTime + 5, duration));
+        //   showBlinkMessage('+5 seconds');
+        //   break;
 
         case 'KeyF':
           e.preventDefault();
@@ -149,27 +149,28 @@ function usePlayerShortcuts({
 
   const handleTouchStart = useCallback(
     (e) => {
-      const now = Date.now();
-      const touch = e.touches?.[0];
-      if (!touch) return;
+      // --- Double-tap to seek is currently disabled ---
+      // const now = Date.now();
+      // const touch = e.touches?.[0];
+      // if (!touch) return;
 
-      const x = touch.clientX;
-      const width = window.innerWidth;
-      const side = x < width / 2 ? 'left' : 'right';
-      const delta = now - lastTapRef.current.time;
+      // const x = touch.clientX;
+      // const width = window.innerWidth;
+      // const side = x < width / 2 ? 'left' : 'right';
+      // const delta = now - lastTapRef.current.time;
 
-      if (delta < 300 && lastTapRef.current.side === side) {
-        showAndResetUI();
-        if (side === 'left') {
-          onSeek(Math.max(currentTime - 5, 0));
-          showBlinkMessage('-5 seconds');
-        } else {
-          onSeek(Math.min(currentTime + 5, duration));
-          showBlinkMessage('+5 seconds');
-        }
-      }
+      // if (delta < 300 && lastTapRef.current.side === side) {
+      //   showAndResetUI();
+      //   if (side === 'left') {
+      //     onSeek(Math.max(currentTime - 5, 0));
+      //     showBlinkMessage('-5 seconds');
+      //   } else {
+      //     onSeek(Math.min(currentTime + 5, duration));
+      //     showBlinkMessage('+5 seconds');
+      //   }
+      // }
 
-      lastTapRef.current = { time: now, side };
+      // lastTapRef.current = { time: now, side };
     },
     [onSeek, currentTime, duration, showAndResetUI]
   );

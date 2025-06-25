@@ -17,37 +17,41 @@
   font-size: 0.95rem;
   line-height: 1.25rem;
   border-radius: 9999px;
-  background-color:rgba(17, 24, 39, 0.68);
+  background-color: rgba(17, 24, 39, 0.68);
   color: #e5e7eb;            /* gray-200 */
-  box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
   transition: transform 200ms ease, box-shadow 200ms ease, background-color 200ms;
+  border: none;
 }
 
+/* Hover effect for mouse users */
 .channel-button:hover {
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
   background-color: #4b5563; /* gray-600 */
 }
 
+/* Selected channel */
 .channel-button.active {
-  background-color:rgb(97, 10, 236); /* purple-700 */
+  background-color: rgb(97, 10, 236); /* purple-700 */
   color: #ffffff;
   box-shadow: 
     0 0 0 3px rgba(109, 40, 217, 0.6), 
-    0 4px 10px rgba(0,0,0,0.2);
+    0 4px 10px rgba(0, 0, 0, 0.2);
   animation: purple-glow 1.5s ease-in-out infinite alternate;
 }
+
 
 @keyframes purple-glow {
   from {
     box-shadow: 
-      0 0 6px rgba(109,40,217,0.4), 
-      0 4px 10px rgba(0,0,0,0.2);
+      0 0 6px rgba(109, 40, 217, 0.4), 
+      0 4px 10px rgba(0, 0, 0, 0.2);
   }
   to {
     box-shadow: 
-      0 0 16px rgba(109,40,217,0.8), 
-      0 4px 10px rgba(0,0,0,0.2);
+      0 0 16px rgba(109, 40, 217, 0.8), 
+      0 4px 10px rgba(0, 0, 0, 0.2);
   }
 }
 

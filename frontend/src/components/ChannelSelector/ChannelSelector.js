@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react';
 import './ChannelSelector.css';
 
 /**
@@ -20,6 +21,15 @@ export function slugify(name) {
  * @param {Function} clearSearch - Callback to clear any existing search/filter before selection
  */
 function ChannelSelector({ channels, currentChannel, onSelectChannel, clearSearch }) {
+  const firstButtonRef = useRef(null);
+
+  // Auto-focus the first channel button on mount for Firestick navigation
+  useEffect(() => {
+    if (firstButtonRef.current) {
+      firstButtonRef.current.focus();
+    }
+  }, []);
+
   // Handles click on a channel button:
   // Clears search input, then triggers onSelectChannel with the slugified channel name.
   const handleChannelClick = (channelName) => {
@@ -29,17 +39,25 @@ function ChannelSelector({ channels, currentChannel, onSelectChannel, clearSearc
 
   return (
     <div className="channel-selector">
-      {channels.map(channel => (
+      {channels.map((channel, index) => (
         <button
           key={channel._id}
+          ref={index === 0 ? firstButtonRef : null}
           className={`channel-button ${currentChannel?._id === channel._id ? 'active' : ''}`}
           onClick={() => {
-            // Only trigger selection if this channel isn't currently selected
             if (!currentChannel || currentChannel._id !== channel._id) {
               handleChannelClick(channel.name);
             }
           }}
+          onKeyDown={(e) => {
+            if (e.code === 'Enter' || e.code === 'NumpadEnter') {
+              if (!currentChannel || currentChannel._id !== channel._id) {
+                handleChannelClick(channel.name);
+              }
+            }
+          }}
           type="button"
+          tabIndex={0} // ✅ Make button focusable by Firestick/remote
         >
           <div className="channel-content">
             {/* Visual indicator for the channel */}
