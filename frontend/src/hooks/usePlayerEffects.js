@@ -112,7 +112,8 @@ export default function usePlayerEffects({
           el.classList.contains('slider') ||
           el.closest('.control-button') ||
           el.closest('.song-button') ||
-          el.closest('.slider')
+          el.closest('.slider') ||
+          el.closest('.slider-input')    
         );
       });
 

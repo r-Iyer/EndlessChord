@@ -1,4 +1,3 @@
-import React from 'react';
 import { Play, Pause, SkipForward, SkipBack } from 'lucide-react';
 import './PrevPlayNextControls.css';
 
@@ -13,14 +12,19 @@ export default function PrevPlayNextControls({
   const handleKeyDown = (e) => {
     if (e.code === 'ArrowUp' && focusChannelList) {
       e.preventDefault();
-      focusChannelList(); // focus channel list when pressing ↑
+      focusChannelList();
     }
   };
 
   return (
     <div className="prev-play-next-controls">
       <div className="tooltip-wrapper" data-tooltip="Previous">
-        <button className="control-button" onClick={onPrevious} aria-label="Previous">
+        <button
+          className="control-button"
+          onClick={onPrevious}
+          onKeyDown={handleKeyDown}
+          aria-label="Previous"
+        >
           <SkipBack />
         </button>
       </div>
@@ -41,7 +45,12 @@ export default function PrevPlayNextControls({
       </div>
 
       <div className="tooltip-wrapper" data-tooltip="Next">
-        <button className="control-button" onClick={onNext} aria-label="Next">
+        <button
+          className="control-button"
+          onClick={onNext}
+          onKeyDown={handleKeyDown}
+          aria-label="Next"
+        >
           <SkipForward />
         </button>
       </div>

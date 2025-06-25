@@ -1,12 +1,14 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import "./SongInfo.css";
 
 export default function SongInfo({ song, nextSong, laterSong, visible, onNext, onLater }) {
   const [showNext, setShowNext] = useState(false);
 
+  const nextRef = useRef(null);
+  const laterRef = useRef(null);
+
   const isMobilePortrait = window.innerWidth <= 768 && window.innerHeight > window.innerWidth;
-  if(isMobilePortrait)
-      visible = true;
+  if (isMobilePortrait) visible = true;
 
   useEffect(() => {
     setShowNext(false);
@@ -17,6 +19,20 @@ export default function SongInfo({ song, nextSong, laterSong, visible, onNext, o
   }, [visible, nextSong, laterSong]);
 
   if (!song) return null;
+
+  const handleNextKeyDown = (e) => {
+    if (e.code === 'ArrowRight' && laterRef.current) {
+      e.preventDefault();
+      laterRef.current.focus();
+    }
+  };
+
+  const handleLaterKeyDown = (e) => {
+    if (e.code === 'ArrowLeft' && nextRef.current) {
+      e.preventDefault();
+      nextRef.current.focus();
+    }
+  };
 
   return (
     <div className={`song-info-container ${visible ? "visible" : "hidden"}`}>
@@ -60,7 +76,13 @@ export default function SongInfo({ song, nextSong, laterSong, visible, onNext, o
         {showNext && (nextSong || laterSong) && (
           <div className="upcoming-songs">
             {nextSong && (
-              <button className="next-song song-button" onClick={onNext} aria-label={`Play next song: ${nextSong.title}`}>
+              <button
+                className="next-song song-button"
+                onClick={onNext}
+                onKeyDown={handleNextKeyDown}
+                ref={nextRef}
+                aria-label={`Play next song: ${nextSong.title}`}
+              >
                 <div className="queue-label next-label">Next</div>
                 <div className="queue-title">{nextSong.title}</div>
                 <div className="queue-artist">{nextSong.artist}</div>
@@ -68,7 +90,13 @@ export default function SongInfo({ song, nextSong, laterSong, visible, onNext, o
               </button>
             )}
             {laterSong && (
-              <button className="later-song song-button" onClick={onLater} aria-label={`Play later song: ${laterSong.title}`}>
+              <button
+                className="later-song song-button"
+                onClick={onLater}
+                onKeyDown={handleLaterKeyDown}
+                ref={laterRef}
+                aria-label={`Play later song: ${laterSong.title}`}
+              >
                 <div className="queue-label later-label">Later</div>
                 <div className="queue-title">{laterSong.title}</div>
                 <div className="queue-artist">{laterSong.artist}</div>

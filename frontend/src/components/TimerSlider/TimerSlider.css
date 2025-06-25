@@ -63,3 +63,17 @@
   background: white;
   transform: scale(1.1);
 }
+
+.slider-input:focus::-webkit-slider-thumb,
+.slider-input:focus-visible::-webkit-slider-thumb {
+  transform: scale(1.5); /* Zoom effect on focus */
+  background: rgb(180, 102, 1);        /* Red color on focus */
+}
+
+.slider-input:focus::-moz-range-thumb,
+.slider-input:focus-visible::-moz-range-thumb {
+  transform: scale(1.5); /* Zoom effect on focus */
+  background: rgb(180, 102, 1);      /* Red color on focus */
+}
+
+
