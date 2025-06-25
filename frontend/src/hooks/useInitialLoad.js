@@ -105,7 +105,6 @@ const useInitialLoad = ({
         }
       } catch (error) {
         console.error('Error fetching initial data:', error);
-        // We could set some global error state here if desired
       }
     };
 

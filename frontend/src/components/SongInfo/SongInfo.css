@@ -30,7 +30,7 @@
   }
   :fullscreen{
     z-index: 10; /* Keep z-index low on mobile fullscreen */
-    bottom: 7rem; /* Optional: adjust position */
+    bottom: 7rem;
   }
   
 }

@@ -23,7 +23,7 @@ import { useEffect, useCallback } from 'react';
 * @param {Function} [params.onCCToggle]
 * @param {Function} [params.setShowUI]
 * @param {Object} [params.uiTimeoutRef]
-* @param {Object} [params.containerRef] - Optional container to focus for arrow key support
+* @param {Object} [params.containerRef]
 */
 function usePlayerShortcuts({
   onSeek,

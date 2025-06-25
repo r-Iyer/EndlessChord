@@ -24,7 +24,7 @@ export const fetchChannels = async () => {
   } catch (error) {
     // If the error was due to cancelation, just bail out silently
     if (error.name === 'CanceledError' || error.name === 'AbortError') {
-      console.log('✅ Previous fetchChannels call was canceled');
+      console.log('Previous fetchChannels call was canceled');
       return;
     }
     console.error('Error fetching channels:', error);
@@ -48,7 +48,7 @@ export const fetchChannelById = async (channelId, { signal } = {}) => {
     return response.data;
   } catch (error) {
     if (error.name === 'CanceledError' || error.name === 'AbortError') {
-      console.log(`✅ fetchChannelById(${channelId}) call was canceled`);
+      console.log(`fetchChannelById(${channelId}) call was canceled`);
       return;
     }
     console.error(`Error fetching channel ${channelId}:`, error);

@@ -31,7 +31,6 @@ api.interceptors.request.use(
       };
     } catch (err) {
       console.error('Failed to attach auth headers:', err);
-      // Optional: Could reject the request here to prevent unauthenticated calls
     }
 
     // Return the modified config to continue with the request

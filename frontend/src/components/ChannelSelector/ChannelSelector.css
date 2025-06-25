@@ -2,7 +2,7 @@
   padding: 0.5rem;
   display: flex;
   gap: 0.5rem;
-  overflow-x: auto;         /* ✅ enable scrolling if needed */
+  overflow-x: auto;
   overflow-y: hidden;
   scrollbar-width: none;
 }

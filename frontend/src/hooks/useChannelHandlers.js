@@ -114,7 +114,7 @@ export default function useChannelHandlers(
       setCurrentSong(null);
       setNextSong(null);
       setQueue([]);
-      setHistory([]); // ✅ Clear play history when switching channels
+      setHistory([]); // Clear play history when switching channels
       setIsLoading(true);
       setIsFetchingSongs(true);
 

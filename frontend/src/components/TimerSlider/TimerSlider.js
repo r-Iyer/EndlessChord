@@ -100,7 +100,7 @@ export default function TimerSlider({ currentTime = 0, duration = 0, onSeek, sty
         onTouchCancel={handleCommit}
         onKeyUp={handleCommit}
         onBlur={handleCommit}
-        onKeyDown={handleKeyDown} // <-- redirect ↑ ↓ focus
+        onKeyDown={handleKeyDown}
         className="slider-input"
         aria-valuemin={0}
         aria-valuemax={duration}

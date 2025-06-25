@@ -31,7 +31,6 @@ const UserProfile = ({ user, onLogout, onShowAuth, onPlayFavorites }) => {
       onLogout();
     } catch (err) {
       console.error('Logout failed:', err);
-      // Optionally show an error notification to user here
     } finally {
       setShowDropdown(false);
     }
