@@ -18,7 +18,7 @@ export default function ControlsFooter({
   user,
   currentSong,
   onSeek,
-  fullscreenRef, // 👈 receive ref for fullscreen button
+  fullscreenRef,
 }) {
   return (
     <div className="controls-footer">
@@ -55,7 +55,7 @@ export default function ControlsFooter({
           className="control-button"
           onClick={onFullscreenToggle}
           aria-label={isFullscreen ? 'Exit Fullscreen' : 'Enter Fullscreen'}
-          ref={fullscreenRef} // 👈 attach focus ref here
+          ref={fullscreenRef}
         >
           {isFullscreen ? <Minimize /> : <Maximize />}
         </button>
