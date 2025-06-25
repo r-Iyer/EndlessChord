@@ -1,4 +1,4 @@
-import { useEffect, useCallback, useRef } from 'react';
+import { useEffect, useCallback } from 'react';
 
 /**
  * Hook to add keyboard and touch shortcuts for a media player:
@@ -38,26 +38,7 @@ function usePlayerShortcuts({
   uiTimeoutRef,
   containerRef,
 }) {
-  const lastTapRef = useRef({ time: 0, side: null });
 
-  const showBlinkMessage = (message) => {
-    const container = document.getElementById('seek-overlay-container');
-    if (!container) return;
-
-    const id = message.includes('+') ? 'seek-message-right' : 'seek-message-left';
-    document.getElementById(id)?.remove();
-
-    const el = document.createElement('div');
-    el.id = id;
-    el.className = `seek-message ${id}`;
-    el.textContent = message;
-
-    container.appendChild(el);
-
-    setTimeout(() => {
-      el.remove();
-    }, 800);
-  };
 
   const showAndResetUI = useCallback(() => {
     if (!setShowUI || !uiTimeoutRef) return;
@@ -134,17 +115,7 @@ function usePlayerShortcuts({
           break;
       }
     },
-    [
-      onPrevious,
-      onNext,
-      onPlayPause,
-      onSeek,
-      currentTime,
-      duration,
-      onFullscreenToggle,
-      onCCToggle,
-      showAndResetUI,
-    ]
+    [onPrevious, onNext, onPlayPause, onSeek, onFullscreenToggle, onCCToggle, showAndResetUI]
   );
 
   const handleTouchStart = useCallback(
@@ -172,7 +143,7 @@ function usePlayerShortcuts({
 
       // lastTapRef.current = { time: now, side };
     },
-    [onSeek, currentTime, duration, showAndResetUI]
+    []
   );
 
   useEffect(() => {
