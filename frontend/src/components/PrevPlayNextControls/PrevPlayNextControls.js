@@ -7,6 +7,7 @@ export default function PrevPlayNextControls({
   onPlayPause,
   onNext,
   onPrevious,
+  playPauseRef, // <-- ref passed in from parent
 }) {
   return (
     <div className="prev-play-next-controls">
@@ -24,6 +25,7 @@ export default function PrevPlayNextControls({
           className="control-button"
           onClick={onPlayPause}
           aria-label={isPlaying ? 'Pause' : 'Play'}
+          ref={playPauseRef} // <-- assign ref to Play/Pause button
         >
           {isPlaying ? <Pause /> : <Play />}
         </button>

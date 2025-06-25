@@ -71,7 +71,7 @@ export default function usePlayerEffects({
       }, 8000);
     }
   }, [setShowInfo, isPlaying, infoTimeoutRef]);
-  
+
   // When `currentSong` changes, immediately show info and start auto-hide timer
   useEffect(() => {
     if (currentSong) {
@@ -83,25 +83,30 @@ export default function usePlayerEffects({
       }
     };
   }, [currentSong, showSongInfo, infoTimeoutRef]);
-  
+
   // ----------------------------------------------------------------------
   // 2. Auto-hide the player UI after 2.5s of inactivity — show on click or hover
   // ----------------------------------------------------------------------
   useEffect(() => {
     const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
     let lastMoveTime = 0;
-    
-    const showUIWithTimeout = () => {
-      setShowUI(true);
+
+    // Shared logic to (re)start the auto-hide timeout
+    const resetUIHideTimer = () => {
       if (uiTimeoutRef.current) clearTimeout(uiTimeoutRef.current);
       uiTimeoutRef.current = setTimeout(() => {
         setShowUI(false);
       }, 2500);
     };
-    
+
+    const showUIWithTimeout = () => {
+      setShowUI(true);
+      resetUIHideTimer();
+    };
+
     const handleClickOrTouch = (e) => {
       const path = e.composedPath();
-      
+
       const clickedInsideControls = path.some((el) => {
         if (!(el instanceof HTMLElement)) return false;
         return (
@@ -114,46 +119,38 @@ export default function usePlayerEffects({
           el.closest('.slider')
         );
       });
-      
+
       if (clickedInsideControls) {
         // If controls are already visible, restart timeout
         setShowUI(true);
-        if (uiTimeoutRef.current) clearTimeout(uiTimeoutRef.current);
-        uiTimeoutRef.current = setTimeout(() => {
-          setShowUI(false);
-        }, 2500);
+        resetUIHideTimer();
         return;
       }
-      
-      
+
       setShowUI((prev) => {
         const shouldShow = !prev;
-        if (shouldShow && !isTouchDevice) {
-          // Desktop: auto-hide after timeout
-          if (uiTimeoutRef.current) clearTimeout(uiTimeoutRef.current);
-          uiTimeoutRef.current = setTimeout(() => {
-            setShowUI(false);
-          }, 2500);
+        if (shouldShow) {
+          resetUIHideTimer(); // <-- always start timeout when toggling on
         }
         return shouldShow;
       });
     };
-    
+
     const handleMouseMove = (e) => {
       const now = Date.now();
       if (now - lastMoveTime < 300) return; // throttle every 300ms
       lastMoveTime = now;
-      
+
       showUIWithTimeout();
     };
-    
+
     if (isTouchDevice) {
       window.addEventListener('touchstart', handleClickOrTouch, { passive: true });
     } else {
       window.addEventListener('click', handleClickOrTouch);
       window.addEventListener('mousemove', handleMouseMove);
     }
-    
+
     return () => {
       if (isTouchDevice) {
         window.removeEventListener('touchstart', handleClickOrTouch);
@@ -164,22 +161,22 @@ export default function usePlayerEffects({
       if (uiTimeoutRef.current) clearTimeout(uiTimeoutRef.current);
     };
   }, [setShowUI, uiTimeoutRef]);
-  
+
   // ----------------------------------------------------------------------
   // 3. Whenever the song changes, mark the player as not-ready (so it can reinitialize)
   // ----------------------------------------------------------------------
   useEffect(() => {
     setPlayerReady(false);
   }, [currentSong, setPlayerReady]);
-  
+
   // ----------------------------------------------------------------------
   // 4. Poll player every 500ms to update currentTime and duration while playing
   // ----------------------------------------------------------------------
   useEffect(() => {
     let intervalId = null;
-    
+
     const getPlayerInstance = () => playerRef.current;
-    
+
     if (
       currentSong &&
       playerReady &&
@@ -200,28 +197,28 @@ export default function usePlayerEffects({
         }
       }, 500);
     }
-    
+
     return () => {
       if (intervalId) {
         clearInterval(intervalId);
       }
     };
   }, [currentSong, playerReady, setCurrentTime, setDuration, playerRef]);
-  
+
   // ----------------------------------------------------------------------
   // 5. Show song info again at the beginning (first 2s) and near the end (20s before end)
   // ----------------------------------------------------------------------
   useEffect(() => {
     if (!currentSong || !duration) return;
-    
+
     let preEndTimeoutId = null;
     const timeLeft = duration - currentTime;
-    
+
     // If we're within the first 2 seconds, show info immediately
     if (currentTime <= 2) {
       showSongInfo();
     }
-    
+
     // For songs longer than 30s, schedule a show when only 20s remain
     if (duration > 30) {
       if (timeLeft > 20) {
@@ -232,13 +229,13 @@ export default function usePlayerEffects({
         showSongInfo();
       }
     }
-    
+
     return () => {
       if (preEndTimeoutId) {
         clearTimeout(preEndTimeoutId);
       }
     };
   }, [currentSong, duration, currentTime, showSongInfo]);
-  
+
   return { showSongInfo };
 }

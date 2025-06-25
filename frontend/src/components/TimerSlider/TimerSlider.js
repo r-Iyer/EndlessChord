@@ -20,8 +20,10 @@ function formatTime(sec) {
  * - duration: total duration (seconds)
  * - onSeek: callback to seek to a new time
  * - style: optional styles to apply on container
+ * - upRef: ref to element to focus when ArrowUp is pressed
+ * - downRef: ref to element to focus when ArrowDown is pressed
  */
-export default function TimerSlider({ currentTime = 0, duration = 0, onSeek, style }) {
+export default function TimerSlider({ currentTime = 0, duration = 0, onSeek, style, upRef, downRef }) {
   // Local state for slider value (used during dragging)
   const [sliderValue, setSliderValue] = useState(currentTime);
 
@@ -63,14 +65,17 @@ export default function TimerSlider({ currentTime = 0, duration = 0, onSeek, sty
 
   /**
    * Allow Firestick to escape slider with ↑ ↓ keys.
-   * Prevent slider from trapping focus vertically.
-   * Also blur the slider so focus can move to nearby controls.
+   * Manually redirect focus to upRef/downRef for predictable behavior.
    */
   const handleKeyDown = (e) => {
-    if (e.code === 'ArrowUp' || e.code === 'ArrowDown') {
+    if (e.code === 'ArrowUp') {
       e.preventDefault();
       e.stopPropagation();
-      e.target.blur(); // <-- blur to release focus
+      if (upRef?.current) upRef.current.focus(); // focus play/pause button
+    } else if (e.code === 'ArrowDown') {
+      e.preventDefault();
+      e.stopPropagation();
+      if (downRef?.current) downRef.current.focus(); // focus CC button
     }
   };
 
@@ -95,7 +100,7 @@ export default function TimerSlider({ currentTime = 0, duration = 0, onSeek, sty
         onTouchCancel={handleCommit}
         onKeyUp={handleCommit}
         onBlur={handleCommit}
-        onKeyDown={handleKeyDown} // <-- added this to allow escape
+        onKeyDown={handleKeyDown} // <-- redirect ↑ ↓ focus
         className="slider-input"
         aria-valuemin={0}
         aria-valuemax={duration}

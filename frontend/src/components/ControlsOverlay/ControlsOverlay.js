@@ -1,3 +1,4 @@
+import { useRef } from 'react';
 import PrevPlayNextControls from '../PrevPlayNextControls/PrevPlayNextControls';
 import TimerSlider from '../TimerSlider/TimerSlider';
 import ControlsFooter from '../ControlsFooter/ControlsFooter';
@@ -18,21 +19,25 @@ export default function ControlsOverlay({
   currentTime,
   duration,
 }) {
+  // Refs for focus redirection
+  const playPauseRef = useRef(null); // used for ArrowUp
+  const ccRef = useRef(null);        // used for ArrowDown
+
   return (
     <div className="controls-overlay">
       {/* Center Play/Prev/Next */}
-<div className={`controls-overlay__center ${isFullscreen ? 'fullscreen' : ''}`}>
-  <div className="controls-overlay-relative">
-    <div id="seek-overlay-container" className="seek-overlay-container" />
-    <PrevPlayNextControls
-      isPlaying={isPlaying}
-      onPlayPause={onPlayPause}
-      onNext={onNext}
-      onPrevious={onPrevious}
-    />
-  </div>
-</div>
-
+      <div className={`controls-overlay__center ${isFullscreen ? 'fullscreen' : ''}`}>
+        <div className="controls-overlay-relative">
+          <div id="seek-overlay-container" className="seek-overlay-container" />
+          <PrevPlayNextControls
+            isPlaying={isPlaying}
+            onPlayPause={onPlayPause}
+            onNext={onNext}
+            onPrevious={onPrevious}
+            playPauseRef={playPauseRef} // pass down for focus
+          />
+        </div>
+      </div>
 
       {/* Bottom Controls Footer */}
       <ControlsFooter
@@ -43,6 +48,7 @@ export default function ControlsOverlay({
         user={user}
         currentSong={currentSong}
         onSeek={onSeek}
+        ccRef={ccRef} // pass down for focus
       />
 
       {/* Slider Row */}
@@ -51,6 +57,8 @@ export default function ControlsOverlay({
           currentTime={currentTime}
           duration={duration}
           onSeek={onSeek}
+          upRef={playPauseRef}   // ← focus moves up to play/pause
+          downRef={ccRef}        // ↓ focus moves down to CC button
           style={{
             height: 40,
             pointerEvents: 'auto',
