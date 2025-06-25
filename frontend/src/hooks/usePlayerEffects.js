@@ -78,7 +78,6 @@ export default function usePlayerEffects({
       showSongInfo();
     }
     return () => {
-      // Clean up pending timeout when song changes or component unmounts
       if (infoTimeoutRef.current) {
         clearTimeout(infoTimeoutRef.current);
       }
@@ -86,50 +85,63 @@ export default function usePlayerEffects({
   }, [currentSong, showSongInfo, infoTimeoutRef]);
 
   // ----------------------------------------------------------------------
-  // 2. Auto-hide the player UI after 2.5s of mouse/touch inactivity
+  // 2. Auto-hide the player UI after 2.5s of inactivity — show on click or hover
   // ----------------------------------------------------------------------
-useEffect(() => {
-  const toggleUIVisibility = (e) => {
-const path = e.composedPath();
+  useEffect(() => {
+    const handleClick = (e) => {
+      const path = e.composedPath();
 
-const clickedInsideControls = path.some((el) => {
-  if (!(el instanceof HTMLElement)) return false;
-  return (
-    el.tagName === 'BUTTON' ||
-    el.classList.contains('control-button') ||
-    el.classList.contains('song-button') ||
-    el.classList.contains('slider') ||
-    el.closest('.control-button') ||
-    el.closest('.song-button') ||
-    el.closest('.slider')
-  );
-});
+      const clickedInsideControls = path.some((el) => {
+        if (!(el instanceof HTMLElement)) return false;
+        return (
+          el.tagName === 'BUTTON' ||
+          el.classList.contains('control-button') ||
+          el.classList.contains('song-button') ||
+          el.classList.contains('slider') ||
+          el.closest('.control-button') ||
+          el.closest('.song-button') ||
+          el.closest('.slider')
+        );
+      });
 
-if (clickedInsideControls) return;
+      if (clickedInsideControls) return;
 
+      setShowUI((prev) => {
+        const shouldShow = !prev;
+        if (shouldShow) {
+          if (uiTimeoutRef.current) clearTimeout(uiTimeoutRef.current);
+          uiTimeoutRef.current = setTimeout(() => {
+            setShowUI(false);
+          }, 2500);
+        }
+        return shouldShow;
+      });
+    };
 
-    setShowUI(prev => {
-      const shouldShow = !prev;
+    let lastMoveTime = 0;
+    const handleMouseMove = (e) => {
+      const now = Date.now();
+      if (now - lastMoveTime < 300) return; // throttle every 300ms
+      lastMoveTime = now;
 
-      if (shouldShow) {
-        if (uiTimeoutRef.current) clearTimeout(uiTimeoutRef.current);
-        uiTimeoutRef.current = setTimeout(() => {
-          setShowUI(false);
-        }, 2500);
-      }
+      setShowUI(true);
+      if (uiTimeoutRef.current) clearTimeout(uiTimeoutRef.current);
+      uiTimeoutRef.current = setTimeout(() => {
+        setShowUI(false);
+      }, 2500);
+    };
 
-      return shouldShow;
-    });
-  };
+    window.addEventListener('click', handleClick);
+    window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('touchstart', handleMouseMove, { passive: true });
 
-  window.addEventListener('click', toggleUIVisibility);
-
-  return () => {
-    window.removeEventListener('click', toggleUIVisibility);
-    if (uiTimeoutRef.current) clearTimeout(uiTimeoutRef.current);
-  };
-}, [setShowUI, uiTimeoutRef]);
-
+    return () => {
+      window.removeEventListener('click', handleClick);
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('touchstart', handleMouseMove);
+      if (uiTimeoutRef.current) clearTimeout(uiTimeoutRef.current);
+    };
+  }, [setShowUI, uiTimeoutRef]);
 
   // ----------------------------------------------------------------------
   // 3. Whenever the song changes, mark the player as not-ready (so it can reinitialize)
@@ -144,7 +156,6 @@ if (clickedInsideControls) return;
   useEffect(() => {
     let intervalId = null;
 
-    // Helper to get the player instance, if available
     const getPlayerInstance = () => playerRef.current;
 
     if (
@@ -196,7 +207,6 @@ if (clickedInsideControls) return;
           showSongInfo();
         }, (timeLeft - 20) * 1000);
       } else if (timeLeft > 0 && timeLeft <= 20 && currentTime > 2) {
-        // If we just crossed into the last 20 seconds (and past 2s), show info now
         showSongInfo();
       }
     }
