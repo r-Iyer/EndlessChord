@@ -61,6 +61,18 @@ export default function TimerSlider({ currentTime = 0, duration = 0, onSeek, sty
     dragging.current = false;
   };
 
+  /**
+   * Allow Firestick to escape slider with ↑ ↓ keys.
+   * Prevent slider from trapping focus vertically.
+   */
+  const handleKeyDown = (e) => {
+    if (e.code === 'ArrowUp' || e.code === 'ArrowDown') {
+      e.preventDefault();
+      e.stopPropagation();
+      // Let the browser/Firestick move focus elsewhere
+    }
+  };
+
   // Calculate slider fill progress percentage (0-100)
   const progressPercentage = duration > 0 ? (sliderValue / duration) * 100 : 0;
 
@@ -82,6 +94,7 @@ export default function TimerSlider({ currentTime = 0, duration = 0, onSeek, sty
         onTouchCancel={handleCommit}
         onKeyUp={handleCommit}
         onBlur={handleCommit}
+        onKeyDown={handleKeyDown} // <-- added this to allow escape
         className="slider-input"
         aria-valuemin={0}
         aria-valuemax={duration}

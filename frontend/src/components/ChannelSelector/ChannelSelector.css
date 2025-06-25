@@ -2,7 +2,8 @@
   padding: 0.5rem;
   display: flex;
   gap: 0.5rem;
-  overflow-x: auto;
+  overflow-x: visible; /* ✅ Change this */
+  overflow-y: hidden;
   scrollbar-width: none;
 }
 
