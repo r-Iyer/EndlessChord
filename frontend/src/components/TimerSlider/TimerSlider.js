@@ -82,16 +82,24 @@ export default function TimerSlider({ currentTime = 0, duration = 0, onSeek, sty
         onTouchCancel={handleCommit}
         onKeyUp={handleCommit}
         onBlur={handleCommit}
+        onKeyDown={(e) => {
+          // Prevent remote/D-pad getting stuck and incrementing slider forever
+          if (e.code === 'ArrowLeft' || e.code === 'ArrowRight') {
+            e.preventDefault();       // block default 1s movement
+            e.currentTarget.blur();   // remove focus so keypresses resume
+          }
+        }}
         className="slider-input"
         aria-valuemin={0}
         aria-valuemax={duration}
         aria-valuenow={sliderValue}
         aria-label="Seek slider"
+        tabIndex={-1}  // prevent initial focus by Firestick remote
         style={{
-          // CSS variable used in CSS for slider fill color
           '--progress-percentage': `${progressPercentage}%`,
         }}
       />
+
 
       {/* Total duration display */}
       <span className="time-display" aria-label="Total duration">{formatTime(duration)}</span>

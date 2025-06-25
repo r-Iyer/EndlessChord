@@ -40,8 +40,6 @@ function usePlayerShortcuts({
 }) {
   const lastTapRef = useRef({ time: 0, side: null });
 
-  const isFireTV = /AFT|AmazonWebAppPlatform/.test(navigator.userAgent);
-
   const showBlinkMessage = (message) => {
     const container = document.getElementById('seek-overlay-container');
     if (!container) return;
@@ -102,21 +100,13 @@ function usePlayerShortcuts({
           onPlayPause();
           break;
 
-        case 'Enter':
-          e.preventDefault();
-          showAndResetUI();
-          onPlayPause();
-          break;
-
         case 'ArrowLeft':
-          if (isFireTV) return;
           showAndResetUI();
           onSeek(Math.max(currentTime - 5, 0));
           showBlinkMessage('-5 seconds');
           break;
 
         case 'ArrowRight':
-          if (isFireTV) return;
           showAndResetUI();
           onSeek(Math.min(currentTime + 5, duration));
           showBlinkMessage('+5 seconds');
@@ -154,7 +144,6 @@ function usePlayerShortcuts({
       onFullscreenToggle,
       onCCToggle,
       showAndResetUI,
-      isFireTV,
     ]
   );
 
