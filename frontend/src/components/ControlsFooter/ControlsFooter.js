@@ -18,6 +18,7 @@ export default function ControlsFooter({
   user,
   currentSong,
   onSeek,
+  fullscreenRef, // 👈 receive ref for fullscreen button
 }) {
   return (
     <div className="controls-footer">
@@ -45,7 +46,7 @@ export default function ControlsFooter({
 
       {/* Favorite Button */}
       {user && !AuthService.isGuest && (
-          <FavoriteButton song={currentSong} user={user} />
+        <FavoriteButton song={currentSong} user={user} />
       )}
 
       {/* Fullscreen Toggle */}
@@ -54,6 +55,7 @@ export default function ControlsFooter({
           className="control-button"
           onClick={onFullscreenToggle}
           aria-label={isFullscreen ? 'Exit Fullscreen' : 'Enter Fullscreen'}
+          ref={fullscreenRef} // 👈 attach focus ref here
         >
           {isFullscreen ? <Minimize /> : <Maximize />}
         </button>

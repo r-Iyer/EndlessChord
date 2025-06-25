@@ -20,8 +20,8 @@ export default function ControlsOverlay({
   duration,
 }) {
   // Refs for focus redirection
-  const playPauseRef = useRef(null); // used for ArrowUp
-  const ccRef = useRef(null);        // used for ArrowDown
+  const playPauseRef = useRef(null);     // used for ArrowUp
+  const fullscreenRef = useRef(null);    // used for ArrowDown
 
   return (
     <div className="controls-overlay">
@@ -48,7 +48,7 @@ export default function ControlsOverlay({
         user={user}
         currentSong={currentSong}
         onSeek={onSeek}
-        ccRef={ccRef} // pass down for focus
+        fullscreenRef={fullscreenRef} // pass down for ArrowDown focus
       />
 
       {/* Slider Row */}
@@ -57,8 +57,8 @@ export default function ControlsOverlay({
           currentTime={currentTime}
           duration={duration}
           onSeek={onSeek}
-          upRef={playPauseRef}   // ← focus moves up to play/pause
-          downRef={ccRef}        // ↓ focus moves down to CC button
+          upRef={playPauseRef}       // focus up to play/pause
+          downRef={fullscreenRef}    // focus down to fullscreen button
           style={{
             height: 40,
             pointerEvents: 'auto',

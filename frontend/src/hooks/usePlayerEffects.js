@@ -58,12 +58,12 @@ export default function usePlayerEffects({
   // ----------------------------------------------------------------------
   const showSongInfo = useCallback(() => {
     setShowInfo(true);
-    
+
     // Clear any existing timeout so we don't stack multiple hides
     if (infoTimeoutRef.current) {
       clearTimeout(infoTimeoutRef.current);
     }
-    
+
     // Only auto-hide if music is playing
     if (isPlaying) {
       infoTimeoutRef.current = setTimeout(() => {
@@ -125,6 +125,14 @@ export default function usePlayerEffects({
         setShowUI(true);
         resetUIHideTimer();
         return;
+      }
+
+      // 🔥 Blur currently focused button, if any
+      if (
+        document.activeElement &&
+        document.activeElement.tagName === 'BUTTON'
+      ) {
+        document.activeElement.blur();
       }
 
       setShowUI((prev) => {

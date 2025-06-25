@@ -2,7 +2,7 @@
   padding: 0.5rem;
   display: flex;
   gap: 0.5rem;
-  overflow-x: visible; /* ✅ Change this */
+  overflow-x: auto;         /* ✅ enable scrolling if needed */
   overflow-y: hidden;
   scrollbar-width: none;
 }
@@ -12,36 +12,43 @@
 }
 
 .channel-button {
-  flex: 0 0 7rem;        /* fixed width */
+  flex: 0 0 7rem;
   padding: 0.5rem;
   text-align: center;
   font-size: 0.95rem;
   line-height: 1.25rem;
   border-radius: 9999px;
   background-color: rgba(17, 24, 39, 0.68);
-  color: #e5e7eb;            /* gray-200 */
+  color: #e5e7eb;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
   transition: transform 200ms ease, box-shadow 200ms ease, background-color 200ms;
   border: none;
+  outline: none; /* Remove default */
 }
 
 /* Hover effect for mouse users */
 .channel-button:hover {
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-  background-color: #4b5563; /* gray-600 */
+  background-color: #4b5563;
+}
+
+/* Focus outline for TV/keyboard navigation */
+.channel-button:focus-visible {
+  outline: 3px solid #9333ea; /* purple-600 */
+  outline-offset: 2px;
+  z-index: 10;
 }
 
 /* Selected channel */
 .channel-button.active {
-  background-color: rgb(97, 10, 236); /* purple-700 */
+  background-color: rgb(97, 10, 236);
   color: #ffffff;
   box-shadow: 
     0 0 0 3px rgba(109, 40, 217, 0.6), 
     0 4px 10px rgba(0, 0, 0, 0.2);
   animation: purple-glow 1.5s ease-in-out infinite alternate;
 }
-
 
 @keyframes purple-glow {
   from {
@@ -66,7 +73,7 @@
   width: 0.5rem;
   height: 0.5rem;
   border-radius: 9999px;
-  background-color: #34D399; 
+  background-color: #34D399;
   animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
 

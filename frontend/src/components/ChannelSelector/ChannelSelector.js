@@ -30,8 +30,6 @@ function ChannelSelector({ channels, currentChannel, onSelectChannel, clearSearc
     }
   }, []);
 
-  // Handles click on a channel button:
-  // Clears search input, then triggers onSelectChannel with the slugified channel name.
   const handleChannelClick = (channelName) => {
     clearSearch();
     onSelectChannel(slugify(channelName));
@@ -57,11 +55,11 @@ function ChannelSelector({ channels, currentChannel, onSelectChannel, clearSearc
             }
           }}
           type="button"
-          tabIndex={0} // ✅ Make button focusable by Firestick/remote
+          tabIndex={0}
+          autoFocus={index === 0} // ✅ Helps on Fire TV to get initial focus
         >
           <div className="channel-content">
-            {/* Visual indicator for the channel */}
-            <span className="channel-indicator"></span>
+            <span className="channel-indicator" />
             <span>{channel.name}</span>
           </div>
         </button>
