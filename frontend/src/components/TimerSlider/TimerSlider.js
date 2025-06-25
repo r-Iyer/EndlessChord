@@ -24,77 +24,63 @@ function formatTime(sec) {
  * - downRef: ref to element to focus when ArrowDown is pressed
  */
 export default function TimerSlider({ currentTime = 0, duration = 0, onSeek, style, upRef, downRef }) {
-  // Local state for slider value (used during dragging)
   const [sliderValue, setSliderValue] = useState(currentTime);
-
-  // Ref to track if user is currently dragging slider thumb
   const dragging = useRef(false);
 
-  // Sync sliderValue with currentTime prop if not dragging
+  // Sync sliderValue with currentTime when not dragging
   useEffect(() => {
     if (!dragging.current) {
-      // Defensive check: Clamp currentTime between 0 and duration
-      const safeCurrent = Math.min(Math.max(currentTime, 0), duration);
-      setSliderValue(safeCurrent);
+      const safe = Math.min(Math.max(currentTime, 0), duration);
+      setSliderValue(safe);
     }
   }, [currentTime, duration]);
 
-  /**
-   * Handle slider value change while dragging.
-   * Update local sliderValue and mark dragging active.
-   */
   const handleChange = (e) => {
     const val = Number(e.target.value);
-    if (isNaN(val)) return; // ignore invalid input
-    setSliderValue(val);
-    dragging.current = true;
+    if (!isNaN(val)) {
+      setSliderValue(val);
+      dragging.current = true;
+    }
   };
 
-  /**
-   * Commit the slider value change.
-   * Called on mouse/touch/key events signaling end of interaction.
-   */
   const handleCommit = () => {
     if (dragging.current && onSeek) {
-      // Clamp sliderValue between 0 and duration before calling onSeek
-      const seekTime = Math.min(Math.max(sliderValue, 0), duration);
-      onSeek(seekTime);
+      const safeVal = Math.min(Math.max(sliderValue, 0), duration);
+      onSeek(safeVal);
     }
     dragging.current = false;
   };
 
-  /**
-   * Allow Firestick to escape slider with ↑ ↓ keys.
-   * Manually redirect focus to upRef/downRef for predictable behavior.
-   */
   const handleKeyDown = (e) => {
     if (e.code === 'ArrowUp') {
       e.preventDefault();
       e.stopPropagation();
-      if (upRef?.current) upRef.current.focus(); // focus play/pause button
+      upRef?.current?.focus();
     } else if (e.code === 'ArrowDown') {
       e.preventDefault();
       e.stopPropagation();
-      if (downRef?.current) downRef.current.focus(); // focus CC button
+      downRef?.current?.focus();
     }
   };
 
-  // Calculate slider fill progress percentage (0-100)
-  const progressPercentage = duration > 0 ? (sliderValue / duration) * 100 : 0;
+  const progressPercent = duration > 0 ? (sliderValue / duration) * 100 : 0;
 
   return (
     <div className="timer-slider" style={style}>
-      {/* Current time display */}
-      <span className="time-display" aria-label="Current time">{formatTime(sliderValue)}</span>
+      {/* Current time */}
+      <span className="time-display" aria-label="Current time">
+        {formatTime(sliderValue)}
+      </span>
 
-      {/* Range input slider */}
+      {/* Slider */}
       <input
         type="range"
         min={0}
-        max={duration || 1}  // avoid max=0 which breaks slider
-        step={10}
+        max={duration || 1}
+        step={1}
         value={sliderValue}
-        onChange={handleChange}
+        onInput={handleChange}
+        onPointerUp={handleCommit}
         onMouseUp={handleCommit}
         onTouchEnd={handleCommit}
         onTouchCancel={handleCommit}
@@ -106,15 +92,16 @@ export default function TimerSlider({ currentTime = 0, duration = 0, onSeek, sty
         aria-valuemax={duration}
         aria-valuenow={sliderValue}
         aria-label="Seek slider"
-        tabIndex={0} // ensure focusable on TV
+        tabIndex={0}
         style={{
-          // CSS variable used in CSS for slider fill color
-          '--progress-percentage': `${progressPercentage}%`,
+          '--progress-percentage': `${progressPercent}%`
         }}
       />
 
-      {/* Total duration display */}
-      <span className="time-display" aria-label="Total duration">{formatTime(duration)}</span>
+      {/* Duration */}
+      <span className="time-display" aria-label="Total duration">
+        {formatTime(duration)}
+      </span>
     </div>
   );
 }
