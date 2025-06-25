@@ -64,12 +64,13 @@ export default function TimerSlider({ currentTime = 0, duration = 0, onSeek, sty
   /**
    * Allow Firestick to escape slider with ↑ ↓ keys.
    * Prevent slider from trapping focus vertically.
+   * Also blur the slider so focus can move to nearby controls.
    */
   const handleKeyDown = (e) => {
     if (e.code === 'ArrowUp' || e.code === 'ArrowDown') {
       e.preventDefault();
       e.stopPropagation();
-      // Let the browser/Firestick move focus elsewhere
+      e.target.blur(); // <-- blur to release focus
     }
   };
 
@@ -86,7 +87,7 @@ export default function TimerSlider({ currentTime = 0, duration = 0, onSeek, sty
         type="range"
         min={0}
         max={duration || 1}  // avoid max=0 which breaks slider
-        step={1}
+        step={10}
         value={sliderValue}
         onChange={handleChange}
         onMouseUp={handleCommit}
@@ -100,6 +101,7 @@ export default function TimerSlider({ currentTime = 0, duration = 0, onSeek, sty
         aria-valuemax={duration}
         aria-valuenow={sliderValue}
         aria-label="Seek slider"
+        tabIndex={0} // ensure focusable on TV
         style={{
           // CSS variable used in CSS for slider fill color
           '--progress-percentage': `${progressPercentage}%`,
