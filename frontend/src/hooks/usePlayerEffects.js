@@ -150,29 +150,35 @@ export default function usePlayerEffects({
       showUIWithTimeout();
     };
     
-    // ✅ NEW: Remote or keyboard-based interaction brings back UI and focuses play/pause if UI was hidden
-    const handleKeyDown = (e) => {
-      const remoteKeys = [
-        'ArrowUp',
-        'ArrowDown',
-        'ArrowLeft',
-        'ArrowRight',
-        'Enter',
-        'NumpadEnter',
-        'MediaPlayPause',
-        'Space',
-      ];
-      
-      if (remoteKeys.includes(e.code)) {
-        setShowUI((wasShown) => {
-          if (!wasShown && playPauseRef?.current) {
-            playPauseRef.current.focus();
+const handleKeyDown = (e) => {
+  const remoteKeys = [
+    'ArrowUp',
+    'ArrowDown',
+    'ArrowLeft',
+    'ArrowRight',
+    'Enter',
+    'NumpadEnter',
+    'MediaPlayPause',
+    'Space',
+  ];
+
+  if (remoteKeys.includes(e.code)) {
+    setShowUI((wasShown) => {
+      if (!wasShown && playPauseRef?.current) {
+        requestAnimationFrame(() => {
+          playPauseRef.current.focus();
+          if (e.code === 'Space') {
+            playPauseRef.current.click(); // Trigger click only for Spacebar
           }
-          return true;
         });
-        resetUIHideTimer();
       }
-    };
+      return true;
+    });
+    resetUIHideTimer();
+  }
+};
+
+
     
     if (isTouchDevice) {
       window.addEventListener('touchstart', handleClickOrTouch, { passive: true });
