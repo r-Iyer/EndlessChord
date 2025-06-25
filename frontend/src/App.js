@@ -198,7 +198,8 @@ function App() {
     onFullscreenToggle: toggleFullscreen,
     onCCToggle: () => setIsCCEnabled(prev => !prev),
     setShowUI,
-    uiTimeoutRef
+    uiTimeoutRef,
+    playPauseRef,
   });
   
   // Favorites handler

@@ -1,45 +1,45 @@
 import { useEffect, useCallback } from 'react';
 
 /**
- * Manages various side effects related to the music player UI:
- * 1. Automatically shows/hides song info when a new song starts or nears its end.
- * 2. Auto-hides the UI after a period of mouse/touch/remote inactivity.
- * 3. Resets the `playerReady` flag whenever the current song changes.
- * 4. Updates `currentTime` and `duration` every 500ms while a song is playing and the player is ready.
- *
- * @param {Object} params
- * @param {Object|null} params.currentSong
- *   The currently playing song object (or null if none).
- * @param {Function} params.setShowInfo
- *   Setter to control whether the song info overlay is visible.
- * @param {Object} params.infoTimeoutRef
- *   A ref (e.g., `useRef(null)`) used to track the timeout ID for auto-hiding song info.
- * @param {number} params.currentTime
- *   The current playback time (in seconds) of the song.
- * @param {Function} params.setCurrentTime
- *   Setter to update the current playback time.
- * @param {number} params.duration
- *   The total duration (in seconds) of the current song.
- * @param {Function} params.setDuration
- *   Setter to update the song duration.
- * @param {Object} params.playerRef
- *   A ref pointing to the player instance, which must expose `getCurrentTime()` and `getDuration()`.
- * @param {Function} params.setShowUI
- *   Setter to control whether the main player UI is visible.
- * @param {Object} params.uiTimeoutRef
- *   A ref used to track the timeout ID for auto-hiding the UI.
- * @param {Function} params.setPlayerReady
- *   Setter to control whether the player is “ready” (e.g., after buffering).
- * @param {boolean} params.playerReady
- *   True when the player has finished loading and is ready to report time updates.
- * @param {boolean} params.isPlaying
- *   True if audio playback is currently in progress.
- * @param {Object} params.playPauseRef
- *   Ref to the play/pause button, used to autofocus when UI shows via remote key
- *
- * @returns {Object}
- *   - showSongInfo: A callback to force-show the song info overlay (and restart its auto-hide timer).
- */
+* Manages various side effects related to the music player UI:
+* 1. Automatically shows/hides song info when a new song starts or nears its end.
+* 2. Auto-hides the UI after a period of mouse/touch/remote inactivity.
+* 3. Resets the `playerReady` flag whenever the current song changes.
+* 4. Updates `currentTime` and `duration` every 500ms while a song is playing and the player is ready.
+*
+* @param {Object} params
+* @param {Object|null} params.currentSong
+*   The currently playing song object (or null if none).
+* @param {Function} params.setShowInfo
+*   Setter to control whether the song info overlay is visible.
+* @param {Object} params.infoTimeoutRef
+*   A ref (e.g., `useRef(null)`) used to track the timeout ID for auto-hiding song info.
+* @param {number} params.currentTime
+*   The current playback time (in seconds) of the song.
+* @param {Function} params.setCurrentTime
+*   Setter to update the current playback time.
+* @param {number} params.duration
+*   The total duration (in seconds) of the current song.
+* @param {Function} params.setDuration
+*   Setter to update the song duration.
+* @param {Object} params.playerRef
+*   A ref pointing to the player instance, which must expose `getCurrentTime()` and `getDuration()`.
+* @param {Function} params.setShowUI
+*   Setter to control whether the main player UI is visible.
+* @param {Object} params.uiTimeoutRef
+*   A ref used to track the timeout ID for auto-hiding the UI.
+* @param {Function} params.setPlayerReady
+*   Setter to control whether the player is “ready” (e.g., after buffering).
+* @param {boolean} params.playerReady
+*   True when the player has finished loading and is ready to report time updates.
+* @param {boolean} params.isPlaying
+*   True if audio playback is currently in progress.
+* @param {Object} params.playPauseRef
+*   Ref to the play/pause button, used to autofocus when UI shows via remote key
+*
+* @returns {Object}
+*   - showSongInfo: A callback to force-show the song info overlay (and restart its auto-hide timer).
+*/
 export default function usePlayerEffects({
   currentSong,
   setShowInfo,
@@ -62,14 +62,14 @@ export default function usePlayerEffects({
   const showSongInfo = useCallback(() => {
     setShowInfo(true);
     if (infoTimeoutRef.current) clearTimeout(infoTimeoutRef.current);
-
+    
     if (isPlaying) {
       infoTimeoutRef.current = setTimeout(() => {
         setShowInfo(false);
       }, 8000);
     }
   }, [setShowInfo, isPlaying, infoTimeoutRef]);
-
+  
   useEffect(() => {
     if (currentSong) {
       showSongInfo();
@@ -80,7 +80,7 @@ export default function usePlayerEffects({
       }
     };
   }, [currentSong, showSongInfo, infoTimeoutRef]);
-
+  
   // ----------------------------------------------------------------------
   // 2. Auto-hide the player UI after 2.5–4s of inactivity — show on mouse/touch/remote key interaction
   // ----------------------------------------------------------------------
@@ -88,24 +88,27 @@ export default function usePlayerEffects({
     const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
     const isRemoteDevice = !('ontouchstart' in window) && !('onmousemove' in window);
     const timeout = isRemoteDevice ? 4000 : 2500;
-
+    
     let lastMoveTime = 0;
-
+    
     const resetUIHideTimer = () => {
       if (uiTimeoutRef.current) clearTimeout(uiTimeoutRef.current);
       uiTimeoutRef.current = setTimeout(() => {
         setShowUI(false);
       }, timeout);
     };
-
+    
     const showUIWithTimeout = () => {
       setShowUI(true);
       resetUIHideTimer();
+      setTimeout(() => {
+        playPauseRef.current?.focus();
+      }, 0);
     };
-
+    
     const handleClickOrTouch = (e) => {
       const path = e.composedPath();
-
+      
       const clickedInsideControls = path.some((el) => {
         if (!(el instanceof HTMLElement)) return false;
         return (
@@ -119,31 +122,34 @@ export default function usePlayerEffects({
           el.closest('.slider-input')
         );
       });
-
+      
       if (clickedInsideControls) {
         setShowUI(true);
+        setTimeout(() => {
+          playPauseRef.current?.focus();
+        }, 0);
         resetUIHideTimer();
         return;
       }
-
+      
       if (document.activeElement?.tagName === 'BUTTON') {
         document.activeElement.blur();
       }
-
+      
       setShowUI((prev) => {
         const shouldShow = !prev;
         if (shouldShow) resetUIHideTimer();
         return shouldShow;
       });
     };
-
+    
     const handleMouseMove = (e) => {
       const now = Date.now();
       if (now - lastMoveTime < 300) return;
       lastMoveTime = now;
       showUIWithTimeout();
     };
-
+    
     // ✅ NEW: Remote or keyboard-based interaction brings back UI and focuses play/pause if UI was hidden
     const handleKeyDown = (e) => {
       const remoteKeys = [
@@ -156,7 +162,7 @@ export default function usePlayerEffects({
         'MediaPlayPause',
         'Space',
       ];
-
+      
       if (remoteKeys.includes(e.code)) {
         setShowUI((wasShown) => {
           if (!wasShown && playPauseRef?.current) {
@@ -167,16 +173,16 @@ export default function usePlayerEffects({
         resetUIHideTimer();
       }
     };
-
+    
     if (isTouchDevice) {
       window.addEventListener('touchstart', handleClickOrTouch, { passive: true });
     } else {
       window.addEventListener('click', handleClickOrTouch);
       window.addEventListener('mousemove', handleMouseMove);
     }
-
+    
     window.addEventListener('keydown', handleKeyDown);
-
+    
     return () => {
       if (isTouchDevice) {
         window.removeEventListener('touchstart', handleClickOrTouch);
@@ -188,22 +194,22 @@ export default function usePlayerEffects({
       if (uiTimeoutRef.current) clearTimeout(uiTimeoutRef.current);
     };
   }, [setShowUI, uiTimeoutRef, playPauseRef]);
-
+  
   // ----------------------------------------------------------------------
   // 3. Reset player ready flag whenever the song changes
   // ----------------------------------------------------------------------
   useEffect(() => {
     setPlayerReady(false);
   }, [currentSong, setPlayerReady]);
-
+  
   // ----------------------------------------------------------------------
   // 4. Poll player every 500ms to update currentTime and duration
   // ----------------------------------------------------------------------
   useEffect(() => {
     let intervalId = null;
-
+    
     const getPlayerInstance = () => playerRef.current;
-
+    
     if (
       currentSong &&
       playerReady &&
@@ -224,27 +230,27 @@ export default function usePlayerEffects({
         }
       }, 500);
     }
-
+    
     return () => {
       if (intervalId) {
         clearInterval(intervalId);
       }
     };
   }, [currentSong, playerReady, setCurrentTime, setDuration, playerRef]);
-
+  
   // ----------------------------------------------------------------------
   // 5. Show song info again at beginning and near end of song
   // ----------------------------------------------------------------------
   useEffect(() => {
     if (!currentSong || !duration) return;
-
+    
     let preEndTimeoutId = null;
     const timeLeft = duration - currentTime;
-
+    
     if (currentTime <= 2) {
       showSongInfo();
     }
-
+    
     if (duration > 30) {
       if (timeLeft > 20) {
         preEndTimeoutId = setTimeout(() => {
@@ -254,13 +260,13 @@ export default function usePlayerEffects({
         showSongInfo();
       }
     }
-
+    
     return () => {
       if (preEndTimeoutId) {
         clearTimeout(preEndTimeoutId);
       }
     };
   }, [currentSong, duration, currentTime, showSongInfo]);
-
+  
   return { showSongInfo };
 }

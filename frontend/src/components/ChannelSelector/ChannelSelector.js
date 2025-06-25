@@ -39,12 +39,15 @@ const ChannelSelector = forwardRef(function ChannelSelector(
     onSelectChannel(slugify(channelName));
   };
 
-  const handleKeyDown = (e) => {
-    if (e.code === 'ArrowDown' && playPauseRef?.current) {
-      e.preventDefault();
-      playPauseRef.current.focus();
-    }
-  };
+const handleKeyDown = (e) => {
+  if (e.code === 'ArrowDown' && playPauseRef?.current) {
+    e.preventDefault();
+    setTimeout(() => {
+      playPauseRef.current?.focus();
+    }, 0);
+  }
+};
+
 
   return (
     <div className="channel-selector">
