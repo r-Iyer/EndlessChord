@@ -22,6 +22,7 @@ export default function VideoWithControls({
   onSeek,
   user,
   showUI,
+  channelSelectorRef
 }) {
   const videoContainerRef = useRef(null);
 
@@ -58,6 +59,7 @@ export default function VideoWithControls({
           onSeek={onSeek}
           currentTime={currentTime}
           duration={duration}
+          channelSelectorRef={channelSelectorRef}
         />
       </div>
     </div>

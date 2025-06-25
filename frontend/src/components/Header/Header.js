@@ -21,18 +21,17 @@ export default function Header({
   clearSearch,
   setChannelNameInURL,
   selectChannel,
+  channelSelectorRef,
 }) {
   const [languageFilter, setLanguageFilter] = useState('');
-  
-  // Get unique languages from channels and capitalize first letter
+
   const languages = [...new Set(channels.map(channel => channel.language))]
     .sort()
     .map(lang => ({
       value: lang,
       label: lang.charAt(0).toUpperCase() + lang.slice(1)
     }));
-  
-  // Filter channels based on selected language
+
   const filteredChannels = languageFilter
     ? channels.filter(channel => channel.language === languageFilter)
     : channels;
@@ -41,26 +40,23 @@ export default function Header({
     clearSearch();
     setUserInteracted(true);
     setBackendError(false);
-    
-    // Normalize input for comparison
+
     const normalizedInput = slugify(channelIdOrName);
-    
-    // Find by id or slugified name
+
     const channel =
       channels.find((c) => c._id === channelIdOrName) ||
       channels.find((c) => slugify(c.name) === normalizedInput);
-    
+
     if (channel) {
       setChannelNameInURL(slugify(channel.name));
       selectChannel(channel._id);
     }
   };
-  
+
   return (
     <header className={`app-header ${isFullscreen ? 'app-header--hidden' : ''}`}>
       <div className="header-container">
         <div className="layout-column-gap">
-          {/* Top row: Search Bar, Language Filter, and User Profile */}
           <div className="flex gap-4 items-center">
             <div className="flex-1">
               <SearchBar
@@ -69,31 +65,30 @@ export default function Header({
                 className="full-width"
               />
             </div>
-            
-            {/* Language Filter Dropdown */}
+
             <LanguageDropdown 
               languages={languages}
               selectedValue={languageFilter}
               onSelect={setLanguageFilter}
               placeholder="All Languages"
             />
-            
+
             <div className="no-shrink">
               <UserProfile
                 user={user}
                 onLogout={handleLogout}
                 onShowAuth={() => setShowAuthModal(true)}
                 onPlayFavorites={() => {
-                  clearSearch();       // First, clear search
-                  playFavorites();     // Then, play favorites
+                  clearSearch();
+                  playFavorites();
                 }}
               />
             </div>
           </div>
-          
-          {/* Bottom row: Channel Selector */}
+
           <div className="full-width">
             <ChannelSelector
+              ref={channelSelectorRef}
               channels={filteredChannels}
               currentChannel={currentChannel}
               onSelectChannel={handleChannelSelect}

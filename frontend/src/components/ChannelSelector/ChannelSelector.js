@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, forwardRef, useImperativeHandle } from 'react';
 import './ChannelSelector.css';
 
 /**
@@ -20,7 +20,10 @@ export function slugify(name) {
  * @param {Function} onSelectChannel - Callback fired with slugified channel name on selection
  * @param {Function} clearSearch - Callback to clear any existing search/filter before selection
  */
-function ChannelSelector({ channels, currentChannel, onSelectChannel, clearSearch }) {
+const ChannelSelector = forwardRef(function ChannelSelector(
+  { channels, currentChannel, onSelectChannel, clearSearch },
+  ref
+) {
   const firstButtonRef = useRef(null);
 
   // Auto-focus the first channel button on mount for Firestick navigation
@@ -34,6 +37,15 @@ function ChannelSelector({ channels, currentChannel, onSelectChannel, clearSearc
     clearSearch();
     onSelectChannel(slugify(channelName));
   };
+
+  // Expose focus method to parent
+  useImperativeHandle(ref, () => ({
+    focusFirstButton: () => {
+      if (firstButtonRef.current) {
+        firstButtonRef.current.focus();
+      }
+    },
+  }));
 
   return (
     <div className="channel-selector">
@@ -56,7 +68,7 @@ function ChannelSelector({ channels, currentChannel, onSelectChannel, clearSearc
           }}
           type="button"
           tabIndex={0}
-          autoFocus={index === 0} // ✅ Helps on Fire TV to get initial focus
+          autoFocus={index === 0}
         >
           <div className="channel-content">
             <span className="channel-indicator" />
@@ -66,6 +78,6 @@ function ChannelSelector({ channels, currentChannel, onSelectChannel, clearSearc
       ))}
     </div>
   );
-}
+});
 
 export default ChannelSelector;

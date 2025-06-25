@@ -27,6 +27,7 @@ function App() {
   const [showInfo, setShowInfo] = useState(false);
   const [showUI, setShowUI] = useState(true);
   const [backendError, setBackendError] = useState(false);
+  const channelSelectorRef = useRef(null);
   
   // Playback state
   const [currentChannel, setCurrentChannel] = useState(null);
@@ -247,6 +248,7 @@ function App() {
     clearSearch={clearSearch}
     setChannelNameInURL={setChannelNameInURL}
     selectChannel={selectChannel}
+    channelSelectorRef={channelSelectorRef}
     />
     
     <main className="main-container">
@@ -289,6 +291,7 @@ function App() {
     onPrevious={handlePreviousSong}
     onCCToggle={() => setIsCCEnabled(prev => !prev)}
     isFetchingSongs = {isFetchingSongs}
+    channelSelectorRef={channelSelectorRef}
     />
     </main>
     </div>

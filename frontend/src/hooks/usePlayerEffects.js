@@ -3,7 +3,7 @@ import { useEffect, useCallback } from 'react';
 /**
 * Manages various side effects related to the music player UI:
 * 1. Automatically shows/hides song info when a new song starts or nears its end.
-* 2. Auto-hides the UI after a period of mouse/touch inactivity.
+* 2. Auto-hides the UI after a period of mouse/touch/remote inactivity.
 * 3. Resets the `playerReady` flag whenever the current song changes.
 * 4. Updates `currentTime` and `duration` every 500ms while a song is playing and the player is ready.
 *
@@ -53,18 +53,14 @@ export default function usePlayerEffects({
   playerReady,
   isPlaying,
 }) {
-  // ----------------------------------------------------------------------
-  // 1. Callback to show song info overlay, and auto-hide after 8 seconds (if playing)
-  // ----------------------------------------------------------------------
+  // 1. Show song info overlay and auto-hide it after 8s if music is playing
   const showSongInfo = useCallback(() => {
     setShowInfo(true);
 
-    // Clear any existing timeout so we don't stack multiple hides
     if (infoTimeoutRef.current) {
       clearTimeout(infoTimeoutRef.current);
     }
 
-    // Only auto-hide if music is playing
     if (isPlaying) {
       infoTimeoutRef.current = setTimeout(() => {
         setShowInfo(false);
@@ -72,7 +68,6 @@ export default function usePlayerEffects({
     }
   }, [setShowInfo, isPlaying, infoTimeoutRef]);
 
-  // When `currentSong` changes, immediately show info and start auto-hide timer
   useEffect(() => {
     if (currentSong) {
       showSongInfo();
@@ -84,14 +79,11 @@ export default function usePlayerEffects({
     };
   }, [currentSong, showSongInfo, infoTimeoutRef]);
 
-  // ----------------------------------------------------------------------
-  // 2. Auto-hide the player UI after 2.5s of inactivity — show on click or hover
-  // ----------------------------------------------------------------------
+  // 2. Auto-hide the player UI after 2.5s of inactivity (mouse/touch/keyboard)
   useEffect(() => {
     const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
     let lastMoveTime = 0;
 
-    // Shared logic to (re)start the auto-hide timeout
     const resetUIHideTimer = () => {
       if (uiTimeoutRef.current) clearTimeout(uiTimeoutRef.current);
       uiTimeoutRef.current = setTimeout(() => {
@@ -121,24 +113,19 @@ export default function usePlayerEffects({
       });
 
       if (clickedInsideControls) {
-        // If controls are already visible, restart timeout
         setShowUI(true);
         resetUIHideTimer();
         return;
       }
 
-      // 🔥 Blur currently focused button, if any
-      if (
-        document.activeElement &&
-        document.activeElement.tagName === 'BUTTON'
-      ) {
+      if (document.activeElement && document.activeElement.tagName === 'BUTTON') {
         document.activeElement.blur();
       }
 
       setShowUI((prev) => {
         const shouldShow = !prev;
         if (shouldShow) {
-          resetUIHideTimer(); // <-- always start timeout when toggling on
+          resetUIHideTimer();
         }
         return shouldShow;
       });
@@ -146,10 +133,22 @@ export default function usePlayerEffects({
 
     const handleMouseMove = (e) => {
       const now = Date.now();
-      if (now - lastMoveTime < 300) return; // throttle every 300ms
+      if (now - lastMoveTime < 300) return;
       lastMoveTime = now;
 
       showUIWithTimeout();
+    };
+
+    // ✅ NEW: Handle remote/keyboard key presses like Enter/PlayPause
+    const handleKeyDown = (e) => {
+      const keysThatShouldResetUI = ['Enter', 'NumpadEnter', 'MediaPlayPause', 'Space'];
+      if (
+        keysThatShouldResetUI.includes(e.code) &&
+        document.activeElement?.tagName === 'BUTTON'
+      ) {
+        setShowUI(true);
+        resetUIHideTimer();
+      }
     };
 
     if (isTouchDevice) {
@@ -159,6 +158,8 @@ export default function usePlayerEffects({
       window.addEventListener('mousemove', handleMouseMove);
     }
 
+    window.addEventListener('keydown', handleKeyDown);
+
     return () => {
       if (isTouchDevice) {
         window.removeEventListener('touchstart', handleClickOrTouch);
@@ -166,23 +167,19 @@ export default function usePlayerEffects({
         window.removeEventListener('click', handleClickOrTouch);
         window.removeEventListener('mousemove', handleMouseMove);
       }
+      window.removeEventListener('keydown', handleKeyDown);
       if (uiTimeoutRef.current) clearTimeout(uiTimeoutRef.current);
     };
   }, [setShowUI, uiTimeoutRef]);
 
-  // ----------------------------------------------------------------------
-  // 3. Whenever the song changes, mark the player as not-ready (so it can reinitialize)
-  // ----------------------------------------------------------------------
+  // 3. Reset player ready flag on song change
   useEffect(() => {
     setPlayerReady(false);
   }, [currentSong, setPlayerReady]);
 
-  // ----------------------------------------------------------------------
-  // 4. Poll player every 500ms to update currentTime and duration while playing
-  // ----------------------------------------------------------------------
+  // 4. Poll for current time/duration every 500ms
   useEffect(() => {
     let intervalId = null;
-
     const getPlayerInstance = () => playerRef.current;
 
     if (
@@ -201,7 +198,7 @@ export default function usePlayerEffects({
             setDuration(Math.floor(dur));
           }
         } catch {
-          // Silent catch: player might not be fully initialized yet
+          // Silent fail
         }
       }, 500);
     }
@@ -213,21 +210,17 @@ export default function usePlayerEffects({
     };
   }, [currentSong, playerReady, setCurrentTime, setDuration, playerRef]);
 
-  // ----------------------------------------------------------------------
-  // 5. Show song info again at the beginning (first 2s) and near the end (20s before end)
-  // ----------------------------------------------------------------------
+  // 5. Show song info again at start and 20s before end
   useEffect(() => {
     if (!currentSong || !duration) return;
 
     let preEndTimeoutId = null;
     const timeLeft = duration - currentTime;
 
-    // If we're within the first 2 seconds, show info immediately
     if (currentTime <= 2) {
       showSongInfo();
     }
 
-    // For songs longer than 30s, schedule a show when only 20s remain
     if (duration > 30) {
       if (timeLeft > 20) {
         preEndTimeoutId = setTimeout(() => {

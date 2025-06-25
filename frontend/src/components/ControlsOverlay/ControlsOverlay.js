@@ -18,6 +18,7 @@ export default function ControlsOverlay({
   onSeek,
   currentTime,
   duration,
+  channelSelectorRef,
 }) {
   // Refs for focus redirection
   const playPauseRef = useRef(null);     // used for ArrowUp
@@ -34,7 +35,8 @@ export default function ControlsOverlay({
             onPlayPause={onPlayPause}
             onNext={onNext}
             onPrevious={onPrevious}
-            playPauseRef={playPauseRef} // pass down for focus
+            playPauseRef={playPauseRef}
+            channelSelectorRef={channelSelectorRef}
           />
         </div>
       </div>

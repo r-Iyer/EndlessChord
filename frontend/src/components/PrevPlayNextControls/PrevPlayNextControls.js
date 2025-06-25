@@ -7,8 +7,16 @@ export default function PrevPlayNextControls({
   onPlayPause,
   onNext,
   onPrevious,
-  playPauseRef, // <-- ref passed in from parent
+  playPauseRef,
+  focusChannelList,
 }) {
+  const handleKeyDown = (e) => {
+    if (e.code === 'ArrowUp' && focusChannelList) {
+      e.preventDefault();
+      focusChannelList(); // focus channel list when pressing ↑
+    }
+  };
+
   return (
     <div className="prev-play-next-controls">
       <div className="tooltip-wrapper" data-tooltip="Previous">
@@ -24,8 +32,9 @@ export default function PrevPlayNextControls({
         <button
           className="control-button"
           onClick={onPlayPause}
+          onKeyDown={handleKeyDown}
           aria-label={isPlaying ? 'Pause' : 'Play'}
-          ref={playPauseRef} // <-- assign ref to Play/Pause button
+          ref={playPauseRef}
         >
           {isPlaying ? <Pause /> : <Play />}
         </button>

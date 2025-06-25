@@ -25,6 +25,7 @@ export default function PlayerContainer({
   onPrevious,
   onCCToggle,
   user,
+  channelSelectorRef,
 }) {
   const [isVideoLoaded, setIsVideoLoaded] = useState(false);
 
@@ -63,6 +64,7 @@ export default function PlayerContainer({
         onSeek={onSeek}
         user={user}
         showUI={showUI}
+        channelSelectorRef={channelSelectorRef}
       />
 
       <SongInfo
