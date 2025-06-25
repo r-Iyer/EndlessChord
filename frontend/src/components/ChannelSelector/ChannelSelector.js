@@ -26,11 +26,13 @@ const ChannelSelector = forwardRef(function ChannelSelector(
     },
   }));
 
+  // Focus only on initial mount
   useEffect(() => {
     if (!disabled && firstButtonRef.current) {
       firstButtonRef.current.focus();
     }
-  }, [disabled]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleChannelClick = (channelName) => {
     clearSearch();
