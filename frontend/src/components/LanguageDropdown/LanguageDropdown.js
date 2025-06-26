@@ -1,7 +1,9 @@
 import { useState, useRef, useEffect } from 'react';
 import './LanguageDropdown.css';
 
-// Hook to get current window width
+/**
+ * Hook to get current window width
+ */
 const useWindowWidth = () => {
   const [width, setWidth] = useState(window.innerWidth);
 
@@ -14,6 +16,17 @@ const useWindowWidth = () => {
   return width;
 };
 
+/**
+ * Hook to maintain refs for each item in dropdown
+ */
+const useItemRefs = (length) => {
+  const refs = useRef([]);
+  useEffect(() => {
+    refs.current = refs.current.slice(0, length);
+  }, [length]);
+  return refs;
+};
+
 const LanguageDropdown = ({
   languages,
   selectedValue,
@@ -24,6 +37,9 @@ const LanguageDropdown = ({
   const dropdownRef = useRef(null);
   const windowWidth = useWindowWidth();
   const firstItemRef = useRef(null); // 🔹 Ref for first dropdown item
+
+  const itemCount = languages.length + 1; // +1 for "All Languages"
+  const itemRefs = useItemRefs(itemCount); // 🔹 Store all refs (All + language options)
 
   // Determine placeholder based on screen size
   const displayPlaceholder = windowWidth < 640 ? "All" : placeholder;
@@ -42,12 +58,28 @@ const LanguageDropdown = ({
 
   // Auto focus first item on open (for TV navigation)
   useEffect(() => {
-    if (isOpen && firstItemRef.current) {
+    if (isOpen && itemRefs.current[0]) {
       requestAnimationFrame(() => {
-        firstItemRef.current.focus();
+        itemRefs.current[0].focus(); // 🔹 Focus the first item ("All Languages")
       });
     }
   }, [isOpen]);
+
+  // 🔹 Handles ArrowUp, ArrowDown, Escape key inside dropdown
+  const handleKeyDown = (e, index) => {
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      const next = (index + 1) % itemCount; // Wrap to top
+      itemRefs.current[next]?.focus();
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      const prev = (index - 1 + itemCount) % itemCount; // Wrap to bottom
+      itemRefs.current[prev]?.focus();
+    } else if (e.key === 'Escape') {
+      e.preventDefault();
+      setIsOpen(false);
+    }
+  };
 
   const handleSelect = (value) => {
     onSelect(value);
@@ -89,14 +121,9 @@ const LanguageDropdown = ({
           {/* 🔹 First item: 'All Languages' */}
           <button
             tabIndex={0} // 🔹 Enable focus
-            ref={firstItemRef} // 🔹 Focus this on open
+            ref={el => itemRefs.current[0] = el} // 🔹 Store ref
             onClick={() => handleSelect('')}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') {
-                e.preventDefault();
-                handleSelect('');
-              }
-            }}
+            onKeyDown={(e) => handleKeyDown(e, 0)} // 🔹 Navigate with arrow keys
             className={`dropdown-item ${selectedValue === '' ? 'selected' : ''}`}
             role="option"
             aria-selected={selectedValue === ''}
@@ -105,17 +132,14 @@ const LanguageDropdown = ({
             {selectedValue === '' && <CheckIcon />}
           </button>
 
-          {languages.map(({ value, label }) => (
+          {/* 🔹 Language items */}
+          {languages.map(({ value, label }, index) => (
             <button
               key={value}
-              tabIndex={0} // Enable focus
+              tabIndex={0}
+              ref={el => itemRefs.current[index + 1] = el} // 🔹 Store each item ref
               onClick={() => handleSelect(value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') {
-                  e.preventDefault();
-                  handleSelect(value);
-                }
-              }}
+              onKeyDown={(e) => handleKeyDown(e, index + 1)} // 🔹 Navigate with arrow keys
               className={`dropdown-item ${selectedValue === value ? 'selected' : ''}`}
               role="option"
               aria-selected={selectedValue === value}
@@ -130,7 +154,7 @@ const LanguageDropdown = ({
   );
 };
 
-// Check icon component for selected items
+// 🔹 Check icon component for selected items
 const CheckIcon = () => (
   <svg className="check-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
     <path d="M20 6L9 17L4 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
