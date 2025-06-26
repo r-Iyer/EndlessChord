@@ -31,55 +31,90 @@ const LanguageDropdown = ({
   onSelect,
   placeholder = "All Languages"
 }) => {
+  // State to track open/close
   const [isOpen, setIsOpen] = useState(false);
+  // State to track which item is focusable
+  const [focusedIndex, setFocusedIndex] = useState(-1);
   const dropdownRef = useRef(null);
+  const triggerRef = useRef(null); // Ref for main dropdown button
   const windowWidth = useWindowWidth();
-  const itemCount = languages.length + 1;
+
+  const itemCount = languages.length + 1; // include "All"
   const itemRefs = useItemRefs(itemCount);
 
+  // Determine placeholder text based on window size
   const displayPlaceholder = windowWidth < 640 ? "All" : placeholder;
 
-  // 🔒 Close on outside click
+  // Close dropdown on outside click
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
         setIsOpen(false);
       }
     };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // ✅ Focus first item on open
+  // Manage global key events (capture phase) while dropdown is open
   useEffect(() => {
-    if (isOpen && itemRefs.current[0]) {
+    const handleGlobalNav = (e) => {
+      // Only trap when dropdown open
+      if (!isOpen) return;
+      const keys = ['ArrowDown','ArrowUp','ArrowLeft','ArrowRight','Escape'];
+      if (keys.includes(e.key)) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+      // Handle Escape: close
+      if (e.key === 'Escape') {
+        setIsOpen(false);
+        triggerRef.current?.focus();
+        return;
+      }
+      // If on first item and pressing Up, move focus back to trigger
+      if (e.key === 'ArrowUp' && focusedIndex === 0) {
+        setIsOpen(false); // optionally keep open? here we close
+        triggerRef.current?.focus();
+        return;
+      }
+      let nextIndex = focusedIndex;
+      if (e.key === 'ArrowDown') {
+        nextIndex = (focusedIndex + 1) % itemCount;
+      } else if (e.key === 'ArrowUp') {
+        nextIndex = (focusedIndex - 1 + itemCount) % itemCount;
+      } else {
+        return; // Block left/right
+      }
+      setFocusedIndex(nextIndex);
+      itemRefs.current[nextIndex]?.focus();
+    };
+
+    if (isOpen) {
+      document.addEventListener('keydown', handleGlobalNav, true);
+    }
+    return () => {
+      document.removeEventListener('keydown', handleGlobalNav, true);
+    };
+  }, [isOpen, focusedIndex, itemCount, itemRefs]);
+
+  // Open: set focusable index and focus
+  useEffect(() => {
+    if (isOpen) {
+      setFocusedIndex(0);
       requestAnimationFrame(() => {
-        itemRefs.current[0].focus();
+        itemRefs.current[0]?.focus();
       });
+    } else {
+      setFocusedIndex(-1);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isOpen]);
+  }, [isOpen, itemRefs]);
 
-  // 🔁 Handle up/down arrow key manually
-  const handleKeyNavigation = (e, index) => {
-    if (e.key === 'ArrowDown') {
-      e.preventDefault();
-      const next = (index + 1) % itemCount;
-      itemRefs.current[next]?.focus();
-    } else if (e.key === 'ArrowUp') {
-      e.preventDefault();
-      const prev = (index - 1 + itemCount) % itemCount;
-      itemRefs.current[prev]?.focus();
-    } else if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
-      e.preventDefault(); // Block TV left/right jumps
-    } else if (e.key === 'Escape') {
-      setIsOpen(false);
-    }
-  };
-
+  // Handle selection
   const handleSelect = (value) => {
     onSelect(value);
     setIsOpen(false);
+    triggerRef.current?.focus();
   };
 
   const selectedLabel = selectedValue
@@ -89,8 +124,9 @@ const LanguageDropdown = ({
   return (
     <div className="language-dropdown" ref={dropdownRef}>
       <button
+        ref={triggerRef}
         tabIndex={0}
-        onClick={() => setIsOpen(!isOpen)}
+        onClick={() => setIsOpen(prev => !prev)}
         onKeyDown={(e) => {
           if (e.key === 'Enter' || e.key === ' ') {
             e.preventDefault();
@@ -114,12 +150,11 @@ const LanguageDropdown = ({
 
       {isOpen && (
         <div className="dropdown-content" role="listbox">
-          {/* First Item: "All Languages" */}
+          {/* First item: All */}
           <button
             ref={el => itemRefs.current[0] = el}
-            tabIndex={0}
+            tabIndex={focusedIndex === 0 ? 0 : -1}
             onClick={() => handleSelect('')}
-            onKeyDown={(e) => handleKeyNavigation(e, 0)} // 👈 manual key nav
             className={`dropdown-item ${selectedValue === '' ? 'selected' : ''}`}
             role="option"
             aria-selected={selectedValue === ''}
@@ -128,14 +163,13 @@ const LanguageDropdown = ({
             {selectedValue === '' && <CheckIcon />}
           </button>
 
-          {/* Other language items */}
-          {languages.map(({ value, label }, index) => (
+          {/* Language items */}
+          {languages.map(({ value, label }, idx) => (
             <button
               key={value}
-              ref={el => itemRefs.current[index + 1] = el}
-              tabIndex={0}
+              ref={el => itemRefs.current[idx + 1] = el}
+              tabIndex={focusedIndex === idx + 1 ? 0 : -1}
               onClick={() => handleSelect(value)}
-              onKeyDown={(e) => handleKeyNavigation(e, index + 1)} // 👈 manual key nav
               className={`dropdown-item ${selectedValue === value ? 'selected' : ''}`}
               role="option"
               aria-selected={selectedValue === value}
@@ -150,6 +184,7 @@ const LanguageDropdown = ({
   );
 };
 
+// Check icon for selected items
 const CheckIcon = () => (
   <svg className="check-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
     <path d="M20 6L9 17L4 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
