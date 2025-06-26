@@ -36,7 +36,6 @@ const LanguageDropdown = ({
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef(null);
   const windowWidth = useWindowWidth();
-  const firstItemRef = useRef(null); // 🔹 Ref for first dropdown item
 
   const itemCount = languages.length + 1; // +1 for "All Languages"
   const itemRefs = useItemRefs(itemCount); // 🔹 Store all refs (All + language options)
@@ -63,6 +62,7 @@ const LanguageDropdown = ({
         itemRefs.current[0].focus(); // 🔹 Focus the first item ("All Languages")
       });
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen]);
 
   // 🔹 Handles ArrowUp, ArrowDown, Escape key inside dropdown
