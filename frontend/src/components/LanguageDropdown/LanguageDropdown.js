@@ -74,7 +74,7 @@ const LanguageDropdown = ({
       }
       // If on first item and pressing Up, move focus back to trigger
       if (e.key === 'ArrowUp' && focusedIndex === 0) {
-        setIsOpen(false); // optionally keep open? here we close
+        setIsOpen(false);
         triggerRef.current?.focus();
         return;
       }
