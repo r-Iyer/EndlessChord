@@ -55,11 +55,14 @@ function VideoPlayer({
 
   // Track whether the video is paused
   const [isPaused, setIsPaused] = useState(false);
+  // Track whether the video is buffering
+  const [isBuffering, setIsBuffering] = useState(false);
 
-  // Reset player ready and paused state when videoId changes
+  // Reset player ready, paused, and buffering state when videoId changes
   useEffect(() => {
     setIsPlayerReady(false);
     setIsPaused(false);
+    setIsBuffering(false);
   }, [currentSong?.videoId]);
 
   // Sync play/pause with isPlaying prop once player is ready
@@ -102,6 +105,7 @@ function VideoPlayer({
     return () => {
       if (playerRef.current) {
         try {
+          playerRef.current.stopVideo && playerRef.current.stopVideo();
           playerRef.current.destroy();
         } catch {}
         playerRef.current = null;
@@ -123,14 +127,14 @@ function VideoPlayer({
       showinfo: 0,           // Deprecated but kept to hide info
       cc_load_policy: 1,     // Closed captions on by default (can override)
       // Firestick-specific optimizations
-      ...(isFirestick && {
-        vq: 'hd720', // Force HD quality
+      ...(isFirestick ? {
+        vq: 'default', // Let YouTube pick best quality for Firestick
         html5: 1,    // Prioritize HTML5 player
         playsinline: 0
-      })
+      } : {})
     },
     host: 'https://www.youtube-nocookie.com' // Use no-cookie embed to suppress end-of-video suggestions
-  }), []);
+  }), []); // No dependencies needed, isFirestick is static
 
   // Wrapped onStateChange to track pause state
   const handleStateChange = (event) => {
@@ -138,8 +142,12 @@ function VideoPlayer({
     // YouTube states: -1 (unstarted), 0 (ended), 1 (playing), 2 (paused), 3 (buffering), 5 (video cued)
     if (ytState === 2) {
       setIsPaused(true);
+      setIsBuffering(false);
     } else if (ytState === 1 || ytState === 0) {
       setIsPaused(false);
+      setIsBuffering(false);
+    } else if (ytState === 3) {
+      setIsBuffering(true);
     }
     if (typeof onStateChange === 'function') {
       onStateChange(event);
@@ -151,11 +159,20 @@ function VideoPlayer({
     playerRef.current = event.target;
     setIsPlayerReady(true);
 
-    // Instruct YouTube to use adaptive (“default”) quality
+    // Instruct YouTube to use adaptive (“default”) quality for all devices
     try {
-      playerRef.current.setPlaybackQuality(isFirestick ? 'hd720' : 'default');
+      playerRef.current.setPlaybackQuality('default');
     } catch (error) {
       console.warn('Could not set adaptive quality:', error);
+    }
+
+    // Preload next video chunk if possible (YouTube API is limited)
+    if (playerRef.current && playerRef.current.getVideoLoadedFraction) {
+      // This is a read-only API, but you can log for diagnostics
+      const loaded = playerRef.current.getVideoLoadedFraction();
+      if (loaded < 0.2) {
+        console.info('Initial video chunk loaded:', loaded);
+      }
     }
 
     if (typeof onReady === 'function') {
@@ -189,6 +206,11 @@ function VideoPlayer({
         />
 
         {isPaused && <div className="pause-mask" />}
+        {isBuffering && (
+          <div className="buffering-mask">
+            <div className="buffering-loader">Buffering...</div>
+          </div>
+        )}
       </div>
     </div>
   );
