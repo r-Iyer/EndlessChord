@@ -27,6 +27,19 @@ export function requestFullscreenWithOrientation(element) {
 }
 
 /**
+ * Check if the YouTube iframe is present and loaded with a valid src.
+ * This prevents widgetapi.js null src errors.
+ */
+function isIframeLoaded(player) {
+  try {
+    const iframe = player?.getIframe?.();
+    return iframe && typeof iframe.src === 'string' && iframe.src !== '';
+  } catch {
+    return false;
+  }
+}
+
+/**
  * VideoPlayer renders a YouTube player for the current song with control over playback,
  * captions, and fullscreen orientation lock. It also tells YouTube to pick the adaptive ("auto")
  * quality based on the user’s bandwidth.
@@ -67,9 +80,17 @@ function VideoPlayer({
 
   // Sync play/pause with isPlaying prop once player is ready
   useEffect(() => {
-    if (!isPlayerReady || !playerRef.current?.getPlayerState) return;
+    // Only run if playerRef.current is not null and isPlayerReady is true
+    if (
+      !isPlayerReady ||
+      !playerRef?.current ||
+      typeof playerRef?.current?.getPlayerState !== 'function'
+    ) return;
+
+    if (!isIframeLoaded(playerRef.current)) return;
+
     try {
-      const state = playerRef.current.getPlayerState();
+      const state = playerRef.current?.getPlayerState();
       // State -1 = unstarted, 5 = video cued, ignore those states
       if (state !== -1 && state !== 5) {
         if (isPlaying) {
@@ -79,6 +100,7 @@ function VideoPlayer({
         }
       }
     } catch (error) {
+      // Suppress widgetapi errors if iframe is missing
       console.warn('YouTube player state sync error:', error);
     }
   }, [isPlaying, isPlayerReady, playerRef]);
@@ -88,12 +110,14 @@ function VideoPlayer({
     const player = playerRef.current;
     if (!isPlayerReady || !player) return;
 
+    if (!isIframeLoaded(player)) return;
+
     try {
       if (isCCEnabled) {
-        if (player.loadModule) player.loadModule('captions');
+        player.loadModule('captions');
         player.setOption('captions', 'track', { languageCode: 'en' });
-      } else {
-        if (player.unloadModule) player.unloadModule('captions');
+      } else if (typeof player.unloadModule === 'function') {
+        player.unloadModule('captions');
       }
     } catch (error) {
       console.warn('YouTube captions toggle error:', error);
@@ -105,8 +129,8 @@ function VideoPlayer({
     return () => {
       if (playerRef.current) {
         try {
-          playerRef.current.stopVideo && playerRef.current.stopVideo();
-          playerRef.current.destroy();
+          playerRef.current?.stopVideo && playerRef.current?.stopVideo();
+          playerRef.current?.destroy();
         } catch {}
         playerRef.current = null;
       }
@@ -161,15 +185,15 @@ function VideoPlayer({
 
     // Instruct YouTube to use adaptive (“default”) quality for all devices
     try {
-      playerRef.current.setPlaybackQuality('default');
+      playerRef.current?.setPlaybackQuality('default');
     } catch (error) {
       console.warn('Could not set adaptive quality:', error);
     }
 
     // Preload next video chunk if possible (YouTube API is limited)
-    if (playerRef.current && playerRef.current.getVideoLoadedFraction) {
+    if (playerRef.current && playerRef.current?.getVideoLoadedFraction) {
       // This is a read-only API, but you can log for diagnostics
-      const loaded = playerRef.current.getVideoLoadedFraction();
+      const loaded = playerRef.current?.getVideoLoadedFraction();
       if (loaded < 0.2) {
         console.info('Initial video chunk loaded:', loaded);
       }
@@ -195,7 +219,6 @@ function VideoPlayer({
     <div ref={containerRef} className={`youtube-container ${isFullscreen ? 'fullscreen' : ''}`} tabIndex={-1}>
       <div className={`video-wrapper ${isFullscreen ? 'fullscreen' : ''}`}>
         <YouTube
-          key={currentSong.videoId}
           videoId={currentSong.videoId}
           opts={opts}
           onReady={handleReady}

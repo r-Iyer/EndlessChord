@@ -117,7 +117,7 @@ export default function usePlayerHandlers(
   const handleSeek = useCallback(
     (time) => {
       if (!playerRef.current) return;
-      playerRef.current.seekTo(Math.floor(time), true);
+      playerRef.current?.seekTo(Math.floor(time), true);
     },
     [playerRef]
   );
@@ -223,7 +223,7 @@ export default function usePlayerHandlers(
    */
   const togglePlayPause = useCallback(() => {
     if (!playerRef.current) return;
-    isPlaying ? playerRef.current.pauseVideo() : playerRef.current.playVideo();
+    isPlaying ? playerRef.current?.pauseVideo() : playerRef.current?.playVideo();
     setIsPlaying(!isPlaying);
   }, [playerRef, isPlaying, setIsPlaying]);
 
