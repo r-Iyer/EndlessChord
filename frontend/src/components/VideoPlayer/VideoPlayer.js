@@ -68,14 +68,11 @@ function VideoPlayer({
 
   // Track whether the video is paused
   const [isPaused, setIsPaused] = useState(false);
-  // Track whether the video is buffering
-  const [isBuffering, setIsBuffering] = useState(false);
 
-  // Reset player ready, paused, and buffering state when videoId changes
+  // Reset player ready, paused when videoId changes
   useEffect(() => {
     setIsPlayerReady(false);
     setIsPaused(false);
-    setIsBuffering(false);
   }, [currentSong?.videoId]);
 
   // Sync play/pause with isPlaying prop once player is ready
@@ -163,15 +160,11 @@ function VideoPlayer({
   // Wrapped onStateChange to track pause state
   const handleStateChange = (event) => {
     const ytState = event.data;
-    // YouTube states: -1 (unstarted), 0 (ended), 1 (playing), 2 (paused), 3 (buffering), 5 (video cued)
+    // YouTube states: -1 (unstarted), 0 (ended), 1 (playing), 2 (paused), 5 (video cued)
     if (ytState === 2) {
       setIsPaused(true);
-      setIsBuffering(false);
     } else if (ytState === 1 || ytState === 0) {
       setIsPaused(false);
-      setIsBuffering(false);
-    } else if (ytState === 3) {
-      setIsBuffering(true);
     }
     if (typeof onStateChange === 'function') {
       onStateChange(event);
@@ -229,11 +222,6 @@ function VideoPlayer({
         />
 
         {isPaused && <div className="pause-mask" />}
-        {isBuffering && (
-          <div className="buffering-mask">
-            <div className="buffering-loader">Buffering...</div>
-          </div>
-        )}
       </div>
     </div>
   );
