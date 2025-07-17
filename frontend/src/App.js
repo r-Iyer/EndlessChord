@@ -181,7 +181,8 @@ function App() {
     setChannels,
     getSearchFromURL,
     handleSearch,
-    selectChannel
+    selectChannel,
+    setIsLoading
   });
   
   // Fullscreen.toggle

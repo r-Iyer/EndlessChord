@@ -35,6 +35,7 @@ const useInitialLoad = ({
   getSearchFromURL,
   handleSearch,
   selectChannel,
+  setIsLoading,
 }) => {
   useEffect(() => {
     // Only run once auth-check is done and user is either logged in or allowed as guest
@@ -52,6 +53,7 @@ const useInitialLoad = ({
 
     const loadInitialData = async () => {
       try {
+        setIsLoading(true);
         // 1. Fetch all channels
         const data = await fetchChannels();
         if (!mounted) return;
