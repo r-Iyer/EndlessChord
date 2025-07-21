@@ -39,7 +39,6 @@
 }
 
 .album-dropdown-item {
-  min-width: 220px;
   padding: 0.5rem 1rem;
   font-size: 0.95rem;
   background-color: rgba(17, 24, 39, 0.92);
@@ -99,12 +98,6 @@
 @keyframes pulse {
   0%, 100% { opacity: 1; }
   50% { opacity: 0.5; }
-}
-
-/* Album trigger styling */
-.album-dropdown-trigger {
-  width: 220px;
-  justify-content: space-between;
 }
 
 .dropdown-label {
