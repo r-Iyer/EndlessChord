@@ -24,7 +24,8 @@ export default function ControlsFooter({
   onSeek,
   fullscreenRef,
   resetUIHideTimer,
-  clearUIHideTimer
+  clearUIHideTimer,
+  setCurrentSong
 }) {
   const {
     albums,
@@ -127,7 +128,7 @@ const handleShare = async (e) => {
     </div>
     
     {user && !AuthService.isGuest && (
-      <FavoriteButton song={currentSong} user={user} />
+      <FavoriteButton song={currentSong} user={user} setCurrentSong={setCurrentSong}/>
     )}
     
     {user && !AuthService.isGuest && currentSong && (

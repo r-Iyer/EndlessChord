@@ -3,7 +3,7 @@ import { Heart } from 'lucide-react';
 import { addFavorite, removeFavorite } from '../../services/favoritesService';
 import './FavoriteButton.css';
 
-const FavoriteButton = ({ song, user, onUpdate }) => {
+const FavoriteButton = ({ song, user, onUpdate, setCurrentSong }) => {
   const [isFavorite, setIsFavorite] = useState(song?.isFavorite || false);
 
   useEffect(() => {
@@ -11,6 +11,10 @@ const FavoriteButton = ({ song, user, onUpdate }) => {
   }, [song]);
 
   const handleToggleFavorite = async () => {
+
+  setCurrentSong((prev) =>
+    prev ? { ...prev, isFavorite: !prev.isFavorite } : prev
+  );
     if (!user || !song) return;
 
     const newFavoriteState = !isFavorite;

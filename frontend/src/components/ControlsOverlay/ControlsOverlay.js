@@ -21,7 +21,8 @@ export default function ControlsOverlay({
   channelSelectorRef,
   playPauseRef,
   resetUIHideTimer,
-  clearUIHideTimer
+  clearUIHideTimer,
+  setCurrentSong
 }) {
   // Refs for focus redirection
   const fullscreenRef = useRef(null);    // used for ArrowDown
@@ -52,6 +53,7 @@ export default function ControlsOverlay({
         fullscreenRef={fullscreenRef}
         resetUIHideTimer={resetUIHideTimer}
         clearUIHideTimer={clearUIHideTimer}
+        setCurrentSong={setCurrentSong}
       />
 
       {/* Slider Row */}

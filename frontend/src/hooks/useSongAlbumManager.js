@@ -67,19 +67,22 @@ export default function useSongAlbumManager(user, currentSong) {
   
   const onCreate = async () => {
     if (!currentSong || !newName.trim()) return;
-    await createAlbum(newName.trim(), currentSong._id);
+    const album = await createAlbum(newName.trim(), currentSong._id);
     await fetchAndMapAlbums();
+    setSongAlbumMap(prev => ({ ...prev, [album._id]: true })); // ✅ Force mark as selected
     setNewName('');
   };
+
   
 const handleEditKeyDown = (e) => {
   e.stopPropagation();
   if (e.key === 'Enter') {
-    setNewName(e.target.value);
+    if (newName.trim()) onCreate();
   } else if (e.key === 'Escape') {
     setOpen(false); // close dropdown
   }
 };
+
 
   
   return {

@@ -169,3 +169,13 @@
 .song-button * {
   text-align: left;
 }
+
+.next-song:hover {
+  background-color: rgba(17, 24, 39, 0.98);
+  cursor: pointer;
+}
+
+.later-song:hover {
+  background-color: rgba(46, 48, 51, 0.7); /* Gray-400 tone on hover */
+  cursor: pointer;
+}

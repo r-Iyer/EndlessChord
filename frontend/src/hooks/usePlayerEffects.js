@@ -177,7 +177,7 @@ const handleKeyDown = (e) => {
     setShowUI((wasShown) => {
       if (!wasShown && playPauseRef?.current) {
         requestAnimationFrame(() => {
-          playPauseRef.current.focus();
+          playPauseRef.current?.focus();
           if (e.code === 'Space') {
             playPauseRef.current.click(); // Trigger click only for Spacebar
           }

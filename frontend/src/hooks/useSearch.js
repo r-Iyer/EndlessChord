@@ -42,27 +42,29 @@ export default function useSearch(
   // Ref to track the latest search call so we can ignore stale results
   const callIdRef = useRef(0);
 
-  /**
-   * Updates (or removes) the `?search=` parameter in the URL.
-   * If `query` is falsy, removes “search” and leaves any other params intact.
-   */
-  const setSearchInURL = useCallback((query) => {
-    const params = new URLSearchParams(window.location.search);
+/**
+ * Updates (or removes) the `?search=` parameter in the URL.
+ * Also removes `songId` param if present. Leaves other params intact.
+ */
+const setSearchInURL = useCallback((query) => {
+  const params = new URLSearchParams(window.location.search);
 
-    if (query) {
-      params.set('search', query);
-      params.delete('channel'); // ensure we clear any channel param
-    } else {
-      params.delete('search');
-    }
+  params.delete('songId'); // always remove songId
+  if (query) {
+    params.set('search', query);
+    params.delete('channel'); // optionally clear channel
+  } else {
+    params.delete('search');
+  }
 
-    const queryString = params.toString();
-    const newUrl = queryString
-      ? `${window.location.pathname}?${queryString}`
-      : window.location.pathname;
+  const queryString = params.toString();
+  const newUrl = queryString
+    ? `${window.location.pathname}?${queryString}`
+    : window.location.pathname;
 
-    window.history.replaceState({}, '', newUrl);
-  }, []);
+  window.history.replaceState({}, '', newUrl);
+}, []);
+
 
   /**
    * Reads the current `?search=` value from the URL (if any).

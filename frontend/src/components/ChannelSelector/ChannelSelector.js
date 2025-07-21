@@ -72,18 +72,19 @@ const ChannelSelector = forwardRef(function ChannelSelector({
     if (!disabled) firstButtonRef.current?.focus();
   }, [disabled]);
 
-  const handleChannelClick = (channel) => {
-    clearSearch();
-    onSelect({ type: 'channel', channel });
-  };
+const handleChannelClick = (channel) => {
+  if (editingAlbumId) return;
+  clearSearch();
+  setTimeout(() => onSelect({ type: 'channel', channel }), 0);
+};
 
-  const handleAlbumClick = (album) => {
-    if (editingAlbumId) return;
-    clearSearch();
-    onSelect({ type: 'album', album });
-    setOpen(false);
-    triggerRef.current?.focus();
-  };
+const handleAlbumClick = (album) => {
+  if (editingAlbumId) return;
+  clearSearch();
+  setTimeout(() => onSelect({ type: 'album', album }), 0);
+  setOpen(false);
+  triggerRef.current?.focus();
+};
 
   const selectedAlbumName =
     currentSelection?.type === 'album' ? currentSelection.album?.name : 'My Albums';
@@ -112,7 +113,6 @@ const ChannelSelector = forwardRef(function ChannelSelector({
               ref={i === 0 ? firstButtonRef : null}
               className={`channel-button ${isSelected ? 'active' : ''}`}
               onClick={() => handleChannelClick(ch)}
-              disabled={disabled || isSelected} // prevent clicking current channel
               type="button"
             >
               <div className="channel-content">

@@ -6,35 +6,21 @@ import { getSongById } from '../services/songService.js';
 import { DEFAULT_CHANNEL } from '../constants/constants';
 
 /**
-* Hook to perform initial data load once the user is authenticated (or allowed as guest).
-*
-* Responsibilities:
-* 1. Wait until authentication check is complete and user is either authenticated or allowed as guest.
-* 2. Fetch the list of all channels from the backend.
-* 3. If authenticated, also fetch the list of albums (playlists).
-* 4. Populate `setChannels` and `setAlbums` with the results.
-* 5. If there is a search query in the URL, trigger `handleSearch`.
-* 6. Otherwise, look for a `?channel=<slug>` param in the URL:
-*    - If it matches a channel (by slugified name), select that channel.
-*    - Else, if it matches an album ID, select that album.
-*    - If neither, default to the channel named "Hindi Latest" if available, else the first channel.
-* 7. Handles both channels and albums selection via `currentSelection`.
-* 8. Prevents race conditions by cancelling updates if the component unmounts.
-*
-* @param {Object} params
-* @param {boolean} params.isAuthChecked - True once the auth check (in useAuth) has finished.
-* @param {boolean} params.allowGuestAccess - True if the user is authenticated or has chosen guest access.
-* @param {Object|null} params.currentSelection - Currently selected channel or album (might be `null` initially).
-* @param {boolean} params.isLoading - True if a selection fetch is in progress.
-* @param {Function} params.setChannels - Setter to populate the array of all channels.
-* @param {Function} params.setAlbums - Setter to populate the array of albums if authenticated.
-* @param {Function} params.getSearchFromURL - Function that returns a searchQuery if present in URL.
-* @param {Function} params.handleSearch - Callback to perform a search given a query string.
-* @param {Function} params.selectChannel - Callback to select a channel by its ID.
-* @param {Function} params.selectAlbum - Callback to select an album.
-* @param {Function} params.setCurrentSelection - Setter to update the current selection (channel or album).
-* @param {Function} params.setIsLoading - Setter to indicate loading state.
-*/
+ * Hook to perform initial data load once the user is authenticated (or allowed as guest).
+ *
+ * Responsibilities:
+ * 1. Wait until authentication check is complete and user is either authenticated or allowed as guest.
+ * 2. Fetch the list of all channels from the backend.
+ * 3. If authenticated, also fetch the list of albums (playlists).
+ * 4. Populate `setChannels` and `setAlbums` with the results.
+ * 5. If there is a search query in the URL, trigger `handleSearch`.
+ * 6. Otherwise, look for a `?channel=<slug>` param in the URL:
+ *    - If it matches a channel (by slugified name), select that channel.
+ *    - Else, if it matches an album ID, select that album.
+ *    - If neither, default to the channel named "Hindi Latest" if available, else the first channel.
+ * 7. Handles both channels and albums selection via `currentSelection`.
+ * 8. Prevents race conditions by cancelling updates if the component unmounts.
+ */
 const useInitialLoad = ({
   isAuthChecked,
   allowGuestAccess,
@@ -50,97 +36,126 @@ const useInitialLoad = ({
   setIsLoading,
   setCurrentSong,
   setNextSong,
-  user 
+  setQueue,
+  user,
+  fetchSongsForChannel,
+  fetchSearchResults
 }) => {
-
   const hasLoadedRef = useRef(false);
-  
+
+  // Reset the flag on user change
   useEffect(() => {
     hasLoadedRef.current = false;
   }, [user]);
 
   const loadInitialData = async () => {
-    if (hasLoadedRef.current) return; // 🔒 skip if already ran
+    if (hasLoadedRef.current) return; // 🔒 Prevent multiple triggers
     hasLoadedRef.current = true;
 
     let mounted = true;
 
-    const getSongIdFromURL = () => {
-      const params = new URLSearchParams(window.location.search);
-      return params.get('songId');
-    };
-
-    const getChannelNameFromURL = () => {
-      const params = new URLSearchParams(window.location.search);
-      return params.get('channel');
-    };
+    // Read all URL params
+    const params = new URLSearchParams(window.location.search);
+    const urlSongId = params.get('songId');
+    const urlChannelOrAlbum = params.get('channel');
+    const urlSearchQuery = getSearchFromURL();
 
     const slugify = (name) => name.replace(/\s+/g, '-').toLowerCase();
 
     try {
       setIsLoading(true);
 
+      // ✅ Fetch channels and albums in parallel
       const [channels, albums] = await Promise.all([
         fetchChannels(),
         authService.isAuthenticated() ? getAlbums() : Promise.resolve([]),
       ]);
 
-      if (mounted) {
-        setChannels(channels || []);
-        setAlbums(albums || []);
-      }
+      if (!mounted) return;
 
-      const urlSearchQuery = getSearchFromURL();
-      if (urlSearchQuery) {
-        if (mounted) await handleSearch(urlSearchQuery);
+      setChannels(channels || []);
+      setAlbums(albums || []);
+
+      // ✅ Handle search from URL (without songId)
+      if (urlSearchQuery && !urlSongId) {
+        await handleSearch(urlSearchQuery);
         return;
       }
 
-      const urlChannelOrAlbum = getChannelNameFromURL();
-      const urlSongId = getSongIdFromURL();
-
+      // ✅ Handle songId if present
       if (urlSongId) {
         const song = await getSongById(urlSongId);
         if (song && mounted) {
           setCurrentSong(song);
+
+          // ✅ If channel param is present, fetch songs from that channel
+          if (urlChannelOrAlbum) {
+            const channel = channels.find(c => slugify(c.name) === slugify(urlChannelOrAlbum));
+            if (channel) {
+              const songs = await fetchSongsForChannel(channel._id);
+              const filtered = (songs || []).filter(s => s._id !== song._id);
+              setQueue(filtered.slice(1));
+              setNextSong(filtered.length > 0 ? filtered[0] : null);
+              setCurrentSelection({ type: 'channel', channel, album: null });
+              return;
+            }
+          }
+
+          // ✅ Else, fallback to search results if search exists
+          if (urlSearchQuery) {
+            const searchSongs = await fetchSearchResults({
+              query: urlSearchQuery,
+              options: { excludeIds: [song.videoId] },
+            });
+            setQueue(searchSongs || []);
+            setNextSong((searchSongs && searchSongs[0]) || null);
+            setCurrentSelection(null);
+            return;
+          }
+
+          // ✅ Final fallback: empty queue
+          setQueue([]);
           setNextSong(null);
-        }
-      } else {
-        let foundChannel = null;
-        let foundAlbum = null;
-
-        if (urlChannelOrAlbum) {
-          foundChannel = channels.find(c => slugify(c.name) === slugify(urlChannelOrAlbum));
-          if (!foundChannel) {
-            foundAlbum = albums.find(a => a._id === urlChannelOrAlbum);
-          }
-        }
-
-        if (foundChannel) {
-          await selectChannel(foundChannel._id);
-          setCurrentSelection({ type: 'channel', channel: foundChannel, album: null });
-        } else if (foundAlbum) {
-          await selectAlbum(foundAlbum);
-          setCurrentSelection({ type: 'album', channel: null, album: foundAlbum });
-        } else {
-          const defaultChannel =
-            channels.find(c => c.name === DEFAULT_CHANNEL) || channels[0];
-          if (defaultChannel) {
-            await selectChannel(defaultChannel._id);
-            setCurrentSelection({ type: 'channel', channel: defaultChannel, album: null });
-          }
+          return;
         }
       }
 
+      // ✅ Handle direct channel or album selection
+      let foundChannel = null;
+      let foundAlbum = null;
+
+      if (urlChannelOrAlbum) {
+        foundChannel = channels.find(c => slugify(c.name) === slugify(urlChannelOrAlbum));
+        if (!foundChannel) {
+          foundAlbum = albums.find(a => a._id === urlChannelOrAlbum);
+        }
+      }
+
+      if (foundChannel) {
+        await selectChannel(foundChannel._id);
+        setCurrentSelection({ type: 'channel', channel: foundChannel, album: null });
+      } else if (foundAlbum) {
+        await selectAlbum(foundAlbum);
+        setCurrentSelection({ type: 'album', channel: null, album: foundAlbum });
+      } else {
+        // ✅ Default to Hindi Latest or first channel
+        const defaultChannel =
+          channels.find(c => c.name === DEFAULT_CHANNEL) || channels[0];
+        if (defaultChannel) {
+          await selectChannel(defaultChannel._id);
+          setCurrentSelection({ type: 'channel', channel: defaultChannel, album: null });
+        }
+      }
     } catch (err) {
-      console.error(err);
+      console.error('Initial Load Error:', err);
     } finally {
-      if (mounted && !isLoading) setIsLoading(false);
+      if (mounted) setIsLoading(false);
     }
 
+    // Cleanup to prevent updates after unmount
     return () => { mounted = false; };
   };
-  
+
   return { loadInitialData };
 };
 
