@@ -100,10 +100,10 @@ const getSongsWithExclusionsFromDb = async (
     const pipeline = buildAggregationPipeline(baseMatch, yearFilter);
     
     const songs = await Song.aggregate(pipeline).exec();
-    logger.debug(`Found ${songs.length} songs with exclusions and year filter`);
+    logger.debug(`[getSongsWithExclusionsFromDb] Found ${songs.length} songs with exclusions and year filter`);
     return songs;
   } catch (error) {
-    logger.error("Error fetching songs:", error);
+    logger.error("[getSongsWithExclusionsFromDb] Error fetching songs:", error);
     return [];
   }
 };
@@ -112,7 +112,7 @@ const getSongsWithExclusionsFromDb = async (
 const getSongByVideoIdFromDb = async (videoId) => {
   try {
     const song = await Song.findOne({ videoId: videoId });
-    logger.debug(`[getSongByVideoIdFromDb] Found song with videoId: ${videoId}`);
+    logger.debug(`[getSongByVideoIdFromDb] Found ${songs.length} songs with exclusions and year filter`);
     return song;
   } catch (error) {
     logger.error(`[getSongByVideoIdFromDb] Error fetching song with videoId: ${videoId}`, error);
@@ -127,6 +127,17 @@ const getSongByIdFromDb = async (videoId) => {
     return song;
   } catch (err) {
     logger.error(`[getSongByIdFromDb] Error fetching song with videoId: ${videoId}`, err);
+    return null;
+  }
+};
+
+const getSongsFromIdListFromDb = async (songIds) => {
+  try {
+    const songs = await Song.find({ _id: { $in: songIds } });
+    logger.debug(`[getSongsFromIdListFromDb] Found ${songs.length} songs`);
+    return songs;
+  } catch (err) {
+    logger.error(`[getSongsFromIdListFromDb] Error fetching song with videoId: ${videoId}`, err);
     return null;
   }
 };
@@ -189,5 +200,6 @@ module.exports = {
   updateSongInDb,
   runSongAggregationInDb,
   deleteAllSongsInDb,
-  getSongByIdFromDb
+  getSongByIdFromDb,
+  getSongsFromIdListFromDb
 };

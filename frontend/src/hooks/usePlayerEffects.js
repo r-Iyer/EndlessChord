@@ -80,24 +80,35 @@ export default function usePlayerEffects({
       }
     };
   }, [currentSong, showSongInfo, infoTimeoutRef]);
+
+const clearUIHideTimer = useCallback(() => {
+  if (uiTimeoutRef.current) {
+    clearTimeout(uiTimeoutRef.current);
+    uiTimeoutRef.current = null;
+  }
+}, [uiTimeoutRef]);
+
+
+const resetUIHideTimer = useCallback(() => {
+  if (uiTimeoutRef.current) clearTimeout(uiTimeoutRef.current);
+  const isRemoteDevice = !('ontouchstart' in window) && !('onmousemove' in window);
+  const timeout = isRemoteDevice ? 4000 : 2500;
+
+  uiTimeoutRef.current = setTimeout(() => {
+    setShowUI(false);
+  }, timeout);
+}, [setShowUI, uiTimeoutRef]);
+
+
   
   // ----------------------------------------------------------------------
   // 2. Auto-hide the player UI after 2.5–4s of inactivity — show on mouse/touch/remote key interaction
   // ----------------------------------------------------------------------
   useEffect(() => {
+    
     const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
-    const isRemoteDevice = !('ontouchstart' in window) && !('onmousemove' in window);
-    const timeout = isRemoteDevice ? 4000 : 2500;
-    
     let lastMoveTime = 0;
-    
-    const resetUIHideTimer = () => {
-      if (uiTimeoutRef.current) clearTimeout(uiTimeoutRef.current);
-      uiTimeoutRef.current = setTimeout(() => {
-        setShowUI(false);
-      }, timeout);
-    };
-    
+  
     const showUIWithTimeout = () => {
       setShowUI(true);
       resetUIHideTimer();
@@ -175,6 +186,8 @@ const handleKeyDown = (e) => {
       return true;
     });
     resetUIHideTimer();
+  } else {
+    resetUIHideTimer();// Any other keypress just show UI without focus shifting
   }
 };
 
@@ -199,7 +212,7 @@ const handleKeyDown = (e) => {
       window.removeEventListener('keydown', handleKeyDown);
       if (uiTimeoutRef.current) clearTimeout(uiTimeoutRef.current);
     };
-  }, [setShowUI, uiTimeoutRef, playPauseRef]);
+  }, [setShowUI, uiTimeoutRef, playPauseRef, resetUIHideTimer]);
   
   // ----------------------------------------------------------------------
   // 3. Reset player ready flag whenever the song changes
@@ -274,5 +287,5 @@ const handleKeyDown = (e) => {
     };
   }, [currentSong, duration, currentTime, showSongInfo]);
   
-  return { showSongInfo };
+  return { resetUIHideTimer, clearUIHideTimer  };
 }

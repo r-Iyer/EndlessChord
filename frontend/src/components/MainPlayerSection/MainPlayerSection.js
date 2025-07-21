@@ -34,6 +34,8 @@ export default function MainPlayerSection({
   isFetchingSongs,
   channelSelectorRef,
   playPauseRef,
+  resetUIHideTimer,
+  clearUIHideTimer
 }) {
   if (showLoader) {
     return (
@@ -70,6 +72,8 @@ export default function MainPlayerSection({
         user={user}
         channelSelectorRef={channelSelectorRef}
         playPauseRef={playPauseRef}
+        resetUIHideTimer={resetUIHideTimer}
+        clearUIHideTimer={clearUIHideTimer}
       />
     );
   }

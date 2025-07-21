@@ -1,12 +1,12 @@
 require('dotenv').config();
 const express = require('express');
-const { optionalAuth } = require('../../utils/authUtils');
+const { requireAuth } = require('../../utils/authUtils');
 const { handleError, sendResponse } = require('../../utils/handlerUtils');
 const logger = require('../../utils/loggerUtils');
 const { updateGlobalSongPlayCount, updateUserHistory } = require('../../helpers/historyHelpers');
 const router = express.Router();
 
-router.post('/', optionalAuth, async (req, res) => {
+router.post('/', requireAuth, async (req, res) => {
   logger.debug('[ROUTE] POST /api/songs/played');
   
   try {

@@ -1,8 +1,7 @@
 require('dotenv').config();
 const express = require('express');
-const User = require('../../models/User');
 const { handleError, sendResponse } = require('../../utils/handlerUtils');
-const { optionalAuth } = require('../../utils/authUtils');
+const { requireAuth } = require('../../utils/authUtils');
 const { getUserFavorites, addSongToFavorites, removeSongFromFavorites } = require('../../helpers/userHelpers')
 const { addFavoriteStatus } = require('../../utils/userUtils');
 const logger = require('../../utils/loggerUtils');
@@ -10,7 +9,7 @@ const logger = require('../../utils/loggerUtils');
 const router = express.Router();
 
 // Add to favorites
-router.post('/', optionalAuth, async (req, res) => {
+router.post('/', requireAuth, async (req, res) => {
   logger.info('[ROUTE] POST /api/favorites');
   
   try {
@@ -31,7 +30,7 @@ router.post('/', optionalAuth, async (req, res) => {
 });
 
 // Remove from favorites
-router.delete('/:songId', optionalAuth, async (req, res) => {
+router.delete('/:songId', requireAuth, async (req, res) => {
   logger.info(`[ROUTE] DELETE /api/favorites/${req.params.songId}`);
   
   try {
@@ -51,7 +50,7 @@ router.delete('/:songId', optionalAuth, async (req, res) => {
 });
 
 // Get favorites
-router.get('/', optionalAuth, addFavoriteStatus, async (req, res) => {
+router.get('/', requireAuth, addFavoriteStatus, async (req, res) => {
   logger.info('[ROUTE] GET /api/favorites');
   try {
     const userId = req.user?.id;

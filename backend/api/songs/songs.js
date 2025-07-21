@@ -2,7 +2,7 @@ require('dotenv').config();
 const express = require('express');
 const { addAISuggestionsIfNeeded } = require('../../utils/aiUtils');
 const { parseExcludeIds, getSongsWithExclusions } = require('../../utils/songUtils');
-const { optionalAuth } = require('../../utils/authUtils');
+const { requireAuth } = require('../../utils/authUtils');
 const { handleError, sendResponse } = require('../../utils/handlerUtils');
 const { addFavoriteStatus } = require('../../utils/userUtils');
 const { getChannelsInDbById } = require('../../helpers/channelHelpers');
@@ -11,7 +11,7 @@ const logger = require('../../utils/loggerUtils');
 
 const router = express.Router();
 
-router.get('/:channelId', optionalAuth, addFavoriteStatus, async (req, res) => {
+router.get('/:channelId', requireAuth, addFavoriteStatus, async (req, res) => {
   const { source } = req.query;
   const entity = req.baseUrl.split('/')[2];
 

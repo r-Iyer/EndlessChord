@@ -19,7 +19,7 @@ const generateToken = (user) => {
 };
 
 // Middleware to verify JWT token (optional authentication)
-const optionalAuth = (req, res, next) => {
+const requireAuth = (req, res, next) => {
   try {
     const authHeader = req.headers['authorization'];
     const token = authHeader && authHeader.split(' ')[1]; // Bearer TOKEN
@@ -53,4 +53,4 @@ const optionalAuth = (req, res, next) => {
   }
 };
 
-module.exports = { generateToken, optionalAuth };
+module.exports = { generateToken, requireAuth };

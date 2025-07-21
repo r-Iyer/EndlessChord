@@ -11,7 +11,7 @@
   left: 0;
   right: 0;
   bottom: 0;
-  z-index: 9999;
+  
   pointer-events: auto;
 }
 
@@ -22,6 +22,8 @@
   left: 50%;
   transform: translate(-50%, -50%);
   pointer-events: auto;
+  z-index: 2147483646; /* High z-index to ensure it's at the front */
+
 }
 
 @media (max-height: 500px) and (orientation: landscape) {
@@ -40,7 +42,6 @@
   margin: 6px;
   cursor: pointer;
   pointer-events: auto;
-  z-index: 9999;
   transition: background 0.3s ease;
 }
 
@@ -57,11 +58,11 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 2147483646;
   max-width: 100%;
   pointer-events: auto;
   transition: transform 0.2s ease;
   margin-bottom: 10px;
+  z-index: 9999;
 }
 
 /* Fullscreen mode: slider placement */
@@ -101,23 +102,6 @@
   background: rgba(255, 255, 255, 0.1);
 }
 
-.controls-overlay-relative {
-  position: relative;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-
-.seek-overlay-container {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 100%;
-  z-index: 10;
-  pointer-events: none;
-}
-
 .seek-message {
   animation: fadeBlink 1s ease-in-out;
   background: rgba(0, 0, 0, 0.7);
@@ -129,7 +113,6 @@
   top: 50%;
   transform: translateY(-50%);
   pointer-events: none;
-  z-index: 10;
   white-space: nowrap;
 }
 
@@ -149,6 +132,8 @@
 }
 
 .tooltip-wrapper::after {
+  display: none;
+  content: attr(data-tooltip);
   content: attr(data-tooltip);
   position: absolute;
   bottom: 130%; /* above the button */
@@ -162,9 +147,12 @@
   opacity: 0;
   pointer-events: none;
   font-size: 12px;
-  z-index: 10000;
   transition: opacity 0.25s ease, transform 0.25s ease;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.tooltip-wrapper[data-tooltip]::after {
+  display: block;
 }
 
 .tooltip-wrapper:hover::after {

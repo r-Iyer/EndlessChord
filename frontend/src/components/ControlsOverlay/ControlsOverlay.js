@@ -20,6 +20,8 @@ export default function ControlsOverlay({
   duration,
   channelSelectorRef,
   playPauseRef,
+  resetUIHideTimer,
+  clearUIHideTimer
 }) {
   // Refs for focus redirection
   const fullscreenRef = useRef(null);    // used for ArrowDown
@@ -28,8 +30,6 @@ export default function ControlsOverlay({
     <div className="controls-overlay">
       {/* Center Play/Prev/Next */}
       <div className={`controls-overlay__center ${isFullscreen ? 'fullscreen' : ''}`}>
-        <div className="controls-overlay-relative">
-          <div id="seek-overlay-container" className="seek-overlay-container" />
           <PrevPlayNextControls
             isPlaying={isPlaying}
             onPlayPause={onPlayPause}
@@ -38,7 +38,6 @@ export default function ControlsOverlay({
             playPauseRef={playPauseRef}
             channelSelectorRef={channelSelectorRef}
           />
-        </div>
       </div>
 
       {/* Bottom Controls Footer */}
@@ -50,7 +49,9 @@ export default function ControlsOverlay({
         user={user}
         currentSong={currentSong}
         onSeek={onSeek}
-        fullscreenRef={fullscreenRef} // pass down for ArrowDown focus
+        fullscreenRef={fullscreenRef}
+        resetUIHideTimer={resetUIHideTimer}
+        clearUIHideTimer={clearUIHideTimer}
       />
 
       {/* Slider Row */}

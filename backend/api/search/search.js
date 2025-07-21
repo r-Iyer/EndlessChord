@@ -1,6 +1,6 @@
 require('dotenv').config();
 const express = require('express');
-const { optionalAuth } = require('../../utils/authUtils');
+const { requireAuth } = require('../../utils/authUtils');
 const { handleError, sendResponse } = require('../../utils/handlerUtils');
 const { addAISuggestionsIfNeeded } = require('../../utils/aiUtils');
 const { parseExcludeIds } = require('../../utils/songUtils');
@@ -12,7 +12,7 @@ const logger = require('../../utils/loggerUtils');
 
 const router = express.Router();
 
-router.get('/', optionalAuth, addFavoriteStatus, async (req, res) => {
+router.get('/', requireAuth, addFavoriteStatus, async (req, res) => {
   const { q: searchQuery, excludeIds: excludeIdsParam, source: source } = req.query;
   logger.info(`[ROUTE] GET /api/search — Query: ${searchQuery}`);
   logger.info(`[ROUTE] GET /api/search — source: ${source}`);

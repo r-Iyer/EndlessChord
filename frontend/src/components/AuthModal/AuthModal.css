@@ -9,7 +9,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 2147483647; /* High z-index to ensure it's at the front */
+  z-index: 2147483647 ; /* High z-index to ensure it's at the front */
   padding: 1rem;
 }
 

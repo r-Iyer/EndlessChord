@@ -14,6 +14,7 @@ const channels = require('./channels/channels');
 const played = require('./songs/played');
 const songs = require('./songs/songs');
 const favorites = require('./favorites/favorites');
+const albums = require('./albums/albums');
 const logger = require('../utils/loggerUtils');
 
 (async () => {
@@ -37,6 +38,7 @@ const logger = require('../utils/loggerUtils');
     app.use('/api/songs/played', played);
     app.use('/api/songs', songs);
     app.use('/api/favorites', favorites);
+    app.use('/api/albums', albums);
 
     // Global error handler (optional)
     app.use((err, req, res, next) => {

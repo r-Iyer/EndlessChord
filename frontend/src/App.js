@@ -1,9 +1,5 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import './App.css';
-
-import { fetchChannelById } from './services/channelService';
-import { getFavorites } from './services/favoritesService';
-
 import Spinner from './components/Spinner/Spinner';
 import AuthModal from './components/AuthModal/AuthModal';
 import MainPlayerSection from './components/MainPlayerSection/MainPlayerSection';
@@ -16,179 +12,80 @@ import usePlayerHandlers from './hooks/usePlayerHandlers';
 import usePlayerEffects from './hooks/usePlayerEffects';
 import usePlayerShortcuts from './hooks/usePlayerShortcuts';
 import useChannelHandlers from './hooks/useChannelHandlers';
+import useAlbumHandlers from './hooks/useAlbumHandlers';
 import useInitialLoad from './hooks/useInitialLoad';
 import useFullscreen from './hooks/useFullscreen';
 import { useFavoritesHandlers } from './hooks/useFavoriteHandlers';
 
+import { fetchChannelById } from './services/channelService';
+import { getFavorites } from './services/favoritesService';
+
 function App() {
-  // UI state
-  const [isCCEnabled, setIsCCEnabled] = useState(true);
-  const [isFullscreen, setIsFullscreen] = useState(false);
-  const [showInfo, setShowInfo] = useState(false);
-  const [showUI, setShowUI] = useState(true);
-  const [backendError, setBackendError] = useState(false);
-  const channelSelectorRef = useRef(null);
-  const playPauseRef = useRef(null);
-  
-  // Playback state
-  const [currentChannel, setCurrentChannel] = useState(null);
   const [channels, setChannels] = useState([]);
+  const [albums, setAlbums] = useState([]);
+  const [currentSelection, setCurrentSelection] = useState({ type: null, channel: null, album: null });
   const [queue, setQueue] = useState([]);
   const [currentSong, setCurrentSong] = useState(null);
   const [nextSong, setNextSong] = useState(null);
   const [history, setHistory] = useState([]);
   const [isPlaying, setIsPlaying] = useState(false);
-  
-  // Loading & interaction flags
   const [isLoading, setIsLoading] = useState(false);
   const [isFetchingSongs, setIsFetchingSongs] = useState(false);
   const [playerReady, setPlayerReady] = useState(false);
   const [userInteracted, setUserInteracted] = useState(false);
   const [isInitialLoad, setIsInitialLoad] = useState(true);
-  
-  // Time tracking
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
-  
-  // Refs for player, fullscreen container, and timeouts
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [showUI, setShowUI] = useState(true);
+  const [showInfo, setShowInfo] = useState(false);
+  const [backendError, setBackendError] = useState(false);
+  const [isCCEnabled, setIsCCEnabled] = useState(true);
+
   const playerRef = useRef(null);
   const fullscreenRef = useRef(null);
+  const playPauseRef = useRef(null);
+  const channelSelectorRef = useRef(null);
   const infoTimeoutRef = useRef(null);
   const uiTimeoutRef = useRef(null);
-  
-  // Authentication & user state
+
   const {
-    user,
-    showAuthModal,
-    setShowAuthModal,
-    isAuthChecked,
-    allowGuestAccess,
-    handleAuthSuccess,
-    handleLogout,
-    handleGuestAccess
+    user, showAuthModal, setShowAuthModal, isAuthChecked,
+    allowGuestAccess, handleAuthSuccess, handleLogout, handleGuestAccess
   } = useAuth();
-  
-  const hideAuthModal = () => setShowAuthModal(false);
-  
-  // Search hook
-  const {
-    searchQuery,
-    isSearchMode,
-    handleSearch,
-    clearSearch,
-    getSearchFromURL
-  } = useSearch(
-    setUserInteracted,
-    setBackendError,
-    setIsPlaying,
-    setCurrentSong,
-    setNextSong,
-    setQueue,
-    setIsLoading,
-    setCurrentChannel
+
+  const { searchQuery, isSearchMode, handleSearch, clearSearch, getSearchFromURL } = useSearch(
+    setUserInteracted, setBackendError, setIsPlaying, setCurrentSong, setNextSong, setQueue, setIsLoading, setCurrentSelection
   );
-  
-  // Song queue management
-  const {
-    fetchSongsForChannel,
-    fetchMoreSongs
-  } = useSongQueue(
-    currentChannel,
-    currentSong,
-    setCurrentSong,
-    nextSong,
-    setNextSong,
-    queue,
-    setQueue,
-    isFetchingSongs,
-    setIsFetchingSongs,
-    history,
-    searchQuery
+
+  const { fetchSongsForChannel, fetchMoreSongs } = useSongQueue(
+    currentSelection, currentSong, setCurrentSong, nextSong, setNextSong, queue, setQueue, isFetchingSongs, setIsFetchingSongs, history, searchQuery
   );
-  
-  // Player control handlers
+
   const {
-    handleSeek,
-    handlePreviousSong,
-    handleNextSong,
-    handleLaterSong,
-    togglePlayPause,
-    handlePlayerReady,
-    handlePlayerStateChange,
-    handlePlayerError
+    handleSeek, handlePreviousSong, handleNextSong, handleLaterSong,
+    togglePlayPause, handlePlayerReady, handlePlayerStateChange, handlePlayerError
   } = usePlayerHandlers(
-    playerRef,
-    isPlaying,
-    setIsPlaying,
-    currentSong,
-    setCurrentSong,
-    nextSong,
-    setNextSong,
-    queue,
-    setQueue,
-    fetchMoreSongs,
-    history,
-    setHistory,
-    setCurrentTime,
-    setPlayerReady,
-    isInitialLoad,
-    setIsInitialLoad,
-    setShowInfo
+    playerRef, isPlaying, setIsPlaying, currentSong, setCurrentSong, nextSong, setNextSong, queue, setQueue, fetchMoreSongs, history, setHistory,
+    setCurrentTime, setPlayerReady, isInitialLoad, setIsInitialLoad, setShowInfo
   );
-  
-  // Player effects (time updates & UI hiding)
-  usePlayerEffects({
-    currentSong,
-    setShowInfo,
-    infoTimeoutRef,
-    currentTime,
-    setCurrentTime,
-    duration,
-    setDuration,
-    playerRef,
-    setShowUI,
-    uiTimeoutRef,
-    setPlayerReady,
-    playerReady,
-    isPlaying,
-    playPauseRef
+
+ const { resetUIHideTimer, clearUIHideTimer } = usePlayerEffects({
+    currentSong, setShowInfo, infoTimeoutRef, currentTime, setCurrentTime,
+    duration, setDuration, playerRef, setShowUI, uiTimeoutRef, setPlayerReady,
+    playerReady, isPlaying, playPauseRef, 
   });
-  
-  // Channel selection & URL handling
+
+  const setCurrentChannel = (channel) => setCurrentSelection(prev => ({ ...prev, type: 'channel', channel, album: null }));
+
   const { setChannelNameInURL, selectChannel } = useChannelHandlers(
-    setUserInteracted,
-    setBackendError,
-    setIsPlaying,
-    setCurrentSong,
-    setNextSong,
-    setQueue,
-    setHistory,
-    setIsLoading,
-    setIsFetchingSongs,
-    setCurrentChannel,
-    fetchChannelById,
-    fetchSongsForChannel,
-    currentChannel,
-    channels
+    setUserInteracted, setBackendError, setIsPlaying, setCurrentSong, setNextSong, setQueue,
+    setHistory, setIsLoading, setIsFetchingSongs, setCurrentChannel, fetchChannelById, fetchSongsForChannel,
+    currentSelection.channel, channels
   );
-  
-  // Initial load (channels, URL params, etc.)
-  useInitialLoad({
-    isAuthChecked,
-    allowGuestAccess,
-    currentChannel,
-    isLoading,
-    setChannels,
-    getSearchFromURL,
-    handleSearch,
-    selectChannel,
-    setIsLoading
-  });
-  
-  // Fullscreen.toggle
+
   const { toggleFullscreen } = useFullscreen(isFullscreen, setIsFullscreen, fullscreenRef);
 
-  
   usePlayerShortcuts({
     onSeek: handleSeek,
     onPlayPause: togglePlayPause,
@@ -202,104 +99,98 @@ function App() {
     uiTimeoutRef,
     playPauseRef,
   });
+
+  const { selectAlbum } = useAlbumHandlers({
+    setUserInteracted, setBackendError, setIsPlaying, setCurrentSong, setNextSong, setQueue, setHistory,
+    setIsLoading, setIsFetchingSongs, setCurrentSelection
+  });
+
   
-  // Favorites handler
-  const { playFavorites} = useFavoritesHandlers(
-    getFavorites,
-    {
-      setCurrentChannel,
-      setCurrentSong,
-      setNextSong,
-      setQueue,
-      setUserInteracted,
-      setIsLoading
-    }
-  );
-  
-  // Early return: spinner until auth check completes
-  if (!isAuthChecked) {
-    return (
-      <div className="full-center-screen">
-      <Spinner />
-      </div>
-    );
-  }
-  
+  const { loadInitialData } = useInitialLoad({
+    isAuthChecked, allowGuestAccess, currentSelection, isLoading, setChannels, setAlbums,
+    getSearchFromURL, handleSearch, selectChannel, selectAlbum, setCurrentSelection, setIsLoading
+  });
+
+  const { playFavorites } = useFavoritesHandlers(getFavorites, {
+    setCurrentSelection, setCurrentSong, setNextSong, setQueue, setUserInteracted, setIsLoading
+  });
+
+  useEffect(() => {
+    loadInitialData();
+//MUST be commented
+// eslint-disable-next-line react-hooks/exhaustive-deps
+}, [user]);
+
+
+if (!isAuthChecked) return <div className="full-center-screen"><Spinner /></div>;
+
+
   return (
     <div ref={fullscreenRef} className="app-container">
-    {/* AuthModal */}
-    <AuthModal
-    isOpen={showAuthModal}
-    onClose={hideAuthModal}
-    onAuthSuccess={handleAuthSuccess}
-    onGuestAccess={handleGuestAccess}
-    />
-    
-    {/* Header */}
-    <Header
-    isFullscreen={isFullscreen}
-    setShowAuthModal={setShowAuthModal}
-    searchQuery={searchQuery}
-    handleSearch={handleSearch}
-    user={user}
-    handleLogout={handleLogout}
-    playFavorites={playFavorites}
-    channels={channels}
-    currentChannel={currentChannel}
-    isSearchMode={isSearchMode}
-    setUserInteracted={setUserInteracted}
-    setBackendError={setBackendError}
-    clearSearch={clearSearch}
-    setChannelNameInURL={setChannelNameInURL}
-    selectChannel={selectChannel}
-    channelSelectorRef={channelSelectorRef}
-    playPauseRef={playPauseRef}
-    />
-    
-    <main className="main-container">
-    {/* Global loader overlay */}
-    {isLoading && (
-      <div className="loader-overlay">
-      <Spinner />
-      </div>
-    )}
-    
-    {/* MainPlayerSection */}
-    <MainPlayerSection
-    showLoader={isLoading}
-    currentSong={currentSong}
-    nextSong={nextSong}
-    queue={queue}
-    showInfo={showInfo}
-    isPlaying={isPlaying}
-    onReady={handlePlayerReady}
-    onStateChange={handlePlayerStateChange}
-    onError={handlePlayerError}
-    playerRef={playerRef}
-    isCCEnabled={isCCEnabled}
-    currentTime={currentTime}
-    duration={duration}
-    onSeek={handleSeek}
-    isFullscreen={isFullscreen}
-    showUI={showUI}
-    currentChannel={currentChannel}
-    isSearchMode={isSearchMode}
-    searchQuery={searchQuery}
-    clearSearch={clearSearch}
-    backendError={backendError}
-    userInteracted={userInteracted}
-    user={user}
-    onPlayPause={togglePlayPause}
-    onNext={handleNextSong}
-    onLater={handleLaterSong}
-    onFullscreenToggle={toggleFullscreen}
-    onPrevious={handlePreviousSong}
-    onCCToggle={() => setIsCCEnabled(prev => !prev)}
-    isFetchingSongs = {isFetchingSongs}
-    channelSelectorRef={channelSelectorRef}
-    playPauseRef={playPauseRef}
-    />
-    </main>
+      <AuthModal isOpen={showAuthModal} onClose={() => setShowAuthModal(false)}
+        onAuthSuccess={handleAuthSuccess} onGuestAccess={handleGuestAccess} />
+<Header
+  isFullscreen={isFullscreen}
+  setShowAuthModal={setShowAuthModal}
+  searchQuery={searchQuery}
+  handleSearch={handleSearch}
+  user={user}
+  handleLogout={handleLogout}
+  playFavorites={playFavorites}
+  channels={channels}
+  albums={albums}
+  setAlbums={setAlbums}
+  currentSelection={currentSelection}
+  onSelect={setCurrentSelection}
+  isSearchMode={isSearchMode}
+  setUserInteracted={setUserInteracted}
+  setBackendError={setBackendError}
+  clearSearch={clearSearch}
+  setChannelNameInURL={setChannelNameInURL}
+  selectChannel={selectChannel}
+  channelSelectorRef={channelSelectorRef}
+  selectAlbum={selectAlbum}
+/>
+
+      <main className="main-container">
+        {isLoading && <div className="loader-overlay"><Spinner /></div>}
+        <MainPlayerSection
+          showLoader={isLoading}
+          currentSong={currentSong}
+          nextSong={nextSong}
+          queue={queue}
+          showInfo={showInfo}
+          isPlaying={isPlaying}
+          onReady={handlePlayerReady}
+          onStateChange={handlePlayerStateChange}
+          onError={handlePlayerError}
+          playerRef={playerRef}
+          isCCEnabled={isCCEnabled}
+          currentTime={currentTime}
+          duration={duration}
+          onSeek={handleSeek}
+          isFullscreen={isFullscreen}
+          showUI={showUI}
+          currentSelection={currentSelection}
+          isSearchMode={isSearchMode}
+          searchQuery={searchQuery}
+          clearSearch={clearSearch}
+          backendError={backendError}
+          userInteracted={userInteracted}
+          user={user}
+          onPlayPause={togglePlayPause}
+          onNext={handleNextSong}
+          onLater={handleLaterSong}
+          onFullscreenToggle={toggleFullscreen}
+          onPrevious={handlePreviousSong}
+          onCCToggle={() => setIsCCEnabled(prev => !prev)}
+          isFetchingSongs={isFetchingSongs}
+          channelSelectorRef={channelSelectorRef}
+          playPauseRef={playPauseRef}
+          resetUIHideTimer={resetUIHideTimer}
+          clearUIHideTimer={clearUIHideTimer}
+        />
+      </main>
     </div>
   );
 }

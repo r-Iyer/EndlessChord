@@ -81,7 +81,7 @@ export default function useChannelHandlers(
    * 2. Stops playback and clears current song/queue/history.
    * 3. Sets a loading state while fetching channel data and songs.
    * 4. Attempts to resolve `channelIdOrName` to a channel object:
-   *    - If `channels` list is non-empty and `channelIdOrName` isn't a 24-hex ID, tries matching by slugified name.
+   *    - If `channels` list is non-empty and `channelIdOrName` isn't a 24-hex ID, tries matching by slugified name or _id.
    *    - Otherwise, calls `fetchChannelById(channelIdOrName)`.
    * 5. If the new channel is the same as `currentChannel`, simply clears loading.
    * 6. Updates URL, sets `currentChannel`, fetches songs via `fetchSongsForChannel`.
@@ -121,21 +121,19 @@ export default function useChannelHandlers(
       try {
         let channelData = null;
         const isObjectId = /^[0-9a-fA-F]{24}$/.test(channelIdOrName);
-        const slug = (name) => name.replace(/\s+/g, '-').toLowerCase();
+        const slugify = (name) => name.replace(/\s+/g, '-').toLowerCase();
 
-        // Use cached channels if available
-        if (
-          channels.length > 0 &&
-          typeof channelIdOrName === 'string' &&
-          !isObjectId
-        ) {
-          channelData = channels.find(
-            (c) => slug(c.name) === slug(channelIdOrName)
+        // Resolving from loaded channels
+        if (channels.length > 0) {
+          channelData = channels.find((c) =>
+            isObjectId
+              ? c._id === channelIdOrName
+              : slugify(c.name) === slugify(channelIdOrName)
           );
         }
 
-        // Fetch from API if not found locally
-        if (!channelData) {
+        // Only fetch from API if channels are not loaded or not found
+        if (!channelData && channels.length === 0) {
           try {
             channelData = await fetchChannelById(channelIdOrName, { signal });
           } catch (error) {
@@ -153,19 +151,12 @@ export default function useChannelHandlers(
           throw new Error(`Channel "${channelIdOrName}" not found`);
         }
 
-        // Skip if same channel is already selected
-        if (currentChannel?._id === channelData._id) {
-          setIsLoading(false);
-          setIsFetchingSongs(false);
-          return;
-        }
-
         // Update channel and URL
         setCurrentChannel(channelData);
-        setChannelNameInURL(slug(channelData.name));
+        setChannelNameInURL(slugify(channelData.name));
 
         // Fetch songs with cancellation support
-        let songs;
+        let songs = [];
         try {
           songs = await fetchSongsForChannel(channelData._id, { signal });
         } catch (error) {
@@ -182,6 +173,7 @@ export default function useChannelHandlers(
           setCurrentSong(songs[0]);
           setNextSong(songs[1] || null);
           setQueue(songs.slice(2));
+          setIsPlaying(false);
         } else {
           setIsPlaying(false);
         }
@@ -198,23 +190,7 @@ export default function useChannelHandlers(
         }
       }
     },
-    [
-      setUserInteracted,
-      setBackendError,
-      setIsPlaying,
-      setCurrentSong,
-      setNextSong,
-      setQueue,
-      setHistory,
-      setIsLoading,
-      setIsFetchingSongs,
-      setCurrentChannel,
-      fetchChannelById,
-      fetchSongsForChannel,
-      currentChannel,
-      channels,
-      setChannelNameInURL,
-    ]
+    [setUserInteracted, setBackendError, setIsPlaying, setCurrentSong, setNextSong, setQueue, setHistory, setIsLoading, setIsFetchingSongs, setCurrentChannel, fetchChannelById, fetchSongsForChannel, channels, setChannelNameInURL]
   );
 
   return {

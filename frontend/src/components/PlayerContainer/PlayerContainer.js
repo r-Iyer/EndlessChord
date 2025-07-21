@@ -27,6 +27,8 @@ export default function PlayerContainer({
   user,
   channelSelectorRef,
   playPauseRef,
+  resetUIHideTimer,
+  clearUIHideTimer
 }) {
   const [isVideoLoaded, setIsVideoLoaded] = useState(false);
 
@@ -67,6 +69,8 @@ export default function PlayerContainer({
         showUI={showUI}
         channelSelectorRef={channelSelectorRef}
         playPauseRef={playPauseRef}
+        resetUIHideTimer={resetUIHideTimer}
+        clearUIHideTimer={clearUIHideTimer}
       />
 
       <SongInfo

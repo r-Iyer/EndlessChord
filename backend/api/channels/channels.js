@@ -1,6 +1,6 @@
 require('dotenv').config();
 const express = require('express');
-const { optionalAuth } = require('../../utils/authUtils');
+const { requireAuth } = require('../../utils/authUtils');
 const { handleError, sendResponse } = require('../../utils/handlerUtils');
 const { reinitializeDatabase } = require('../../utils/initialiseUtils');
 const { getChannelsInDb, getChannelsInDbById } = require('../../helpers/channelHelpers');
@@ -8,7 +8,7 @@ const logger = require('../../utils/loggerUtils');
 
 const router = express.Router();
 // Routes
-router.get('/', optionalAuth, async (req, res) => {
+router.get('/', requireAuth, async (req, res) => {
   logger.info('[ROUTE] GET /api/channels');
   
   // Reinitialize database tables if needed
@@ -24,7 +24,7 @@ router.get('/', optionalAuth, async (req, res) => {
   }
 });
 
-router.get('/:id', optionalAuth, async (req, res) => {
+router.get('/:id', requireAuth, async (req, res) => {
   logger.info(`[ROUTE] GET /api/channels/${req.params.id}`);
   
   try {
