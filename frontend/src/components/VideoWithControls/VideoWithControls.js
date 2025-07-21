@@ -26,7 +26,9 @@ export default function VideoWithControls({
   playPauseRef,
   resetUIHideTimer,
   clearUIHideTimer,
-  setCurrentSong
+  setCurrentSong,
+  albums,
+  setAlbums
 }) {
   const videoContainerRef = useRef(null);
 
@@ -68,6 +70,8 @@ export default function VideoWithControls({
           resetUIHideTimer={resetUIHideTimer}
           clearUIHideTimer={clearUIHideTimer}
           setCurrentSong={setCurrentSong}
+          albums={albums}
+          setAlbums={setAlbums}
         />
       </div>
     </div>

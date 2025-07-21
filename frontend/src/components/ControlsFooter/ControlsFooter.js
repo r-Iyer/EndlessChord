@@ -25,10 +25,11 @@ export default function ControlsFooter({
   fullscreenRef,
   resetUIHideTimer,
   clearUIHideTimer,
-  setCurrentSong
+  setCurrentSong,
+  albums,
+  setAlbums
 }) {
   const {
-    albums,
     open,
     setOpen,
     newName,
@@ -38,7 +39,7 @@ export default function ControlsFooter({
     onToggleAlbum,
     onCreate,
     handleEditKeyDown
-  } = useSongAlbumManager(user, currentSong);
+  } = useSongAlbumManager(user, currentSong,setAlbums);
   
   const inputRef = useRef(null);
   

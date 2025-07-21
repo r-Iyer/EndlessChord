@@ -29,7 +29,9 @@ export default function PlayerContainer({
   playPauseRef,
   resetUIHideTimer,
   clearUIHideTimer,
-  setCurrentSong
+  setCurrentSong,
+  albums,
+  setAlbums
 }) {
   const [isVideoLoaded, setIsVideoLoaded] = useState(false);
 
@@ -73,6 +75,8 @@ export default function PlayerContainer({
         resetUIHideTimer={resetUIHideTimer}
         clearUIHideTimer={clearUIHideTimer}
         setCurrentSong={setCurrentSong}
+        albums={albums}
+        setAlbums={setAlbums}
       />
 
       <SongInfo

@@ -36,7 +36,9 @@ export default function MainPlayerSection({
   playPauseRef,
   resetUIHideTimer,
   clearUIHideTimer,
-  setCurrentSong
+  setCurrentSong,
+  albums,
+  setAlbums
 }) {
   if (showLoader) {
     return (
@@ -76,6 +78,8 @@ export default function MainPlayerSection({
         resetUIHideTimer={resetUIHideTimer}
         clearUIHideTimer={clearUIHideTimer}
         setCurrentSong={setCurrentSong}
+        albums={albums}
+        setAlbums={setAlbums}
       />
     );
   }

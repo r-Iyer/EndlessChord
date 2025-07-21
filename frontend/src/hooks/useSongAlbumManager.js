@@ -2,8 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import AuthService from '../services/authService';
 import { getAlbums, addSongToAlbum, removeSongFromAlbum, createAlbum } from '../services/albumService';
 
-export default function useSongAlbumManager(user, currentSong) {
-  const [albums, setAlbums] = useState([]);
+export default function useSongAlbumManager(user, currentSong, setAlbums) {
   const [open, setOpen] = useState(false);
   const [newName, setNewName] = useState('');
   const [songAlbumMap, setSongAlbumMap] = useState({});
@@ -13,7 +12,7 @@ export default function useSongAlbumManager(user, currentSong) {
   const fetchAndMapAlbums = async () => {
     if (user && !AuthService.isGuest) {
       const albums = await getAlbums();
-      setAlbums(albums);
+      setAlbums(albums); 
       
       if (currentSong) {
         const map = {};
@@ -86,8 +85,6 @@ const handleEditKeyDown = (e) => {
 
   
   return {
-    albums,
-    setAlbums,
     open,
     setOpen,
     newName,

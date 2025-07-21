@@ -116,7 +116,7 @@ const AuthModal = ({ isOpen, onClose, onAuthSuccess }) => {
 
   return (
     <div className="auth-modal-overlay">
-      <div className="auth-modal-container">
+      <div className="auth-modal-container" onClick={(e) => e.stopPropagation()}>
         <div className="auth-modal-header">
           <h2 className="auth-modal-title">
             {mode === 'login' ? 'Login' : 'Sign Up'}

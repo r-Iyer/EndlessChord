@@ -125,10 +125,10 @@ const { loadInitialData } = useInitialLoad({
   setIsLoading,
   setCurrentSong,
   setNextSong,
-  setQueue, // ✅ add this
+  setQueue,
   user,
-  fetchSongsForChannel, // ✅ add this
-  fetchSearchResults: searchService, // ✅ add this
+  fetchSongsForChannel,
+  fetchSearchResults: searchService,
 });
 
 
@@ -212,6 +212,8 @@ selectAlbum={selectAlbum}
       resetUIHideTimer={resetUIHideTimer}
       clearUIHideTimer={clearUIHideTimer}
       setCurrentSong={setCurrentSong}
+      albums={albums}
+      setAlbums={setAlbums}
     />
   </main>
 </div>
