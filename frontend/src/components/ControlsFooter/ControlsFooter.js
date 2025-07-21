@@ -89,7 +89,7 @@ const handleShare = async (e) => {
 
   const songTitle = currentSong?.title?.trim() || 'Listen to this song';
   const shareUrl = url.toString();
-  const message = `🎵 Listen to ${songTitle} on Endless Chord 🎶! \n${shareUrl}`;
+  const message = `🎵 Listen to ${songTitle} on Endless Chord 🎶! \n`;
 
   console.log('Sharing message:', message);
 

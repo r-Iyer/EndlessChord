@@ -21,9 +21,11 @@ export default function useSongHandlers(currentSong) {
   };
 
   // Sync URL whenever currentSong changes
-  useEffect(() => {
+useEffect(() => {
+  if (currentSong?.videoId) {
     setSongInURL(currentSong);
-  }, [currentSong]);
+  }
+}, [currentSong]);
 
   return { setSongInURL, getSongFromURL };
 }

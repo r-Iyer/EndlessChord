@@ -18,7 +18,7 @@ export default function MainPlayerSection({
   onSeek,
   isFullscreen,
   showUI,
-  currentChannel,
+  currentSelection,
   isSearchMode,
   searchQuery,
   clearSearch,

@@ -11,8 +11,8 @@ import { INITIAL, REFRESH } from '../constants/constants';
 * a channel or a search query, while ensuring no duplicates and respecting
 * the current playback history.
 *
-* @param {Object|null} currentChannel
-*   The currently selected channel object. Expected to have an `_id` property.
+* @param {Object|null} setCurrentSelection
+*   The currently selected object. Expected to have an `_id` property.
 *
 * @param {Object|null} currentSong
 *   The currently playing song object. Expected to have a `videoId` property.
@@ -51,7 +51,7 @@ import { INITIAL, REFRESH } from '../constants/constants';
 *   - fetchMoreSongs: Function to fetch or append more songs to the queue.
 */
 export default function useSongQueue(
-  currentChannel,
+  currentSelection,
   currentSong,
   setCurrentSong,
   nextSong,
@@ -83,7 +83,7 @@ export default function useSongQueue(
   * any video IDs already in currentSong, nextSongRef, queueRef, or history.
   *
   * Options:
-  * - channelId: string (defaults to currentChannel?._id)
+  * - channelId: string (defaults to currentSelection?.channel?._id)
   * - setAsCurrent: boolean   → if true, update currentSong & nextSong & queue
   * - appendToQueue: boolean  → if true, append results to existing queue
   * - initial: boolean        → if true, indicates initial load (used by fetchSongsService)
@@ -93,7 +93,7 @@ export default function useSongQueue(
   const fetchSongs = useCallback(
     async (options = {}) => {
       const {
-        channelId = currentChannel?._id,
+        channelId = currentSelection?.channel?._id,
         setAsCurrent = false,
         appendToQueue = false,
         initial = false,
@@ -206,7 +206,7 @@ export default function useSongQueue(
           setIsFetchingSongs(false);
         }
       },
-      [currentChannel?._id, currentSong?.videoId, history, setCurrentSong, setNextSong, setQueue, setIsFetchingSongs]
+      [currentSelection?.channel?._id, currentSong?.videoId, history, setCurrentSong, setNextSong, setQueue, setIsFetchingSongs]
     );
     
     const fetchSongsForChannel = useCallback(
@@ -246,4 +246,3 @@ export default function useSongQueue(
       fetchMoreSongs,
     };
   }
-  

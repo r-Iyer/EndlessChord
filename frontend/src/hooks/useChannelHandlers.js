@@ -13,10 +13,10 @@ import { cancelSearch } from '../services/searchService';
  * @param {Function} setHistory - Clears or updates play history when channel changes.
  * @param {Function} setIsLoading - Toggles loading state for channel changes.
  * @param {Function} setIsFetchingSongs – Setter to toggle isFetchingSongs.
- * @param {Function} setCurrentChannel - Updates the current channel object.
+ * @param {Function} setCurrentSelection - Updates the current selection object.
  * @param {Function} fetchChannelById - Async function to fetch channel by its ID or name.
  * @param {Function} fetchSongsForChannel - Async function to fetch songs given a channel ID.
- * @param {Object|null} currentChannel - The currently selected channel.
+ * @param {Object|null} currentSelection - The current selection object containing type, channel, album.
  * @param {Array<Object>} channels - List of all available channels (may include { _id, name, ... }).
  *
  * @returns {Object} 
@@ -36,10 +36,10 @@ export default function useChannelHandlers(
   setHistory,
   setIsLoading,
   setIsFetchingSongs,
-  setCurrentChannel,
+  setCurrentSelection,
   fetchChannelById,
   fetchSongsForChannel,
-  currentChannel,
+  currentSelection,
   channels
 ) {
   const callIdRef = useRef(0);
@@ -83,8 +83,8 @@ export default function useChannelHandlers(
    * 4. Attempts to resolve `channelIdOrName` to a channel object:
    *    - If `channels` list is non-empty and `channelIdOrName` isn't a 24-hex ID, tries matching by slugified name or _id.
    *    - Otherwise, calls `fetchChannelById(channelIdOrName)`.
-   * 5. If the new channel is the same as `currentChannel`, simply clears loading.
-   * 6. Updates URL, sets `currentChannel`, fetches songs via `fetchSongsForChannel`.
+   * 5. If the new channel is the same as `currentSelection.channel`, simply clears loading.
+   * 6. Updates URL, sets `currentSelection`, fetches songs via `fetchSongsForChannel`.
    * 7. If songs exist, places the first in `currentSong`, second in `nextSong`, rest in `queue`.
    *    If no songs, ensures playback is stopped and queue is empty.
    * 8. On any error (network, missing channel, etc.), sets the backend error flag and resets playback state.
@@ -151,8 +151,8 @@ export default function useChannelHandlers(
           throw new Error(`Channel "${channelIdOrName}" not found`);
         }
 
-        // Update channel and URL
-        setCurrentChannel(channelData);
+        // Update channel in selection and URL
+        setCurrentSelection(prev => ({ type: 'channel', channel: channelData, album: null }));
         setChannelNameInURL(slugify(channelData.name));
 
         // Fetch songs with cancellation support
@@ -190,7 +190,7 @@ export default function useChannelHandlers(
         }
       }
     },
-    [setUserInteracted, setBackendError, setIsPlaying, setCurrentSong, setNextSong, setQueue, setHistory, setIsLoading, setIsFetchingSongs, setCurrentChannel, fetchChannelById, fetchSongsForChannel, channels, setChannelNameInURL]
+    [setUserInteracted, setBackendError, setIsPlaying, setCurrentSong, setNextSong, setQueue, setHistory, setIsLoading, setIsFetchingSongs, setCurrentSelection, fetchChannelById, fetchSongsForChannel, channels, setChannelNameInURL]
   );
 
   return {

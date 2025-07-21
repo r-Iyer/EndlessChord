@@ -77,11 +77,9 @@ function App() {
     playerReady, isPlaying, playPauseRef, 
   });
 
-  const setCurrentChannel = (channel) => setCurrentSelection(prev => ({ ...prev, type: 'channel', channel, album: null }));
-
   const { setChannelNameInURL, selectChannel } = useChannelHandlers(
     setUserInteracted, setBackendError, setIsPlaying, setCurrentSong, setNextSong, setQueue,
-    setHistory, setIsLoading, setIsFetchingSongs, setCurrentChannel, fetchChannelById, fetchSongsForChannel,
+    setHistory, setIsLoading, setIsFetchingSongs, setCurrentSelection, fetchChannelById, fetchSongsForChannel,
     currentSelection.channel, channels
   );
 
@@ -112,18 +110,20 @@ function App() {
   
   const { loadInitialData } = useInitialLoad({
     isAuthChecked, allowGuestAccess, currentSelection, isLoading, setChannels, setAlbums,
-    getSearchFromURL, handleSearch, selectChannel, selectAlbum, setCurrentSelection, setIsLoading
+    getSearchFromURL, handleSearch, selectChannel, selectAlbum, setCurrentSelection, setIsLoading,
+    setCurrentSong, setNextSong, user
   });
 
   const { playFavorites } = useFavoritesHandlers(getFavorites, {
     setCurrentSelection, setCurrentSong, setNextSong, setQueue, setUserInteracted, setIsLoading
   });
-
+  
   useEffect(() => {
+  if (isAuthChecked && (user || allowGuestAccess)) {
     loadInitialData();
-//MUST be commented
+  }
 // eslint-disable-next-line react-hooks/exhaustive-deps
-}, [user]);
+}, [user, isAuthChecked, allowGuestAccess]);
 
 
 if (!isAuthChecked) return <div className="full-center-screen"><Spinner /></div>;

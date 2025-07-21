@@ -17,7 +17,7 @@ import { INITIAL } from '../constants/constants';
  * @param {Function} setNextSong - Sets the next song in the queue.
  * @param {Function} setQueue - Sets the remaining song queue.
  * @param {Function} setIsLoading - Toggles loading state for network calls.
- * @param {Function} setCurrentChannel - Clears or sets the current channel (we clear it on search).
+ * @param {Function} setCurrentSelection - Clears or sets the current selection (we clear it on search).
  *
  * @returns {Object}
  *   - searchQuery: The current search input string.
@@ -34,7 +34,7 @@ export default function useSearch(
   setNextSong,
   setQueue,
   setIsLoading,
-  setCurrentChannel
+  setCurrentSelection
 ) {
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearchMode, setIsSearchMode] = useState(false);
@@ -102,7 +102,7 @@ export default function useSearch(
       setIsPlaying(false);
       setIsLoading(true);
 
-      setCurrentChannel(null);
+      setCurrentSelection(null);
       setSearchQuery(trimmed);
       setIsSearchMode(true);
       setSearchInURL(trimmed);
@@ -158,7 +158,7 @@ export default function useSearch(
       setNextSong,
       setQueue,
       setIsLoading,
-      setCurrentChannel,
+      setCurrentSelection,
       setSearchInURL,
       isSearchMode,
     ]

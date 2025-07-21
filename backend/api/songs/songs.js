@@ -8,8 +8,34 @@ const { addFavoriteStatus } = require('../../utils/userUtils');
 const { getChannelsInDbById } = require('../../helpers/channelHelpers');
 const { getUserRecentSongsInDb } = require('../../helpers/userHelpers');
 const logger = require('../../utils/loggerUtils');
+const { getSongByVideoIdFromDb } = require('../../helpers/songHelpers');
 
 const router = express.Router();
+
+router.get('/song/:videoId', requireAuth, addFavoriteStatus, async (req, res) => {
+  const { videoId } = req.params;
+  const userId = req.user?.id;
+  const userName = req.user?.name;
+
+  logger.info(`[ROUTE] GET /api/song/${videoId} — User: ${userName}`);
+
+  try {
+    // 1. Fetch song from database by videoId
+    const song = await getSongByVideoIdFromDb(videoId);
+
+    if (!song) {
+      logger.warn(`[ROUTE] GET /api/song/${videoId} — Song not found`);
+      return sendResponse(res, { message: 'Song not found' }, 404);
+    }
+
+    logger.info(`[ROUTE] GET /api/song/${videoId} — Found song: ${song.title}`);
+
+    // 3. Return the song
+    sendResponse(res, song);
+  } catch (error) {
+    handleError(res, error, `/api/song/${videoId}`);
+  }
+});
 
 router.get('/:channelId', requireAuth, addFavoriteStatus, async (req, res) => {
   const { source } = req.query;

@@ -47,3 +47,8 @@ export const cancelFetchSongs = () => {
     currentAbortController.abort();
   }
 };
+
+export const getSongById = async (videoId) => {
+  const response = await api.get(`/api/songs/song/${videoId}`);
+  return response.data;
+};
