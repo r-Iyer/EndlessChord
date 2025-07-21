@@ -19,6 +19,7 @@ import { useFavoritesHandlers } from './hooks/useFavoriteHandlers';
 
 import { fetchChannelById } from './services/channelService';
 import { getFavorites } from './services/favoritesService';
+import useSongHandlers from './hooks/useSongHandlers';
 
 function App() {
   const [channels, setChannels] = useState([]);
@@ -85,6 +86,9 @@ function App() {
   );
 
   const { toggleFullscreen } = useFullscreen(isFullscreen, setIsFullscreen, fullscreenRef);
+
+ useSongHandlers(currentSong);
+
 
   usePlayerShortcuts({
     onSeek: handleSeek,

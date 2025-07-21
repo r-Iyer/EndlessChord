@@ -7,6 +7,7 @@ import {
   RotateCcw,
   Plus,
   Check,
+  Share2 
 } from 'lucide-react';
 import FavoriteButton from '../FavoriteButton/FavoriteButton';
 import AuthService from '../../services/authService';
@@ -77,6 +78,39 @@ export default function ControlsFooter({
       }
     };
   }, [open, resetUIHideTimer]);
+  
+const handleShare = async (e) => {
+  e.stopPropagation();
+
+  const url = new URL(window.location.href);
+  if (currentSong?.videoId) {
+    url.searchParams.set('songId', currentSong.videoId);
+  }
+
+  const songTitle = currentSong?.title?.trim() || 'Listen to this song';
+  const shareUrl = url.toString();
+  const message = `🎵 Listen to ${songTitle} on Endless Chord 🎶! \n${shareUrl}`;
+
+  console.log('Sharing message:', message);
+
+  try {
+    if (navigator.share) {
+      await navigator.share({
+        title: songTitle,
+        text: message,
+        url: shareUrl,
+      });
+    } else {
+      await navigator.clipboard.writeText(message);
+      alert('Link copied to clipboard!');
+    }
+  } catch (err) {
+    console.error('Sharing failed:', err);
+    alert('Sharing failed. Copied link to clipboard!');
+    await navigator.clipboard.writeText(message);
+  }
+};
+  
   
   return (
     <div className="controls-footer">
@@ -176,6 +210,15 @@ export default function ControlsFooter({
     ref={fullscreenRef}
     >
     {isFullscreen ? <Minimize /> : <Maximize />}
+    </button>
+    </div>
+    <div className="tooltip-wrapper" data-tooltip="Share">
+    <button
+    className="control-button"
+    onClick={handleShare}
+    aria-label="Share"
+    >
+    <Share2 />
     </button>
     </div>
     </div>
