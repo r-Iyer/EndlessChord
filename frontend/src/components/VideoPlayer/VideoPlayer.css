@@ -1,12 +1,3 @@
-html, body {
-  margin: 0;
-  padding: 0;
-  width: 100vw;
-  height: 100vh;
-  overflow: hidden;
-  background: black;
-}
-
 .youtube-container {
   position: relative;
   width: 100%;
@@ -20,17 +11,27 @@ html, body {
   width: 100vw;
   height: 100vh;
   z-index: 9999;
-  background: black;
+  background-color: black;
 }
 
-/* Normal mode = 16:9 */
+/* Default: Mobile Portrait (16:9 aspect) */
 .video-wrapper {
   width: 100%;
   aspect-ratio: 16 / 9;
-  background: black;
 }
 
-/* Fullscreen = force fill screen without any gaps */
+/* Desktop (min-width >= 768px) or Fullscreen override */
+@media (min-width: 768px) {
+  .video-wrapper,
+  .video-wrapper.fullscreen {
+    width: 100%;
+    height: 100vh;
+    aspect-ratio: auto;
+    touch-action: none;
+  }
+}
+
+/* Mobile Fullscreen — override via class toggle */
 .video-wrapper.fullscreen {
   position: absolute;
   top: 0;
@@ -38,35 +39,35 @@ html, body {
   width: 100vw;
   height: 100vh;
   aspect-ratio: unset;
-  background: black;
+  background-color: black;
   touch-action: none;
 }
 
-.youtube-player,
-.youtube-player iframe {
-  display: block;
+.youtube-player {
   width: 100%;
   height: 100%;
-  border: none;
-  margin: 0;
-  padding: 0;
-  background: black;
-  pointer-events: auto;
 }
 
-/* Empty player fallback screen */
 .empty-player-container {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 100vw;
+  width: 100%;
   height: 100vh;
-  background: black;
+  background-color: black;
 }
 
 .empty-player-message {
   color: white;
-  font-size: 1.25rem;
+  font-size: 1.25rem; /* text-xl */
+}
+
+/* Override YouTube iframe styles */
+.youtube-player iframe {
+  width: 100%;
+  height: 100%;
+  border: none;
+  pointer-events: none;
 }
 
 .pause-mask {
@@ -75,11 +76,12 @@ html, body {
   left: 0;
   width: 100%;
   height: 22%;
-  background: black;
+  background-color: black;
   z-index: 10;
   pointer-events: none;
 }
 
+/* Muted icon top-left */
 .muted-indicator {
   position: absolute;
   top: 12px;
@@ -93,6 +95,7 @@ html, body {
   justify-content: center;
 }
 
+/* Add to VideoPlayer.css */
 .unmute-overlay {
   position: absolute;
   top: 0;
@@ -100,5 +103,5 @@ html, body {
   width: 100%;
   height: 100%;
   z-index: 10;
-  background: transparent;
+  background-color: transparent;
 }
