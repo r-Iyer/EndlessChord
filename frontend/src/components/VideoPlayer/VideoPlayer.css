@@ -1,13 +1,3 @@
-html, body {
-  margin: 0;
-  padding: 0;
-  width: 100vw;
-  height: 100vh;
-  overflow: hidden;
-  background-color: black;
-}
-
-/* Always take full viewport in fullscreen */
 .youtube-container {
   position: relative;
   width: 100%;
@@ -15,44 +5,63 @@ html, body {
 }
 
 .youtube-container.fullscreen {
-  width: 100vw;
-  height: 100vh;
+  position: relative;
+  top: 0px;
+  width: 100%;
+  height: 100%;
 }
 
+/* Default: Mobile Portrait (16:9 aspect) */
 .video-wrapper {
   width: 100%;
   aspect-ratio: 16 / 9;
 }
 
-/* Fix fullscreen gap: no aspect-ratio, full viewport height */
+/* Desktop (min-width >= 768px) or Fullscreen override */
+@media (min-width: 768px) {
+  .video-wrapper,
+  .video-wrapper.fullscreen {
+    width: 100%;
+    height: 100vh;
+    aspect-ratio: auto;
+    touch-action: none;
+  }
+}
+
+/* Mobile Fullscreen — override via class toggle */
 .video-wrapper.fullscreen {
-  width: 100vw;
+  width: 100%;
   height: 100vh;
   aspect-ratio: auto;
   background-color: black;
   touch-action: none;
 }
 
-.youtube-player,
-.youtube-player iframe {
+.youtube-player {
   width: 100%;
   height: 100%;
-  display: block;
-  border: none;
 }
 
 .empty-player-container {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 100vw;
+  width: 100%;
   height: 100vh;
   background-color: black;
 }
 
 .empty-player-message {
   color: white;
-  font-size: 1.25rem;
+  font-size: 1.25rem; /* text-xl */
+}
+
+/* Override YouTube iframe styles */
+.youtube-player iframe {
+  width: 100%;
+  height: 100%;
+  border: none;
+  pointer-events: none;
 }
 
 .pause-mask {
@@ -66,6 +75,7 @@ html, body {
   pointer-events: none;
 }
 
+/* Muted icon top-left */
 .muted-indicator {
   position: absolute;
   top: 12px;
@@ -79,6 +89,7 @@ html, body {
   justify-content: center;
 }
 
+/* Add to VideoPlayer.css */
 .unmute-overlay {
   position: absolute;
   top: 0;
