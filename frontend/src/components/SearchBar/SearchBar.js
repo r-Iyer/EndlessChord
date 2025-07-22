@@ -41,6 +41,11 @@ export default function SearchBar({ onSearch, searchQuery = '', onQueryChange, c
     }
   };
 
+  const handleKeyDown = (e) => {
+    // Prevent the event from bubbling up to parent elements
+    e.stopPropagation();
+  };
+
   return (
     <div className={`search-container ${className}`}>        
       <form onSubmit={handleSubmit} className="search-form">
@@ -50,6 +55,7 @@ export default function SearchBar({ onSearch, searchQuery = '', onQueryChange, c
             type="text"
             value={query}
             onChange={(e) => handleQueryChange(e.target.value)}
+            onKeyDown={handleKeyDown} // 💡 stop propagation here
             placeholder={placeholderText}
             className="search-input"
           />
