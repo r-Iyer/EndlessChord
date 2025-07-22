@@ -177,7 +177,10 @@ function VideoPlayer({
   const handleReady = (event) => {
     playerRef.current = event.target;
     setIsPlayerReady(true);
-    playerRef.current.mute(); 
+    if(isFirstLoadRef.current) {
+      playerRef.current.mute(); 
+      isFirstLoadRef.current = false;
+    }
 
     try {
       // First attempt: Use YouTube's autoplay parameter
