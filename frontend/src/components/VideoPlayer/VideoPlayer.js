@@ -12,7 +12,7 @@ const isFirestick = /Fire TV|AFT/.test(navigator.userAgent);
 */
 export function requestFullscreenWithOrientation(element) {
   if (!element) return;
-
+  
   if (element.requestFullscreen) {
     element.requestFullscreen();
   } else if (element.webkitRequestFullscreen) {
@@ -20,7 +20,7 @@ export function requestFullscreenWithOrientation(element) {
   } else if (element.msRequestFullscreen) {
     element.msRequestFullscreen();
   }
-
+  
   if (window.screen.orientation?.lock) {
     window.screen.orientation.lock('landscape').catch(() => {
       // Ignore errors, e.g. user rejected lock
@@ -69,16 +69,16 @@ function VideoPlayer({
   const [isPlayerReady, setIsPlayerReady] = useState(false);
   const [showMutedBanner, setShowMutedBanner] = useState(false);
   const isFirstLoadRef = useRef(true);
-
+  
   // Track whether the video is paused
   const [isPaused, setIsPaused] = useState(false);
-
+  
   // Reset player ready, paused when videoId changes
   useEffect(() => {
     setIsPlayerReady(false);
     setIsPaused(false);
   }, [currentSong?.videoId]);
-
+  
   // Sync play/pause with isPlaying prop once player is ready
   useEffect(() => {
     if (
@@ -86,9 +86,9 @@ function VideoPlayer({
       !playerRef?.current ||
       typeof playerRef?.current?.getPlayerState !== 'function'
     ) return;
-
+    
     if (!isIframeLoaded(playerRef.current)) return;
-
+    
     try {
       const state = playerRef.current?.getPlayerState();
       // State -1 = unstarted, 5 = video cued, ignore those states
@@ -103,30 +103,34 @@ function VideoPlayer({
       console.warn('YouTube player state sync error:', error);
     }
   }, [isPlaying, isPlayerReady, playerRef]);
-
+  
   /**
   * Unmute on any click, key press, or touch event
   */
-useEffect(() => {
-  const unmuteIfMuted = (e) => {
-    if (playerRef.current?.isMuted()) {
-      playerRef.current.unMute();
-      setShowMutedBanner(false);
-    }
-  };
-
-  window.addEventListener('keydown', unmuteIfMuted);
-  window.addEventListener('click', unmuteIfMuted);
-  window.addEventListener('touchstart', unmuteIfMuted, { passive: false });
-
-  return () => {
-    window.removeEventListener('keydown', unmuteIfMuted);
-    window.removeEventListener('click', unmuteIfMuted);
-    window.removeEventListener('touchstart', unmuteIfMuted);
-  };
-}, [playerRef]);
-
-
+  useEffect(() => {
+    // Modify unmuteIfMuted function
+    const unmuteIfMuted = (e) => {
+      // Skip if event originated inside video container
+      if (containerRef.current?.contains(e.target)) return;
+      
+      if (playerRef.current?.isMuted()) {
+        playerRef.current.unMute();
+        setShowMutedBanner(false);
+      }
+    };
+    
+    window.addEventListener('keydown', unmuteIfMuted);
+    window.addEventListener('click', unmuteIfMuted);
+    window.addEventListener('touchstart', unmuteIfMuted, { passive: false });
+    
+    return () => {
+      window.removeEventListener('keydown', unmuteIfMuted);
+      window.removeEventListener('click', unmuteIfMuted);
+      window.removeEventListener('touchstart', unmuteIfMuted);
+    };
+  }, [playerRef]);
+  
+  
   /**
   * Toggle captions on/off
   */
@@ -134,7 +138,7 @@ useEffect(() => {
     const player = playerRef.current;
     if (!isPlayerReady || !player) return;
     if (!isIframeLoaded(player)) return;
-
+    
     try {
       if (isCCEnabled) {
         player.loadModule('captions');
@@ -146,7 +150,7 @@ useEffect(() => {
       console.warn('YouTube captions toggle error:', error);
     }
   }, [isCCEnabled, isPlayerReady, playerRef]);
-
+  
   /**
   * Cleanup on unmount
   */
@@ -161,7 +165,7 @@ useEffect(() => {
       }
     };
   }, [playerRef]);
-
+  
   /**
   * YouTube player options
   */
@@ -187,7 +191,7 @@ useEffect(() => {
     // Must be there so that from second request, autoplay is enabled
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }), [currentSong?.videoId]);
-
+  
   /**
   * Track pause state
   */
@@ -197,35 +201,35 @@ useEffect(() => {
     else if (ytState === 1 || ytState === 0) setIsPaused(false);
     if (typeof onStateChange === 'function') onStateChange(event);
   };
-
+  
   /**
   * Handle YouTube player ready event
   */
   const handleReady = (event) => {
     playerRef.current = event.target;
     setIsPlayerReady(true);
-
+    
     if (isFirstLoadRef.current) {
       playerRef.current.mute();
       setShowMutedBanner(true);
       isFirstLoadRef.current = false;
-
+      
       try {
         playerRef.current.playVideo();
       } catch (error) {
         console.warn('Primary autoplay failed:', error);
       }
     }
-
+    
     try {
       playerRef.current?.setPlaybackQuality('default');
     } catch (error) {
       console.warn('Could not set adaptive quality:', error);
     }
-
+    
     if (typeof onReady === 'function') onReady(event);
   };
-
+  
   /**
   * Clicking mute icon manually unmutes
   */
@@ -235,41 +239,54 @@ useEffect(() => {
     }
     setShowMutedBanner(false); // Immediately hide icon on click
   };
-
+  
+  const handleClickOverlay = (e) => {
+    e.stopPropagation();
+    handleClickMuteIcon();
+  };
+  
   /**
   * Fallback UI if no song selected
   */
   if (!currentSong) {
     return (
       <div className="empty-player-container" role="region" aria-live="polite">
-        <div className="empty-player-message">
-          Select a channel to start watching
-        </div>
+      <div className="empty-player-message">
+      Select a channel to start watching
+      </div>
       </div>
     );
   }
-
+  
   return (
     <div ref={containerRef} className={`youtube-container ${isFullscreen ? 'fullscreen' : ''}`} tabIndex={-1}>
-      <div className={`video-wrapper ${isFullscreen ? 'fullscreen' : ''}`}>
-        {showMutedBanner && (
-          <button className="muted-indicator" onClick={handleClickMuteIcon}>
-            <VolumeX size={16}/>
-          </button>
-        )}
-
-        <YouTube
-          videoId={currentSong.videoId}
-          opts={opts}
-          onReady={handleReady}
-          onStateChange={handleStateChange}
-          onError={onError}
-          className="youtube-player"
-          iframeClassName="youtube-iframe"
-        />
-
-        {isPaused && <div className="pause-mask" />}
-      </div>
+    <div className={`video-wrapper ${isFullscreen ? 'fullscreen' : ''}`}>
+    {showMutedBanner && (
+      <button className="muted-indicator">
+      <VolumeX size={16}/>
+      </button>
+    )}
+    
+    {showMutedBanner && (
+      <div 
+      className="unmute-overlay" 
+      onClick={handleClickOverlay}
+      onTouchStart={handleClickOverlay}
+      />
+    )}
+    
+    <YouTube
+    videoId={currentSong.videoId}
+    opts={opts}
+    onReady={handleReady}
+    onStateChange={handleStateChange}
+    onError={onError}
+    className="youtube-player"
+    iframeClassName="youtube-iframe"
+    />
+    
+    {isPaused && <div className="pause-mask" />}
+    </div>
     </div>
   );
 }
