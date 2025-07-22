@@ -4,13 +4,13 @@ import './VideoPlayer.css';
 
 const isFirestick = /Fire TV|AFT/.test(navigator.userAgent);
 /**
- * Request fullscreen on the given element and attempt to lock screen orientation to landscape.
- * Fallbacks included for vendor-prefixed fullscreen methods.
- * @param {HTMLElement} element - The element to fullscreen
- */
+* Request fullscreen on the given element and attempt to lock screen orientation to landscape.
+* Fallbacks included for vendor-prefixed fullscreen methods.
+* @param {HTMLElement} element - The element to fullscreen
+*/
 export function requestFullscreenWithOrientation(element) {
   if (!element) return;
-
+  
   if (element.requestFullscreen) {
     element.requestFullscreen();
   } else if (element.webkitRequestFullscreen) {
@@ -18,7 +18,7 @@ export function requestFullscreenWithOrientation(element) {
   } else if (element.msRequestFullscreen) {
     element.msRequestFullscreen();
   }
-
+  
   if (window.screen.orientation?.lock) {
     window.screen.orientation.lock('landscape').catch(() => {
       // Ignore errors, e.g. user rejected lock
@@ -27,9 +27,9 @@ export function requestFullscreenWithOrientation(element) {
 }
 
 /**
- * Check if the YouTube iframe is present and loaded with a valid src.
- * This prevents widgetapi.js null src errors.
- */
+* Check if the YouTube iframe is present and loaded with a valid src.
+* This prevents widgetapi.js null src errors.
+*/
 function isIframeLoaded(player) {
   try {
     const iframe = player?.getIframe?.();
@@ -40,19 +40,19 @@ function isIframeLoaded(player) {
 }
 
 /**
- * VideoPlayer renders a YouTube player for the current song with control over playback,
- * captions, and fullscreen orientation lock. It also tells YouTube to pick the adaptive ("auto")
- * quality based on the user’s bandwidth.
- * 
- * Props:
- * - currentSong: object with videoId of the YouTube video to play
- * - isPlaying: boolean to play or pause video
- * - isCCEnabled: boolean to toggle closed captions
- * - onReady: callback for YouTube player ready event
- * - onStateChange: callback for player state changes
- * - onError: callback for player errors
- * - playerRef: React ref to expose YouTube player instance
- */
+* VideoPlayer renders a YouTube player for the current song with control over playback,
+* captions, and fullscreen orientation lock. It also tells YouTube to pick the adaptive ("auto")
+* quality based on the user’s bandwidth.
+* 
+* Props:
+* - currentSong: object with videoId of the YouTube video to play
+* - isPlaying: boolean to play or pause video
+* - isCCEnabled: boolean to toggle closed captions
+* - onReady: callback for YouTube player ready event
+* - onStateChange: callback for player state changes
+* - onError: callback for player errors
+* - playerRef: React ref to expose YouTube player instance
+*/
 function VideoPlayer({
   currentSong,
   isPlaying,
@@ -66,17 +66,17 @@ function VideoPlayer({
   const containerRef = useRef(null);
   const [isPlayerReady, setIsPlayerReady] = useState(false);
   const isFirstLoadRef = useRef(true);
-
-
+  
+  
   // Track whether the video is paused
   const [isPaused, setIsPaused] = useState(false);
-
+  
   // Reset player ready, paused when videoId changes
   useEffect(() => {
     setIsPlayerReady(false);
     setIsPaused(false);
   }, [currentSong?.videoId]);
-
+  
   // Sync play/pause with isPlaying prop once player is ready
   useEffect(() => {
     // Only run if playerRef.current is not null and isPlayerReady is true
@@ -85,9 +85,9 @@ function VideoPlayer({
       !playerRef?.current ||
       typeof playerRef?.current?.getPlayerState !== 'function'
     ) return;
-
+    
     if (!isIframeLoaded(playerRef.current)) return;
-
+    
     try {
       const state = playerRef.current?.getPlayerState();
       // State -1 = unstarted, 5 = video cued, ignore those states
@@ -103,14 +103,24 @@ function VideoPlayer({
       console.warn('YouTube player state sync error:', error);
     }
   }, [isPlaying, isPlayerReady, playerRef]);
-
+  
+  useEffect(() => {
+    const handleAnyKey = (e) => {
+      if (playerRef.current?.isMuted()) {
+        playerRef.current.unMute();
+      }
+    };
+    window.addEventListener('keydown', handleAnyKey);
+    return () => window.removeEventListener('keydown', handleAnyKey);
+  }, [playerRef]);
+  
   // Toggle captions on/off by loading/unloading the captions module
   useEffect(() => {
     const player = playerRef.current;
     if (!isPlayerReady || !player) return;
-
+    
     if (!isIframeLoaded(player)) return;
-
+    
     try {
       if (isCCEnabled) {
         player.loadModule('captions');
@@ -122,7 +132,7 @@ function VideoPlayer({
       console.warn('YouTube captions toggle error:', error);
     }
   }, [isCCEnabled, isPlayerReady, playerRef]);
-
+  
   // Cleanup on unmount
   useEffect(() => {
     return () => {
@@ -135,7 +145,7 @@ function VideoPlayer({
       }
     };
   }, [playerRef]);
-
+  
   // Memoized YouTube player options
   const opts = useMemo(() => ({
     width: '100%',
@@ -158,7 +168,7 @@ function VideoPlayer({
     },
     host: 'https://www.youtube-nocookie.com' // Use no-cookie embed to suppress end-of-video suggestions
   }), []); // No dependencies needed, isFirestick is static
-
+  
   // Wrapped onStateChange to track pause state
   const handleStateChange = (event) => {
     const ytState = event.data;
@@ -172,7 +182,7 @@ function VideoPlayer({
       onStateChange(event);
     }
   };
-
+  
   // Handle YouTube player ready event
   const handleReady = (event) => {
     playerRef.current = event.target;
@@ -181,7 +191,7 @@ function VideoPlayer({
       playerRef.current.mute(); 
       isFirstLoadRef.current = false;
     }
-
+    
     try {
       // First attempt: Use YouTube's autoplay parameter
       playerRef.current.playVideo();
@@ -194,7 +204,7 @@ function VideoPlayer({
     } catch (error) {
       console.warn('Could not set adaptive quality:', error);
     }
-
+    
     // Preload next video chunk if possible (YouTube API is limited)
     if (playerRef.current && playerRef.current?.getVideoLoadedFraction) {
       // This is a read-only API, but you can log for diagnostics
@@ -203,38 +213,38 @@ function VideoPlayer({
         console.info('Initial video chunk loaded:', loaded);
       }
     }
-
+    
     if (typeof onReady === 'function') {
       onReady(event);
     }
   };
-
+  
   // Show fallback UI if no song selected
   if (!currentSong) {
     return (
       <div className="empty-player-container" role="region" aria-live="polite">
-        <div className="empty-player-message">
-          Select a channel to start watching
-        </div>
+      <div className="empty-player-message">
+      Select a channel to start watching
+      </div>
       </div>
     );
   }
-
+  
   return (
     <div ref={containerRef} className={`youtube-container ${isFullscreen ? 'fullscreen' : ''}`} tabIndex={-1}>
-      <div className={`video-wrapper ${isFullscreen ? 'fullscreen' : ''}`}>
-        <YouTube
-          videoId={currentSong.videoId}
-          opts={opts}
-          onReady={handleReady}
-          onStateChange={handleStateChange}
-          onError={onError}
-          className="youtube-player"
-          iframeClassName="youtube-iframe"
-        />
-
-        {isPaused && <div className="pause-mask" />}
-      </div>
+    <div className={`video-wrapper ${isFullscreen ? 'fullscreen' : ''}`}>
+    <YouTube
+    videoId={currentSong.videoId}
+    opts={opts}
+    onReady={handleReady}
+    onStateChange={handleStateChange}
+    onError={onError}
+    className="youtube-player"
+    iframeClassName="youtube-iframe"
+    />
+    
+    {isPaused && <div className="pause-mask" />}
+    </div>
     </div>
   );
 }
