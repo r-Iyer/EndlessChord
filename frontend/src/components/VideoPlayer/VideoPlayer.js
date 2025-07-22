@@ -105,14 +105,23 @@ function VideoPlayer({
   }, [isPlaying, isPlayerReady, playerRef]);
   
   useEffect(() => {
-    const handleAnyKey = (e) => {
+    const unmuteIfMuted = () => {
       if (playerRef.current?.isMuted()) {
         playerRef.current.unMute();
       }
     };
-    window.addEventListener('keydown', handleAnyKey);
-    return () => window.removeEventListener('keydown', handleAnyKey);
+    
+    window.addEventListener('keydown', unmuteIfMuted);
+    window.addEventListener('click', unmuteIfMuted);
+    window.addEventListener('touchstart', unmuteIfMuted, { passive: true });
+    
+    return () => {
+      window.removeEventListener('keydown', unmuteIfMuted);
+      window.removeEventListener('click', unmuteIfMuted);
+      window.removeEventListener('touchstart', unmuteIfMuted);
+    };
   }, [playerRef]);
+  
   
   // Toggle captions on/off by loading/unloading the captions module
   useEffect(() => {
@@ -151,7 +160,7 @@ function VideoPlayer({
     width: '100%',
     height: '100%',
     playerVars: {
-      autoplay: 0,           // Autoplay video on ready
+      autoplay: isFirstLoadRef.current ? 0 : 1,           // Autoplay video on ready
       controls: 0,           // Hide controls UI (custom controls expected)
       fs: 0,                 // Disable fullscreen button (custom fullscreen)
       modestbranding: 1,     // Minimal YouTube branding
@@ -190,13 +199,13 @@ function VideoPlayer({
     if(isFirstLoadRef.current) {
       playerRef.current.mute(); 
       isFirstLoadRef.current = false;
-    }
-    
-    try {
-      // First attempt: Use YouTube's autoplay parameter
-      playerRef.current.playVideo();
-    } catch (error) {
-      console.warn('Primary autoplay failed:', error);
+      
+      try {
+        // First attempt: Use YouTube's autoplay parameter
+        playerRef.current.playVideo();
+      } catch (error) {
+        console.warn('Primary autoplay failed:', error);
+      }
     }
     // Instruct YouTube to use adaptive (“default”) quality for all devices
     try {
