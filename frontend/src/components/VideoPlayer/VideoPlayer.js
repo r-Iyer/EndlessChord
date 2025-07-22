@@ -110,7 +110,6 @@ function VideoPlayer({
 useEffect(() => {
   const unmuteIfMuted = (e) => {
     if (playerRef.current?.isMuted()) {
-      e.preventDefault(); // Prevent pause/play glitch on mobile
       playerRef.current.unMute();
       setShowMutedBanner(false);
     }
