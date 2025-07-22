@@ -1,3 +1,12 @@
+html, body {
+  margin: 0;
+  padding: 0;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  background: black;
+}
+
 .youtube-container {
   position: relative;
   width: 100%;
@@ -5,63 +14,59 @@
 }
 
 .youtube-container.fullscreen {
-  position: relative;
-  top: 0px;
-  width: 100%;
-  height: 100%;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 9999;
+  background: black;
 }
 
-/* Default: Mobile Portrait (16:9 aspect) */
+/* Normal mode = 16:9 */
 .video-wrapper {
   width: 100%;
   aspect-ratio: 16 / 9;
+  background: black;
 }
 
-/* Desktop (min-width >= 768px) or Fullscreen override */
-@media (min-width: 768px) {
-  .video-wrapper,
-  .video-wrapper.fullscreen {
-    width: 100%;
-    height: 100vh;
-    aspect-ratio: auto;
-    touch-action: none;
-  }
-}
-
-/* Mobile Fullscreen — override via class toggle */
+/* Fullscreen = force fill screen without any gaps */
 .video-wrapper.fullscreen {
-  width: 100%;
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100vw;
   height: 100vh;
-  aspect-ratio: auto;
-  background-color: black;
+  aspect-ratio: unset;
+  background: black;
   touch-action: none;
 }
 
-.youtube-player {
+.youtube-player,
+.youtube-player iframe {
+  display: block;
   width: 100%;
   height: 100%;
+  border: none;
+  margin: 0;
+  padding: 0;
+  background: black;
+  pointer-events: auto;
 }
 
+/* Empty player fallback screen */
 .empty-player-container {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 100%;
+  width: 100vw;
   height: 100vh;
-  background-color: black;
+  background: black;
 }
 
 .empty-player-message {
   color: white;
-  font-size: 1.25rem; /* text-xl */
-}
-
-/* Override YouTube iframe styles */
-.youtube-player iframe {
-  width: 100%;
-  height: 100%;
-  border: none;
-  pointer-events: none;
+  font-size: 1.25rem;
 }
 
 .pause-mask {
@@ -70,12 +75,11 @@
   left: 0;
   width: 100%;
   height: 22%;
-  background-color: black;
+  background: black;
   z-index: 10;
   pointer-events: none;
 }
 
-/* Muted icon top-left */
 .muted-indicator {
   position: absolute;
   top: 12px;
@@ -89,7 +93,6 @@
   justify-content: center;
 }
 
-/* Add to VideoPlayer.css */
 .unmute-overlay {
   position: absolute;
   top: 0;
@@ -97,5 +100,5 @@
   width: 100%;
   height: 100%;
   z-index: 10;
-  background-color: transparent;
+  background: transparent;
 }
