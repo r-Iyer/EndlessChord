@@ -22,14 +22,14 @@ const addAISuggestionsIfNeeded = async (
   userId = null,
   entity = null,
 ) => {
-
+  
   /* Rule III.2.d */
   let minimum_song_count = MINIMUM_SONG_COUNT;
   /* Rule II.2.f, Rule III.2.e */
   let maximum_song_count = (source === INITIAL_LOAD) ? INITIAL_SONG_COUNT : DEFAULT_SONG_COUNT;
   
   songs = songs?.slice(0, maximum_song_count);
-
+  
   // If the request is not for songs (/songs) for a particular channel (e.g. /search) OR it's an initial load,
   // and we already have enough songs, skip AI suggestions and return early.
   if ((entity !== SONG_PATH || source === INITIAL_LOAD) && songs.length >= MINIMUM_SONG_COUNT) {
@@ -37,20 +37,24 @@ const addAISuggestionsIfNeeded = async (
     songs = songs.slice(0, INITIAL_SONG_COUNT)
     return { songs, aiSuggestionsAdded: false };
   }
-
+  
   let aiSuggestions = [];
   let aiSuggestionsNeeded = maximum_song_count - songs.length;
-
+  
   try {
     if (entity === SONG_PATH && userId) {
       const { songs: selectedSongs, remainingToFill } = await selectSongsFromHistory( songs, userId, excludeIds );
+
+      if (selectedSongs?.length) {
+        songs = [...songs, ...selectedSongs];
+      }
       // Rule II.2.b, Rule II.2.c
       aiSuggestionsNeeded = remainingToFill;
       /* Rule II.2.e */ 
       minimum_song_count = aiSuggestionsNeeded;
       maximum_song_count = aiSuggestionsNeeded;
     }
-
+    
     // Rule II.1.c, Rule III.1.c, Rule II.2.d, Rule III.2.c
     if (aiSuggestionsNeeded > 0) {
       aiSuggestions = await getUniqueAISuggestions(
@@ -62,23 +66,23 @@ const addAISuggestionsIfNeeded = async (
         maximum_song_count   // Maximum number of songs required
       );
       logger.debug('[addAISuggestionsIfNeeded] AI suggestions:', aiSuggestions);
-
+      
       const { baseGenres, baseLangs } = normalizeBaseFields(channel);
-
+      
       // Save new Songs to DB
       const newSongs = await Promise.all(
         aiSuggestions.map((sugg) =>
           upsertSuggestionSong(sugg, baseGenres, baseLangs)
       )
     ).then(results => results.filter(Boolean));
-
+    
     // Merge the songs from DB and existing list
-    let updatedSongs = [...songs, ...newSongs].map(
+    let updatedSongs = [...shuffle(songs), ...shuffle(newSongs)].map(
       (song) => song.toObject?.() || { ...song }
     );
-
+    
     return {
-      songs: shuffle(updatedSongs),
+      songs: updatedSongs,
       aiSuggestionsAdded: newSongs.length > 0,
     };
   }
@@ -102,14 +106,14 @@ const addAISuggestionsIfNeeded = async (
 async function getUniqueAISuggestions(channel, excludeIds, baseSongs, source, minimum_song_count = MINIMUM_SONG_COUNT, maximum_song_count = DEFAULT_SONG_COUNT) {
   let allSuggestions = [];
   let attempts = 0;
-
+  
   try {
     while (allSuggestions.length < minimum_song_count && attempts < MAX_RETRIES) {
       logger.info(`[getUniqueAISuggestions] Fething Unique AI suggestions, attempt: ${attempts+1}. Current Song count: ${allSuggestions.length}`);
       let newSuggestionsCount = maximum_song_count * 2;
       // For initial search songs, maximum_song_count should not be double.
       if(channel.name === "" && source == INITIAL_LOAD)
-          newSuggestionsCount = maximum_song_count;
+        newSuggestionsCount = maximum_song_count;
       const newSuggestions = await getAISuggestions(channel, newSuggestionsCount); // Request double the required maximum_song_count
       const filtered = filterAISuggestions(newSuggestions, excludeIds, baseSongs);
       allSuggestions = [...new Set([...allSuggestions, ...filtered])]; // Merge and dedupe
@@ -138,7 +142,7 @@ async function getAISuggestions(channel, song_count) {
   try {
     const recommendedSongs = await getAIRecommendations(channel, song_count);
     if (recommendedSongs.length === 0) return [];
-
+    
     const youtubeIds = await getYouTubeVideoDetails(recommendedSongs, channel);
     logger.info( `[getAISuggestions] Fetched youtubeIds for ${recommendedSongs.length} songs`);
     return youtubeIds;
@@ -152,15 +156,15 @@ async function getAISuggestions(channel, song_count) {
 async function getAIRecommendations(channel, song_count) {  
   try {
     let recommendationPrompt = RECOMMENDATION_PROMPT_TEMPLATE
-      .replace('{{SONG_COUNT}}', song_count)
-      .replace('{{LANGUAGE}}', channel.language.toUpperCase())
-      .replace('{{DESCRIPTION}}', channel.description)
-      .replace('{{GENRES}}', channel.genre.join(', '));
-
+    .replace('{{SONG_COUNT}}', song_count)
+    .replace('{{LANGUAGE}}', channel.language.toUpperCase())
+    .replace('{{DESCRIPTION}}', channel.description)
+    .replace('{{GENRES}}', channel.genre.join(', '));
+    
     //If search query
     if(channel.name === "")
       recommendationPrompt += "Search query: " + channel.description + " only";
-
+    
     const recommendedSongs = await getAIRecommendationsGemini(recommendationPrompt, channel.name);
     return recommendedSongs;
   } catch (err) {

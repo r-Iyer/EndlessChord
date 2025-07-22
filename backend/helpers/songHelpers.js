@@ -112,7 +112,7 @@ const getSongsWithExclusionsFromDb = async (
 const getSongByVideoIdFromDb = async (videoId) => {
   try {
     const song = await Song.findOne({ videoId: videoId });
-    logger.debug(`[getSongByVideoIdFromDb] Found ${song.length} songs with exclusions and year filter`);
+    logger.debug(`[getSongByVideoIdFromDb] Found ${song?.length} songs with exclusions and year filter`);
     return song;
   } catch (error) {
     logger.error(`[getSongByVideoIdFromDb] Error fetching song with videoId: ${videoId}`, error);
