@@ -1,10 +1,8 @@
 import { useRef, useEffect, useState, useMemo } from 'react';
 import YouTube from 'react-youtube';
-import { VolumeX } from 'lucide-react';
 import './VideoPlayer.css';
 
 const isFirestick = /Fire TV|AFT/.test(navigator.userAgent);
-
 /**
 * Request fullscreen on the given element and attempt to lock screen orientation to landscape.
 * Fallbacks included for vendor-prefixed fullscreen methods.
@@ -12,7 +10,7 @@ const isFirestick = /Fire TV|AFT/.test(navigator.userAgent);
 */
 export function requestFullscreenWithOrientation(element) {
   if (!element) return;
-
+  
   if (element.requestFullscreen) {
     element.requestFullscreen();
   } else if (element.webkitRequestFullscreen) {
@@ -20,7 +18,7 @@ export function requestFullscreenWithOrientation(element) {
   } else if (element.msRequestFullscreen) {
     element.msRequestFullscreen();
   }
-
+  
   if (window.screen.orientation?.lock) {
     window.screen.orientation.lock('landscape').catch(() => {
       // Ignore errors, e.g. user rejected lock
@@ -45,7 +43,7 @@ function isIframeLoaded(player) {
 * VideoPlayer renders a YouTube player for the current song with control over playback,
 * captions, and fullscreen orientation lock. It also tells YouTube to pick the adaptive ("auto")
 * quality based on the user’s bandwidth.
-*
+* 
 * Props:
 * - currentSong: object with videoId of the YouTube video to play
 * - isPlaying: boolean to play or pause video
@@ -67,28 +65,29 @@ function VideoPlayer({
 }) {
   const containerRef = useRef(null);
   const [isPlayerReady, setIsPlayerReady] = useState(false);
-  const [showMutedBanner, setShowMutedBanner] = useState(false);
   const isFirstLoadRef = useRef(true);
-
+  
+  
   // Track whether the video is paused
   const [isPaused, setIsPaused] = useState(false);
-
+  
   // Reset player ready, paused when videoId changes
   useEffect(() => {
     setIsPlayerReady(false);
     setIsPaused(false);
   }, [currentSong?.videoId]);
-
+  
   // Sync play/pause with isPlaying prop once player is ready
   useEffect(() => {
+    // Only run if playerRef.current is not null and isPlayerReady is true
     if (
       !isPlayerReady ||
       !playerRef?.current ||
       typeof playerRef?.current?.getPlayerState !== 'function'
     ) return;
-
+    
     if (!isIframeLoaded(playerRef.current)) return;
-
+    
     try {
       const state = playerRef.current?.getPlayerState();
       // State -1 = unstarted, 5 = video cued, ignore those states
@@ -100,40 +99,37 @@ function VideoPlayer({
         }
       }
     } catch (error) {
+      // Suppress widgetapi errors if iframe is missing
       console.warn('YouTube player state sync error:', error);
     }
   }, [isPlaying, isPlayerReady, playerRef]);
-
-  /**
-  * Unmute on any click, key press, or touch event
-  */
-useEffect(() => {
-  const unmuteIfMuted = (e) => {
-    if (playerRef.current?.isMuted()) {
-      playerRef.current.unMute();
-    }
-  };
-
-  window.addEventListener('keydown', unmuteIfMuted);
-  window.addEventListener('click', unmuteIfMuted);
-  window.addEventListener('touchstart', unmuteIfMuted, { passive: true });
-
-  return () => {
-    window.removeEventListener('keydown', unmuteIfMuted);
-    window.removeEventListener('click', unmuteIfMuted);
-    window.removeEventListener('touchstart', unmuteIfMuted);
-  };
-}, [playerRef]);
-
-
-  /**
-  * Toggle captions on/off
-  */
+  
+  useEffect(() => {
+    const unmuteIfMuted = () => {
+      if (playerRef.current?.isMuted()) {
+        playerRef.current.unMute();
+      }
+    };
+    
+    window.addEventListener('keydown', unmuteIfMuted);
+    window.addEventListener('click', unmuteIfMuted);
+    window.addEventListener('touchstart', unmuteIfMuted, { passive: true });
+    
+    return () => {
+      window.removeEventListener('keydown', unmuteIfMuted);
+      window.removeEventListener('click', unmuteIfMuted);
+      window.removeEventListener('touchstart', unmuteIfMuted);
+    };
+  }, [playerRef]);
+  
+  
+  // Toggle captions on/off by loading/unloading the captions module
   useEffect(() => {
     const player = playerRef.current;
     if (!isPlayerReady || !player) return;
+    
     if (!isIframeLoaded(player)) return;
-
+    
     try {
       if (isCCEnabled) {
         player.loadModule('captions');
@@ -145,10 +141,8 @@ useEffect(() => {
       console.warn('YouTube captions toggle error:', error);
     }
   }, [isCCEnabled, isPlayerReady, playerRef]);
-
-  /**
-  * Cleanup on unmount
-  */
+  
+  // Cleanup on unmount
   useEffect(() => {
     return () => {
       if (playerRef.current) {
@@ -160,115 +154,106 @@ useEffect(() => {
       }
     };
   }, [playerRef]);
-
-  /**
-  * YouTube player options
-  */
+  
+  // Memoized YouTube player options
   const opts = useMemo(() => ({
     width: '100%',
     height: '100%',
     playerVars: {
-      autoplay: isFirstLoadRef.current ? 0 : 1,
-      controls: 0,
-      fs: 0,
-      modestbranding: 1,
-      rel: 0,
-      iv_load_policy: 3,
-      showinfo: 0,
-      cc_load_policy: 1,
+      autoplay: isFirstLoadRef.current ? 0 : 1,           // Autoplay video on ready
+      controls: 0,           // Hide controls UI (custom controls expected)
+      fs: 0,                 // Disable fullscreen button (custom fullscreen)
+      modestbranding: 1,     // Minimal YouTube branding
+      rel: 0,                // No related videos at end
+      iv_load_policy: 3,     // Disable video annotations/interactive cards
+      showinfo: 0,           // Deprecated but kept to hide info
+      cc_load_policy: 1,     // Closed captions on by default (can override)
+      // Firestick-specific optimizations
       ...(isFirestick ? {
-        vq: 'default',
-        html5: 1,
+        vq: 'default', // Let YouTube pick best quality for Firestick
+        html5: 1,    // Prioritize HTML5 player
         playsinline: 0
       } : {})
     },
-    host: 'https://www.youtube-nocookie.com'
-    // Must be there so that from second request, autoplay is enabled
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }), [currentSong?.videoId]);
-
-  /**
-  * Track pause state
-  */
+    host: 'https://www.youtube-nocookie.com' // Use no-cookie embed to suppress end-of-video suggestions
+  }), []); // No dependencies needed, isFirestick is static
+  
+  // Wrapped onStateChange to track pause state
   const handleStateChange = (event) => {
     const ytState = event.data;
-    if (ytState === 2) setIsPaused(true);
-    else if (ytState === 1 || ytState === 0) setIsPaused(false);
-    if (typeof onStateChange === 'function') onStateChange(event);
+    // YouTube states: -1 (unstarted), 0 (ended), 1 (playing), 2 (paused), 5 (video cued)
+    if (ytState === 2) {
+      setIsPaused(true);
+    } else if (ytState === 1 || ytState === 0) {
+      setIsPaused(false);
+    }
+    if (typeof onStateChange === 'function') {
+      onStateChange(event);
+    }
   };
-
-  /**
-  * Handle YouTube player ready event
-  */
+  
+  // Handle YouTube player ready event
   const handleReady = (event) => {
     playerRef.current = event.target;
     setIsPlayerReady(true);
-
-    if (isFirstLoadRef.current) {
-      playerRef.current.mute();
-      setShowMutedBanner(true);
+    if(isFirstLoadRef.current) {
+      playerRef.current.mute(); 
       isFirstLoadRef.current = false;
-
+      
       try {
+        // First attempt: Use YouTube's autoplay parameter
         playerRef.current.playVideo();
       } catch (error) {
         console.warn('Primary autoplay failed:', error);
       }
     }
-
+    // Instruct YouTube to use adaptive (“default”) quality for all devices
     try {
       playerRef.current?.setPlaybackQuality('default');
     } catch (error) {
       console.warn('Could not set adaptive quality:', error);
     }
-
-    if (typeof onReady === 'function') onReady(event);
-  };
-
-  /**
-  * Clicking mute icon manually unmutes
-  */
-  const handleClickMuteIcon = () => {
-    if (playerRef.current?.isMuted()) {
-      playerRef.current.unMute();
+    
+    // Preload next video chunk if possible (YouTube API is limited)
+    if (playerRef.current && playerRef.current?.getVideoLoadedFraction) {
+      // This is a read-only API, but you can log for diagnostics
+      const loaded = playerRef.current?.getVideoLoadedFraction();
+      if (loaded < 0.2) {
+        console.info('Initial video chunk loaded:', loaded);
+      }
     }
-    setShowMutedBanner(false); // Immediately hide icon on click
+    
+    if (typeof onReady === 'function') {
+      onReady(event);
+    }
   };
-
-  /**
-  * Fallback UI if no song selected
-  */
+  
+  // Show fallback UI if no song selected
   if (!currentSong) {
     return (
       <div className="empty-player-container" role="region" aria-live="polite">
-        <div className="empty-player-message">
-          Select a channel to start watching
-        </div>
+      <div className="empty-player-message">
+      Select a channel to start watching
+      </div>
       </div>
     );
   }
-
+  
   return (
     <div ref={containerRef} className={`youtube-container ${isFullscreen ? 'fullscreen' : ''}`} tabIndex={-1}>
-      <div className={`video-wrapper ${isFullscreen ? 'fullscreen' : ''}`}>
-        {showMutedBanner && (
-          <button className="muted-indicator" onClick={handleClickMuteIcon}>
-            <VolumeX size={16}/>
-          </button>
-        )}
-
-        <YouTube
-          videoId={currentSong.videoId}
-          opts={opts}
-          onReady={handleReady}
-          onStateChange={handleStateChange}
-          onError={onError}
-          className="youtube-player"
-          iframeClassName="youtube-iframe"
-        />
-
-        {isPaused && <div className="pause-mask" />}
-      </div>
+    <div className={`video-wrapper ${isFullscreen ? 'fullscreen' : ''}`}>
+    <YouTube
+    videoId={currentSong.videoId}
+    opts={opts}
+    onReady={handleReady}
+    onStateChange={handleStateChange}
+    onError={onError}
+    className="youtube-player"
+    iframeClassName="youtube-iframe"
+    />
+    
+    {isPaused && <div className="pause-mask" />}
+    </div>
     </div>
   );
 }
