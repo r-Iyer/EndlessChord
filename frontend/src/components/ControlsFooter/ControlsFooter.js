@@ -51,6 +51,7 @@ export default function ControlsFooter({
   
 useEffect(() => {
   setPlayerTemporarilyFrozen(open);
+// eslint-disable-next-line react-hooks/exhaustive-deps
 }, [open]);
 
   
