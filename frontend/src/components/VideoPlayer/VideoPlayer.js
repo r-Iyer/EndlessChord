@@ -111,15 +111,13 @@ useEffect(() => {
   const unmuteIfMuted = (e) => {
     if (playerRef.current?.isMuted()) {
       playerRef.current.unMute();
-      setIsPlayerReady(true);
-      playerRef.current.playVideo(); 
       setShowMutedBanner(false);
     }
   };
 
   window.addEventListener('keydown', unmuteIfMuted);
   window.addEventListener('click', unmuteIfMuted);
-  window.addEventListener('touchstart', unmuteIfMuted, { passive: false });
+  window.addEventListener('touchstart', unmuteIfMuted, { passive: true });
 
   return () => {
     window.removeEventListener('keydown', unmuteIfMuted);
