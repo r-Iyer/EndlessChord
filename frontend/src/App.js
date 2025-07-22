@@ -73,7 +73,7 @@ playerRef, isPlaying, setIsPlaying, currentSong, setCurrentSong, nextSong, setNe
 setCurrentTime, setPlayerReady, isInitialLoad, setIsInitialLoad, setShowInfo
 );
 
-const { resetUIHideTimer, clearUIHideTimer } = usePlayerEffects({
+const { setPlayerTemporarilyFrozen  } = usePlayerEffects({
 currentSong, setShowInfo, infoTimeoutRef, currentTime, setCurrentTime,
 duration, setDuration, playerRef, setShowUI, uiTimeoutRef, setPlayerReady,
 playerReady, isPlaying, playPauseRef, 
@@ -209,8 +209,7 @@ selectAlbum={selectAlbum}
       isFetchingSongs={isFetchingSongs}
       channelSelectorRef={channelSelectorRef}
       playPauseRef={playPauseRef}
-      resetUIHideTimer={resetUIHideTimer}
-      clearUIHideTimer={clearUIHideTimer}
+      setPlayerTemporarilyFrozen={ setPlayerTemporarilyFrozen }
       setCurrentSong={setCurrentSong}
       albums={albums}
       setAlbums={setAlbums}

@@ -1,4 +1,4 @@
-import { useEffect, useCallback } from 'react';
+import { useEffect, useCallback, useRef } from 'react';
 
 /**
 * Manages various side effects related to the music player UI:
@@ -56,10 +56,14 @@ export default function usePlayerEffects({
   isPlaying,
   playPauseRef,
 }) {
+
+  const isFrozenRef = useRef(false);
+
   // ----------------------------------------------------------------------
   // 1. Callback to show song info overlay, and auto-hide after 8 seconds (if playing)
   // ----------------------------------------------------------------------
   const showSongInfo = useCallback(() => {
+    if (isFrozenRef.current) return;
     setShowInfo(true);
     if (infoTimeoutRef.current) clearTimeout(infoTimeoutRef.current);
     
@@ -81,15 +85,9 @@ export default function usePlayerEffects({
     };
   }, [currentSong, showSongInfo, infoTimeoutRef]);
 
-const clearUIHideTimer = useCallback(() => {
-  if (uiTimeoutRef.current) {
-    clearTimeout(uiTimeoutRef.current);
-    uiTimeoutRef.current = null;
-  }
-}, [uiTimeoutRef]);
-
 
 const resetUIHideTimer = useCallback(() => {
+  if (isFrozenRef.current) return;
   if (uiTimeoutRef.current) clearTimeout(uiTimeoutRef.current);
   const isRemoteDevice = !('ontouchstart' in window) && !('onmousemove' in window);
   const timeout = isRemoteDevice ? 4000 : 2500;
@@ -98,6 +96,18 @@ const resetUIHideTimer = useCallback(() => {
     setShowUI(false);
   }, timeout);
 }, [setShowUI, uiTimeoutRef]);
+
+const setPlayerTemporarilyFrozen = useCallback((freeze) => {
+  isFrozenRef.current = freeze;
+  if (freeze) {
+    if (uiTimeoutRef.current) clearTimeout(uiTimeoutRef.current);
+    if (infoTimeoutRef.current) clearTimeout(infoTimeoutRef.current);
+    setShowUI(true);
+  } else {
+    resetUIHideTimer();
+  }
+}, [uiTimeoutRef, infoTimeoutRef, setShowUI, resetUIHideTimer]);
+
 
 
   
@@ -155,6 +165,8 @@ const resetUIHideTimer = useCallback(() => {
     };
     
     const handleMouseMove = (e) => {
+
+      if (isFrozenRef.current) return;
       const now = Date.now();
       if (now - lastMoveTime < 300) return;
       lastMoveTime = now;
@@ -162,6 +174,7 @@ const resetUIHideTimer = useCallback(() => {
     };
     
 const handleKeyDown = (e) => {
+  if (isFrozenRef.current) return;
   const remoteKeys = [
     'ArrowUp',
     'ArrowDown',
@@ -287,5 +300,5 @@ const handleKeyDown = (e) => {
     };
   }, [currentSong, duration, currentTime, showSongInfo]);
   
-  return { resetUIHideTimer, clearUIHideTimer  };
+  return { setPlayerTemporarilyFrozen  };
 }

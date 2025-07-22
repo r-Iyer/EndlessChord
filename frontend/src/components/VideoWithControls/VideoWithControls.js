@@ -24,8 +24,7 @@ export default function VideoWithControls({
   showUI,
   channelSelectorRef,
   playPauseRef,
-  resetUIHideTimer,
-  clearUIHideTimer,
+  setPlayerTemporarilyFrozen,
   setCurrentSong,
   albums,
   setAlbums
@@ -67,8 +66,7 @@ export default function VideoWithControls({
           duration={duration}
           channelSelectorRef={channelSelectorRef}
           playPauseRef={playPauseRef}
-          resetUIHideTimer={resetUIHideTimer}
-          clearUIHideTimer={clearUIHideTimer}
+          setPlayerTemporarilyFrozen={ setPlayerTemporarilyFrozen }
           setCurrentSong={setCurrentSong}
           albums={albums}
           setAlbums={setAlbums}

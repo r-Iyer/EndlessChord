@@ -23,8 +23,7 @@ export default function ControlsFooter({
   currentSong,
   onSeek,
   fullscreenRef,
-  resetUIHideTimer,
-  clearUIHideTimer,
+  setPlayerTemporarilyFrozen,
   setCurrentSong,
   albums,
   setAlbums
@@ -50,9 +49,10 @@ export default function ControlsFooter({
     }
   }, [open, wrapper]);
   
-  useEffect(() => {
-    if (open) clearUIHideTimer();
-  }, [open, clearUIHideTimer]);
+useEffect(() => {
+  setPlayerTemporarilyFrozen(open);
+}, [open]);
+
   
   
   // Focus input on mount
@@ -61,25 +61,6 @@ export default function ControlsFooter({
       inputRef.current.focus();
     }
   }, []);
-  
-  // ✅ Fix: Keep UI alive when scrolling albums dropdown
-  useEffect(() => {
-    const albumsContent = document.querySelector('.albums-dropdown-content');
-    
-    const handleScroll = () => {
-      resetUIHideTimer();
-    };
-    
-    if (albumsContent) {
-      albumsContent.addEventListener('scroll', handleScroll);
-    }
-    
-    return () => {
-      if (albumsContent) {
-        albumsContent.removeEventListener('scroll', handleScroll);
-      }
-    };
-  }, [open, resetUIHideTimer]);
   
 const handleShare = async (e) => {
   e.stopPropagation();
@@ -174,7 +155,6 @@ const handleShare = async (e) => {
         value={newName}
         onChange={(e) => {
           setNewName(e.target.value);
-          clearUIHideTimer();
         }}
         ref={inputRef}
         onClick={(e) => e.stopPropagation()}
@@ -182,7 +162,6 @@ const handleShare = async (e) => {
         onTouchStart={(e) => {
           e.stopPropagation();
           e.nativeEvent.stopImmediatePropagation();
-          resetUIHideTimer();
         }}
         onBlur={(e) => {
           e.stopPropagation();

@@ -20,8 +20,7 @@ export default function ControlsOverlay({
   duration,
   channelSelectorRef,
   playPauseRef,
-  resetUIHideTimer,
-  clearUIHideTimer,
+  setPlayerTemporarilyFrozen,
   setCurrentSong,
   albums,
   setAlbums
@@ -53,8 +52,7 @@ export default function ControlsOverlay({
         currentSong={currentSong}
         onSeek={onSeek}
         fullscreenRef={fullscreenRef}
-        resetUIHideTimer={resetUIHideTimer}
-        clearUIHideTimer={clearUIHideTimer}
+        setPlayerTemporarilyFrozen={ setPlayerTemporarilyFrozen }
         setCurrentSong={setCurrentSong}
         albums={albums}
         setAlbums={setAlbums}

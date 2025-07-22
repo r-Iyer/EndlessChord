@@ -27,8 +27,7 @@ export default function PlayerContainer({
   user,
   channelSelectorRef,
   playPauseRef,
-  resetUIHideTimer,
-  clearUIHideTimer,
+  setPlayerTemporarilyFrozen,
   setCurrentSong,
   albums,
   setAlbums
@@ -72,8 +71,7 @@ export default function PlayerContainer({
         showUI={showUI}
         channelSelectorRef={channelSelectorRef}
         playPauseRef={playPauseRef}
-        resetUIHideTimer={resetUIHideTimer}
-        clearUIHideTimer={clearUIHideTimer}
+        setPlayerTemporarilyFrozen={ setPlayerTemporarilyFrozen }
         setCurrentSong={setCurrentSong}
         albums={albums}
         setAlbums={setAlbums}

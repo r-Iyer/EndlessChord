@@ -34,8 +34,7 @@ export default function MainPlayerSection({
   isFetchingSongs,
   channelSelectorRef,
   playPauseRef,
-  resetUIHideTimer,
-  clearUIHideTimer,
+  setPlayerTemporarilyFrozen,
   setCurrentSong,
   albums,
   setAlbums
@@ -75,8 +74,7 @@ export default function MainPlayerSection({
         user={user}
         channelSelectorRef={channelSelectorRef}
         playPauseRef={playPauseRef}
-        resetUIHideTimer={resetUIHideTimer}
-        clearUIHideTimer={clearUIHideTimer}
+        setPlayerTemporarilyFrozen={ setPlayerTemporarilyFrozen }
         setCurrentSong={setCurrentSong}
         albums={albums}
         setAlbums={setAlbums}
