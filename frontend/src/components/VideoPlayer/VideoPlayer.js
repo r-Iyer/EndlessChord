@@ -111,7 +111,6 @@ useEffect(() => {
   const unmuteIfMuted = (e) => {
     if (playerRef.current?.isMuted()) {
       playerRef.current.unMute();
-      setShowMutedBanner(false);
     }
   };
 
