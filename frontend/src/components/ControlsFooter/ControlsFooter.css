@@ -164,6 +164,7 @@
     transform: none;
   }
     .albums-input{
+    font-size: 0.8rem;
     width: 80%;
     box-sizing: border-box;
   }

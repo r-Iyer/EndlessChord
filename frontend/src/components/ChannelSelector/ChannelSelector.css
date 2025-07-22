@@ -191,3 +191,9 @@
   flex-shrink: 0;
 }
 
+@media (max-width: 480px) {
+  .album-dropdown-item {
+    font-size: 0.8rem;
+  }
+}
+

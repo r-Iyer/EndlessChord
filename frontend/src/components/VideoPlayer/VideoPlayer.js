@@ -65,6 +65,8 @@ function VideoPlayer({
 }) {
   const containerRef = useRef(null);
   const [isPlayerReady, setIsPlayerReady] = useState(false);
+  const isFirstLoadRef = useRef(true);
+
 
   // Track whether the video is paused
   const [isPaused, setIsPaused] = useState(false);
@@ -171,31 +173,37 @@ function VideoPlayer({
     }
   };
 
-  // Handle YouTube player ready event
-  const handleReady = (event) => {
-    playerRef.current = event.target;
-    setIsPlayerReady(true);
+// Handle YouTube player ready event
+const handleReady = (event) => {
+  playerRef.current = event.target;
+  setIsPlayerReady(true);
 
-    // Instruct YouTube to use adaptive (“default”) quality for all devices
-    try {
-      playerRef.current?.setPlaybackQuality('default');
-    } catch (error) {
-      console.warn('Could not set adaptive quality:', error);
-    }
+  // ✅ Mute only on first load
+  if (isFirstLoadRef.current) {
+    playerRef.current.mute();
+    playerRef.current.playVideo(); // Autoplay after mute to prevent autoplay block
+    isFirstLoadRef.current = false;
+  }
 
-    // Preload next video chunk if possible (YouTube API is limited)
-    if (playerRef.current && playerRef.current?.getVideoLoadedFraction) {
-      // This is a read-only API, but you can log for diagnostics
-      const loaded = playerRef.current?.getVideoLoadedFraction();
-      if (loaded < 0.2) {
-        console.info('Initial video chunk loaded:', loaded);
-      }
-    }
+  // Instruct YouTube to use adaptive (“default”) quality for all devices
+  try {
+    playerRef.current?.setPlaybackQuality('default');
+  } catch (error) {
+    console.warn('Could not set adaptive quality:', error);
+  }
 
-    if (typeof onReady === 'function') {
-      onReady(event);
+  // Preload next video chunk if possible (YouTube API is limited)
+  if (playerRef.current && playerRef.current?.getVideoLoadedFraction) {
+    const loaded = playerRef.current?.getVideoLoadedFraction();
+    if (loaded < 0.2) {
+      console.info('Initial video chunk loaded:', loaded);
     }
-  };
+  }
+
+  if (typeof onReady === 'function') {
+    onReady(event);
+  }
+};
 
   // Show fallback UI if no song selected
   if (!currentSong) {
