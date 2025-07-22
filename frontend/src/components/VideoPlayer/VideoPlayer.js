@@ -107,24 +107,26 @@ function VideoPlayer({
   /**
   * Unmute on any click, key press, or touch event
   */
-  useEffect(() => {
-    const unmuteIfMuted = () => {
-      if (playerRef.current?.isMuted()) {
-        playerRef.current.unMute();
-        setShowMutedBanner(false);
-      }
-    };
+useEffect(() => {
+  const unmuteIfMuted = (e) => {
+    if (playerRef.current?.isMuted()) {
+      e.preventDefault(); // Prevent pause/play glitch on mobile
+      playerRef.current.unMute();
+      setShowMutedBanner(false);
+    }
+  };
 
-    window.addEventListener('keydown', unmuteIfMuted);
-    window.addEventListener('click', unmuteIfMuted);
-    window.addEventListener('touchstart', unmuteIfMuted, { passive: true });
+  window.addEventListener('keydown', unmuteIfMuted);
+  window.addEventListener('click', unmuteIfMuted);
+  window.addEventListener('touchstart', unmuteIfMuted, { passive: false });
 
-    return () => {
-      window.removeEventListener('keydown', unmuteIfMuted);
-      window.removeEventListener('click', unmuteIfMuted);
-      window.removeEventListener('touchstart', unmuteIfMuted);
-    };
-  }, [playerRef]);
+  return () => {
+    window.removeEventListener('keydown', unmuteIfMuted);
+    window.removeEventListener('click', unmuteIfMuted);
+    window.removeEventListener('touchstart', unmuteIfMuted);
+  };
+}, [playerRef]);
+
 
   /**
   * Toggle captions on/off
