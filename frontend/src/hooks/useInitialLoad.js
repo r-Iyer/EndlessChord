@@ -65,7 +65,7 @@ const useInitialLoad = ({
     try {
       setIsLoading(true);
 
-      // ✅ Fetch channels and albums in parallel
+      // Fetch channels and albums in parallel
       const [channels, albums] = await Promise.all([
         fetchChannels(),
         authService.isAuthenticated() ? getAlbums() : Promise.resolve([]),
@@ -76,51 +76,66 @@ const useInitialLoad = ({
       setChannels(channels || []);
       setAlbums(albums || []);
 
-      // ✅ Handle search from URL (without songId)
+      // Handle search from URL (without songId)
       if (urlSearchQuery && !urlSongId) {
         await handleSearch(urlSearchQuery);
         return;
       }
 
-      // ✅ Handle songId if present
+      // Handle songId if present
       if (urlSongId) {
         const song = await getSongById(urlSongId);
         if (song && mounted) {
+          // Immediately set currentSong for instant playback
           setCurrentSong(song);
 
-          // ✅ If channel param is present, fetch songs from that channel
-          if (urlChannelOrAlbum) {
-            const channel = channels.find(c => slugify(c.name) === slugify(urlChannelOrAlbum));
-            if (channel) {
-              const songs = await fetchSongsForChannel(channel._id);
-              const filtered = (songs || []).filter(s => s._id !== song._id);
-              setQueue(filtered.slice(1));
-              setNextSong(filtered.length > 0 ? filtered[0] : null);
-              setCurrentSelection({ type: 'channel', channel, album: null });
+          // Reset queue and nextSong immediately, they will be updated asynchronously
+          setNextSong(null);
+          setQueue([]);
+
+          // Start fetching queue and nextSong in the background (doesn't block playback)
+          (async () => {
+            // If channel param is present, fetch songs from that channel
+            if (urlChannelOrAlbum) {
+              const channel = channels.find(c => slugify(c.name) === slugify(urlChannelOrAlbum));
+              if (channel) {
+                const songs = await fetchSongsForChannel(channel._id);
+                const filtered = (songs || []).filter(s => s._id !== song._id);
+                if (mounted) {
+                  setQueue(filtered.slice(1));
+                  setNextSong(filtered.length > 0 ? filtered[0] : null);
+                  setCurrentSelection({ type: 'channel', channel, album: null });
+                }
+                return;
+              }
+            }
+
+            // Else, fallback to search results if search exists
+            if (urlSearchQuery) {
+              const searchSongs = await fetchSearchResults({
+                query: urlSearchQuery,
+                options: { excludeIds: [song.videoId] },
+              });
+              if (mounted) {
+                setQueue(searchSongs || []);
+                setNextSong((searchSongs && searchSongs[0]) || null);
+                setCurrentSelection(null);
+              }
               return;
             }
-          }
 
-          // ✅ Else, fallback to search results if search exists
-          if (urlSearchQuery) {
-            const searchSongs = await fetchSearchResults({
-              query: urlSearchQuery,
-              options: { excludeIds: [song.videoId] },
-            });
-            setQueue(searchSongs || []);
-            setNextSong((searchSongs && searchSongs[0]) || null);
-            setCurrentSelection(null);
-            return;
-          }
+            // Final fallback: empty queue
+            if (mounted) {
+              setQueue([]);
+              setNextSong(null);
+            }
+          })();
 
-          // ✅ Final fallback: empty queue
-          setQueue([]);
-          setNextSong(null);
           return;
         }
       }
 
-      // ✅ Handle direct channel or album selection
+      // Handle direct channel or album selection
       let foundChannel = null;
       let foundAlbum = null;
 
@@ -138,7 +153,7 @@ const useInitialLoad = ({
         await selectAlbum(foundAlbum);
         setCurrentSelection({ type: 'album', channel: null, album: foundAlbum });
       } else {
-        // ✅ Default to Hindi Latest or first channel
+        // Default to Hindi Latest or first channel
         const defaultChannel =
           channels.find(c => c.name === DEFAULT_CHANNEL) || channels[0];
         if (defaultChannel) {
