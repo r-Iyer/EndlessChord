@@ -141,7 +141,7 @@ function VideoPlayer({
     width: '100%',
     height: '100%',
     playerVars: {
-      autoplay: 1,           // Autoplay video on ready
+      autoplay: 0,           // Autoplay video on ready
       controls: 0,           // Hide controls UI (custom controls expected)
       fs: 0,                 // Disable fullscreen button (custom fullscreen)
       modestbranding: 1,     // Minimal YouTube branding
@@ -173,37 +173,38 @@ function VideoPlayer({
     }
   };
 
-// Handle YouTube player ready event
-const handleReady = (event) => {
-  playerRef.current = event.target;
-  setIsPlayerReady(true);
+  // Handle YouTube player ready event
+  const handleReady = (event) => {
+    playerRef.current = event.target;
+    setIsPlayerReady(true);
+    playerRef.current.mute(); 
 
-  // ✅ Mute only on first load
-  if (isFirstLoadRef.current) {
-    playerRef.current.mute();
-    playerRef.current.playVideo(); // Autoplay after mute to prevent autoplay block
-    isFirstLoadRef.current = false;
-  }
-
-  // Instruct YouTube to use adaptive (“default”) quality for all devices
-  try {
-    playerRef.current?.setPlaybackQuality('default');
-  } catch (error) {
-    console.warn('Could not set adaptive quality:', error);
-  }
-
-  // Preload next video chunk if possible (YouTube API is limited)
-  if (playerRef.current && playerRef.current?.getVideoLoadedFraction) {
-    const loaded = playerRef.current?.getVideoLoadedFraction();
-    if (loaded < 0.2) {
-      console.info('Initial video chunk loaded:', loaded);
+    try {
+      // First attempt: Use YouTube's autoplay parameter
+      playerRef.current.playVideo();
+    } catch (error) {
+      console.warn('Primary autoplay failed:', error);
     }
-  }
+    // Instruct YouTube to use adaptive (“default”) quality for all devices
+    try {
+      playerRef.current?.setPlaybackQuality('default');
+    } catch (error) {
+      console.warn('Could not set adaptive quality:', error);
+    }
 
-  if (typeof onReady === 'function') {
-    onReady(event);
-  }
-};
+    // Preload next video chunk if possible (YouTube API is limited)
+    if (playerRef.current && playerRef.current?.getVideoLoadedFraction) {
+      // This is a read-only API, but you can log for diagnostics
+      const loaded = playerRef.current?.getVideoLoadedFraction();
+      if (loaded < 0.2) {
+        console.info('Initial video chunk loaded:', loaded);
+      }
+    }
+
+    if (typeof onReady === 'function') {
+      onReady(event);
+    }
+  };
 
   // Show fallback UI if no song selected
   if (!currentSong) {
