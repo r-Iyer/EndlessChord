@@ -63,12 +63,12 @@ function VideoPlayer({
   onStateChange,
   onError,
   playerRef,
-  isFullscreen
+  isFullscreen,
+  isFirstLoadRef
 }) {
   const containerRef = useRef(null);
   const [isPlayerReady, setIsPlayerReady] = useState(false);
   const [showMutedBanner, setShowMutedBanner] = useState(false);
-  const isFirstLoadRef = useRef(true);
 
   // Track whether the video is paused
   const [isPaused, setIsPaused] = useState(false);

@@ -30,7 +30,8 @@ export default function PlayerContainer({
   setPlayerTemporarilyFrozen,
   setCurrentSong,
   albums,
-  setAlbums
+  setAlbums,
+  isFirstLoadRef
 }) {
   const [isVideoLoaded, setIsVideoLoaded] = useState(false);
 
@@ -75,6 +76,7 @@ export default function PlayerContainer({
         setCurrentSong={setCurrentSong}
         albums={albums}
         setAlbums={setAlbums}
+        isFirstLoadRef={isFirstLoadRef}
       />
 
       <SongInfo

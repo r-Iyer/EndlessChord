@@ -27,7 +27,8 @@ export default function VideoWithControls({
   setPlayerTemporarilyFrozen,
   setCurrentSong,
   albums,
-  setAlbums
+  setAlbums,
+  isFirstLoadRef
 }) {
   const videoContainerRef = useRef(null);
 
@@ -47,6 +48,7 @@ export default function VideoWithControls({
         onError={onError}
         playerRef={playerRef}
         isFullscreen={isFullscreen}
+        isFirstLoadRef={isFirstLoadRef}
       />
 
       <div className={`player-footer ${showUI ? 'visible' : 'hidden'}`}>

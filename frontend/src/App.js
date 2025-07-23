@@ -44,6 +44,7 @@ const [showUI, setShowUI] = useState(true);
 const [showInfo, setShowInfo] = useState(false);
 const [backendError, setBackendError] = useState(false);
 const [isCCEnabled, setIsCCEnabled] = useState(true);
+const isFirstLoadRef = useRef(true);
 
 const playerRef = useRef(null);
 const fullscreenRef = useRef(null);
@@ -213,6 +214,7 @@ selectAlbum={selectAlbum}
       setCurrentSong={setCurrentSong}
       albums={albums}
       setAlbums={setAlbums}
+      isFirstLoadRef={isFirstLoadRef}
     />
   </main>
 </div>

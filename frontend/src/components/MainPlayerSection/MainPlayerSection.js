@@ -37,7 +37,8 @@ export default function MainPlayerSection({
   setPlayerTemporarilyFrozen,
   setCurrentSong,
   albums,
-  setAlbums
+  setAlbums,
+  isFirstLoadRef
 }) {
   if (showLoader) {
     return (
@@ -78,6 +79,7 @@ export default function MainPlayerSection({
         setCurrentSong={setCurrentSong}
         albums={albums}
         setAlbums={setAlbums}
+        isFirstLoadRef={isFirstLoadRef}
       />
     );
   }
