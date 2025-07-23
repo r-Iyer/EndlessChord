@@ -49,6 +49,15 @@ export const cancelFetchSongs = () => {
 };
 
 export const getSongById = async (videoId) => {
-  const response = await api.get(`/api/songs/song/${videoId}`);
-  return response.data;
+  try {
+    const response = await api.get(`/api/songs/song/${videoId}`);
+    return response.data;
+  } catch (error) {
+    if (error.response?.status === 404) {
+      // Song not found
+      return null;
+    }
+    // Re-throw for other types of errors (e.g. 500, network issues)
+    throw error;
+  }
 };

@@ -131,7 +131,11 @@ const useInitialLoad = ({
             }
           })();
           
+          setIsLoading(false);
           return;
+        } else {
+          console.warn('Invalid or missing songId in URL, skipping to default channel/album');
+          // Do NOT return — continue to fetch regular song list
         }
       }
       
