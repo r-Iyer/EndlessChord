@@ -5,78 +5,79 @@ const { SHUFFLE_SCORE_THRESHOLD } = require('../config/constants');
 const { shuffle } = require('./songUtils');
 
 /**
- * Search songs with strict word-by-word fuzzy matching across multiple fields,
- * using the maximum score from any field for each word match.
- *
- * @param {string} searchTerm - User input for searching
- * @param {Array<string>} excludeIds - List of videoIds to exclude
- * @returns {Promise<Array>} - Sorted, filtered list of matching songs
- */
+* Search songs with strict word-by-word fuzzy matching across multiple fields,
+* using the maximum score from any field for each word match.
+*
+* @param {string} searchTerm - User input for searching
+* @param {Array<string>} excludeIds - List of videoIds to exclude
+* @returns {Promise<Array>} - Sorted, filtered list of matching songs
+*/
 async function searchSongsInDb(searchTerm, excludeIds = []) {
   try {
     if (!searchTerm || typeof searchTerm !== 'string') {
       logger.warn('[searchSongsInDb] Invalid searchTerm provided');
       return [];
     }
-
+    
     const words = searchTerm.trim().split(/\s+/); // Split input into words
-
+    
     if (words.length === 0) {
       return [];
     }
+    
+const searchFields = ['title', 'artist', 'composer', 'album'];
+const termWords = searchTerm.toLowerCase().split(/\s+/);
 
-    const pipeline = [
-      {
-        $search: {
-          index: 'default', // Atlas Search index
+const pipeline = [
+  {
+    $search: {
+      index: 'default',
+      compound: {
+        should: searchFields.map(field => ({
           compound: {
-            should: [
-              // For each word, create a compound query that finds the best field match
-              ...words.map(word => ({
-                compound: {
-                  should: ['title', 'artist', 'composer', 'album'].map(field => ({
-                    text: {
-                      query: word,
-                      path: field,
-                      fuzzy: {
-                        maxEdits: 2,      // Allow 1-2 typos
-                        prefixLength: 2   // First 2 characters must match
-                      },
-                      score: { boost: { value: 2 } } // Optional: boost score for exact matches
-                    }
-                  })),
-                  // This ensures we take the MAX score from any field for this word
-                  score: { boost: { value: 1 } }
-                }
-              }))
-            ],
-            minimumShouldMatch: words.length // Ensure all words match somewhere
+            must: termWords.map(word => ({
+              text: {
+                query: word,
+                path: field,
+                fuzzy: {
+                  maxEdits: 1,
+                  prefixLength: 2,
+                },
+                score: { boost: { value: 10 } },
+              },
+            })),
           }
-        }
-      },
-      {
-        $match: {
-          videoId: { $nin: excludeIds } // Filter out excluded videoIds
-        }
-      },
-      {
-        $addFields: {
-          score: { $meta: 'searchScore' } // Add relevance score from Atlas Search
-        }
-      },
-      {
-        $match: {
-          score: { $gte: 0.5 } // Filter out low relevance matches
-        }
-      },
-      {
-        $sort: {
-          score: -1,       // Sort by relevance descending
-          playCount: 1     // Break ties by playCount ascending (optional, maybe descending?)
-        }
+        })),
+        minimumShouldMatch: 1
       }
-    ];
+    }
+  },
+  {
+    $match: {
+      videoId: { $nin: excludeIds }
+    }
+  },
+  {
+    $addFields: {
+      score: { $meta: 'searchScore' }
+    }
+  },
+  {
+    $match: {
+      score: { $gte: 0.5 }
+    }
+  },
+  {
+    $sort: {
+      score: -1,
+      playCount: 1
+    }
+  }
+];
 
+    
+    
+    
     // Run aggregation and return results
     return await runSongAggregationInDb(pipeline);
   } catch (err) {
@@ -86,29 +87,29 @@ async function searchSongsInDb(searchTerm, excludeIds = []) {
 }
 
 /**
- * Sort songs by how closely they match a given search query (based on title, artist, composer, album).
- * Songs with very low relevance retain their original order.
- *
- * @param {Array<Object>} songs - Array of song objects
- * @param {string} searchQuery - The search string
- * @param {number} threshold - Relevance score threshold below which original order is preserved
- * @returns {Array<Object>} - Sorted array of songs
- */
+* Sort songs by how closely they match a given search query (based on title, artist, composer, album).
+* Songs with very low relevance retain their original order.
+*
+* @param {Array<Object>} songs - Array of song objects
+* @param {string} searchQuery - The search string
+* @param {number} threshold - Relevance score threshold below which original order is preserved
+* @returns {Array<Object>} - Sorted array of songs
+*/
 const sortSongsBySearchRelevance = (songs, searchQuery, threshold = 0.2) => {
   if (!searchQuery || typeof searchQuery !== 'string') return songs;
-
+  
   const query = searchQuery.toLowerCase();
-
+  
   const scored = songs.map((song, index) => {
     const fields = [song.title, song.artist, song.composer, song.album]
-      .filter(Boolean)
-      .map(field => field.toLowerCase());
-
+    .filter(Boolean)
+    .map(field => field.toLowerCase());
+    
     const maxSimilarity = Math.max(
       ...fields.map(field => stringSimilarity.compareTwoStrings(field, query)),
       0
     );
-
+    
     return {
       song: {
         ...song,
@@ -119,10 +120,10 @@ const sortSongsBySearchRelevance = (songs, searchQuery, threshold = 0.2) => {
       relevance: maxSimilarity
     };
   });
-
+  
   const highRelevance = scored.filter(item => item.relevance >= threshold);
   const lowRelevance = scored.filter(item => item.relevance < threshold);
-
+  
   highRelevance.sort((a, b) => {
     if (b.relevance === a.relevance) {
       // Randomize when scores are equal
@@ -130,34 +131,34 @@ const sortSongsBySearchRelevance = (songs, searchQuery, threshold = 0.2) => {
     }
     return b.relevance - a.relevance;
   });
-
+  
   // Preserve original order for low relevance
   lowRelevance.sort((a, b) => a.index - b.index);
-
+  
   const finalOrder = [...highRelevance, ...lowRelevance].map(item => item.song);
-
+  
   return finalOrder;
 };
 
 /**
- * Searches songs and shuffles results if all scores are above a threshold.
- *
- * @param {string} searchQuery - The search string.
- * @param {string[]} excludeIds - List of video IDs to exclude.
- * @param {number} threshold - Minimum score to trigger shuffle.
- * @returns {Promise<Array>} - The processed song list.
- */
+* Searches songs and shuffles results if all scores are above a threshold.
+*
+* @param {string} searchQuery - The search string.
+* @param {string[]} excludeIds - List of video IDs to exclude.
+* @param {number} threshold - Minimum score to trigger shuffle.
+* @returns {Promise<Array>} - The processed song list.
+*/
 const searchSongsWithPostProcessing = async (searchQuery, excludeIds = [], threshold = SHUFFLE_SCORE_THRESHOLD) => {
   let songs = await searchSongsInDb(searchQuery, excludeIds);
-
+  
   if (!Array.isArray(songs) || songs.length === 0) return [];
-
+  
   const allAboveThreshold = songs.every(song => song?.score >= threshold);
-
+  
   if (allAboveThreshold) {
     songs = shuffle(songs); // Use your existing shuffle function
   }
-
+  
   return songs;
 }
 
