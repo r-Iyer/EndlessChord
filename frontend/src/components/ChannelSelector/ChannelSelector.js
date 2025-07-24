@@ -97,7 +97,6 @@ const handleAlbumClick = (album) => {
             ref={triggerRef}
             className={`channel-button album-dropdown-trigger ${currentSelection?.type === 'album' ? 'active' : ''}`}
             onClick={() => setOpen(prev => !prev)}
-            disabled={disabled}
             type="button"
           >
             <span className="dropdown-label">{selectedAlbumName}</span>
